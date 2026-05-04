@@ -29,7 +29,7 @@ export default function RootLayout({
           {children}
         </div>
       </body>
-      <KakaoMapScript />
+      <KakaoMapScript apiKey={process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY ?? ''} />
     </html>
   )
 }
