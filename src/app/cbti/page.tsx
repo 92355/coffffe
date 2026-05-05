@@ -238,6 +238,7 @@ export default function CbtiPage() {
   const [phase, setPhase] = useState<Phase>('intro')
   const [currentQ, setCurrentQ] = useState(0)
   const [scores, setScores] = useState<Scores>(INIT_SCORES)
+  const [history, setHistory] = useState<Axis[]>([])
   const [result, setResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<0 | 1 | null>(null)
 
@@ -247,6 +248,7 @@ export default function CbtiPage() {
     setTimeout(() => {
       const next = { ...scores, [axis]: scores[axis] + 1 }
       setScores(next)
+      setHistory(h => [...h, axis])
       setSelected(null)
       if (currentQ < QUESTIONS.length - 1) {
         setCurrentQ((q) => q + 1)
@@ -257,10 +259,19 @@ export default function CbtiPage() {
     }, 320)
   }
 
+  function goBack() {
+    if (currentQ === 0 || selected !== null) return
+    const prevAxis = history[history.length - 1]
+    setHistory(h => h.slice(0, -1))
+    setScores(s => ({ ...s, [prevAxis]: s[prevAxis] - 1 }))
+    setCurrentQ(q => q - 1)
+  }
+
   function restart() {
     setPhase('intro')
     setCurrentQ(0)
     setScores(INIT_SCORES)
+    setHistory([])
     setResult(null)
     setSelected(null)
   }
@@ -332,18 +343,20 @@ export default function CbtiPage() {
       {phase === 'quiz' && (
         <div className="flex flex-col flex-1 px-4 pt-5 pb-8">
           {/* Progress bar */}
-          <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full mb-5 overflow-hidden">
+          <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full mb-4 overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
 
+          {/* Counter */}
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center mb-5 font-medium tracking-wide">
+            {currentQ + 1} / {QUESTIONS.length}
+          </p>
+
           {/* Question — key forces remount → triggers .anim-in */}
           <div key={currentQ} className="anim-in flex flex-col flex-1">
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center mb-5 font-medium tracking-wide">
-              {currentQ + 1} / {QUESTIONS.length}
-            </p>
 
             <div className="text-center mb-8">
               <div className="text-5xl mb-4">{QUESTIONS[currentQ].emoji}</div>
@@ -381,6 +394,20 @@ export default function CbtiPage() {
                 )
               })}
             </div>
+
+            {/* Back button */}
+            {currentQ > 0 && (
+              <button
+                onClick={goBack}
+                disabled={selected !== null}
+                className="mt-5 mx-auto flex items-center gap-1 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-30"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                이전 질문으로
+              </button>
+            )}
           </div>
         </div>
       )}
