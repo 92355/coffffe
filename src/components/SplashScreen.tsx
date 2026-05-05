@@ -22,19 +22,19 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         position: 'fixed', inset: 0, zIndex: 9999,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        background: 'radial-gradient(ellipse at 50% 40%, #0d2a48 0%, #071828 60%, #040f1c 100%)',
+        background: '#EDE0CF',
         opacity: fading ? 0 : 1,
         transition: 'opacity 0.7s ease',
         cursor: 'pointer',
         userSelect: 'none',
       }}
     >
-      {/* Cold glow behind cup */}
+      {/* Warm glow behind cup */}
       <div style={{
         position: 'absolute',
-        width: 220, height: 220,
+        width: 240, height: 240,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(100,180,255,0.08) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(158,111,62,0.12) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
@@ -54,22 +54,22 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
 
           {/* Cup glass left-edge shimmer */}
           <linearGradient id="sc-glass-shine" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(180,220,255,0.22)" />
-            <stop offset="100%" stopColor="rgba(180,220,255,0)" />
+            <stop offset="0%" stopColor="rgba(158,111,62,0.18)" />
+            <stop offset="100%" stopColor="rgba(158,111,62,0)" />
           </linearGradient>
 
           {/* Straw gradient */}
           <linearGradient id="sc-straw" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.85)" />
-            <stop offset="40%" stopColor="rgba(255,255,255,0.55)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.35)" />
+            <stop offset="0%" stopColor="rgba(120,70,30,0.80)" />
+            <stop offset="40%" stopColor="rgba(120,70,30,0.55)" />
+            <stop offset="100%" stopColor="rgba(120,70,30,0.35)" />
           </linearGradient>
         </defs>
 
         {/* ── Cup body (glass tint background) ── */}
         <polygon
           points="22,30 138,30 123,196 37,196"
-          fill="rgba(120,180,255,0.05)"
+          fill="rgba(158,111,62,0.07)"
         />
 
         {/* ── Coffee fill (rises from bottom) ── */}
@@ -144,17 +144,17 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <polygon
           points="22,30 138,30 123,196 37,196"
           fill="none"
-          stroke="rgba(180,220,255,0.50)"
+          stroke="rgba(120,70,30,0.45)"
           strokeWidth="2.5"
         />
 
         {/* Cup rim line */}
         <line x1="22" y1="30" x2="138" y2="30"
-          stroke="rgba(200,232,255,0.70)" strokeWidth="3" strokeLinecap="round" />
+          stroke="rgba(120,70,30,0.60)" strokeWidth="3" strokeLinecap="round" />
 
         {/* Cup bottom line */}
         <line x1="37" y1="196" x2="123" y2="196"
-          stroke="rgba(180,220,255,0.45)" strokeWidth="2.5" strokeLinecap="round" />
+          stroke="rgba(120,70,30,0.40)" strokeWidth="2.5" strokeLinecap="round" />
 
         {/* ── Straw ── */}
         <rect x="107" y="-14" width="10" height="150" rx="5" fill="url(#sc-straw)" />
@@ -163,16 +163,16 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
 
         {/* ── Condensation drops on cup exterior ── */}
         {/* left side */}
-        <ellipse cx="28"  cy="115" rx="3"   ry="5.5" fill="rgba(140,200,255,0.38)" />
-        <ellipse cx="16"  cy="148" rx="2.5" ry="4.5" fill="rgba(140,200,255,0.30)" />
-        <ellipse cx="22"  cy="168" rx="2"   ry="3.5" fill="rgba(140,200,255,0.25)" />
+        <ellipse cx="28"  cy="115" rx="3"   ry="5.5" fill="rgba(100,55,20,0.22)" />
+        <ellipse cx="16"  cy="148" rx="2.5" ry="4.5" fill="rgba(100,55,20,0.16)" />
+        <ellipse cx="22"  cy="168" rx="2"   ry="3.5" fill="rgba(100,55,20,0.13)" />
         {/* water drip from left drop */}
-        <path d="M28,120 Q29.5,130 28,138 Q26.5,130 28,120" fill="rgba(140,200,255,0.32)" />
+        <path d="M28,120 Q29.5,130 28,138 Q26.5,130 28,120" fill="rgba(100,55,20,0.18)" />
 
         {/* right side */}
-        <ellipse cx="146" cy="100" rx="2.5" ry="4.5" fill="rgba(140,200,255,0.35)" />
-        <ellipse cx="138" cy="132" rx="3"   ry="5"   fill="rgba(140,200,255,0.28)" />
-        <ellipse cx="148" cy="158" rx="2"   ry="3.5" fill="rgba(140,200,255,0.22)" />
+        <ellipse cx="146" cy="100" rx="2.5" ry="4.5" fill="rgba(100,55,20,0.20)" />
+        <ellipse cx="138" cy="132" rx="3"   ry="5"   fill="rgba(100,55,20,0.16)" />
+        <ellipse cx="148" cy="158" rx="2"   ry="3.5" fill="rgba(100,55,20,0.12)" />
       </svg>
 
       {/* ── Brand logo ── */}
@@ -184,10 +184,10 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         textAlign: 'center',
         fontFamily: 'inherit',
       }}>
-        <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#f5f5f5', margin: 0 }}>
-          co<span style={{ color: '#d4a373' }}>FFFFF</span>e map
+        <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#2C2C2C', margin: 0 }}>
+          co<span style={{ color: '#9E6F3E' }}>FFFFF</span>e map
         </p>
-        <p style={{ fontSize: 12, color: 'rgba(160,200,240,0.65)', marginTop: 6, letterSpacing: '0.06em' }}>
+        <p style={{ fontSize: 12, color: 'rgba(100,65,30,0.55)', marginTop: 6, letterSpacing: '0.06em' }}>
           안산 스페셜티 커피 큐레이션
         </p>
       </div>
@@ -195,7 +195,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
       {/* tap to skip */}
       <p style={{
         position: 'absolute', bottom: 32,
-        fontSize: 11, color: 'rgba(120,160,200,0.45)',
+        fontSize: 11, color: 'rgba(100,65,30,0.40)',
         letterSpacing: '0.08em',
         opacity: logoVisible ? 1 : 0,
         transition: 'opacity 0.5s ease 0.3s',
