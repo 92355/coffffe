@@ -40,7 +40,8 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+      style={{ color: 'var(--text-secondary)' }}
       aria-label={dark ? '라이트 모드' : '다크 모드'}
     >
       {dark ? <SunIcon /> : <MoonIcon />}

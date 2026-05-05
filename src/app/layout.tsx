@@ -23,9 +23,9 @@ export default function RootLayout({
         {/* Prevent dark mode flash */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d))document.documentElement.classList.add('dark');})();` }} />
       </head>
-      <body className="bg-gray-100 dark:bg-gray-950 min-h-dvh">
-        {/* Centered 70%-ish container */}
-        <div className="mx-auto w-full max-w-4xl min-h-dvh bg-white dark:bg-gray-900 shadow-[0_0_0_1px] shadow-gray-200 dark:shadow-gray-800 flex flex-col">
+      <body className="min-h-dvh" style={{ background: 'var(--background)' }}>
+        {/* Centered container */}
+        <div className="mx-auto w-full max-w-4xl min-h-dvh flex flex-col" style={{ background: 'var(--background)' }}>
           {children}
         </div>
       </body>
