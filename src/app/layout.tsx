@@ -10,7 +10,7 @@ const notoSansKR = Noto_Sans_KR({
 })
 
 export const metadata: Metadata = {
-  title: '스페셜티 커피 지도',
+  title: 'coFFFFFe map — 스페셜티 커피 지도',
   description: '진짜 고퀄리티 스페셜티 커피를 찾는 사람들을 위한 큐레이션 지도.',
 }
 
