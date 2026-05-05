@@ -51,8 +51,12 @@ body {
 }
 
 body {
-  background: var(--background);
+  background-color: #F7F5F0; /* 좌우 여백 — 라이트 */
   color: var(--foreground);
+}
+
+.dark body {
+  background-color: #161616; /* 좌우 여백 — 다크 */
 }
 
 .scrollbar-hide {

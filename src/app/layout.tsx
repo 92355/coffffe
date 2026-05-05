@@ -23,7 +23,7 @@ export default function RootLayout({
         {/* Prevent dark mode flash */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d))document.documentElement.classList.add('dark');})();` }} />
       </head>
-      <body className="min-h-dvh" style={{ background: 'var(--background)' }}>
+      <body className="min-h-dvh">
         {/* Centered container */}
         <div className="mx-auto w-full max-w-4xl min-h-dvh flex flex-col" style={{ background: 'var(--background)' }}>
           {children}
