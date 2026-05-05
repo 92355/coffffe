@@ -5,14 +5,30 @@ import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { BEANS, ORIGINS, ORIGIN_MAP, ROAST_LABEL, ROAST_COLOR } from '@/data/beans'
 
+const ALL_NOTES = (() => {
+  const freq = new Map<string, number>()
+  BEANS.forEach(b => b.notes.forEach(n => freq.set(n, (freq.get(n) ?? 0) + 1)))
+  return ['전체', ...[...freq.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n)]
+})()
+
 export default function BeansPage() {
   const [activeOrigin, setActiveOrigin] = useState('전체')
+  const [activeNotes, setActiveNotes] = useState<Set<string>>(new Set())
   const [visibleSet, setVisibleSet] = useState<Set<number>>(new Set())
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  const filtered = activeOrigin === '전체'
-    ? BEANS
-    : BEANS.filter(b => ORIGIN_MAP[b.origin] === activeOrigin)
+  const filtered = BEANS
+    .filter(b => activeOrigin === '전체' || ORIGIN_MAP[b.origin] === activeOrigin)
+    .filter(b => activeNotes.size === 0 || b.notes.some(n => activeNotes.has(n)))
+
+  function toggleNote(n: string) {
+    if (n === '전체') { setActiveNotes(new Set()); return }
+    setActiveNotes(prev => {
+      const next = new Set(prev)
+      next.has(n) ? next.delete(n) : next.add(n)
+      return next
+    })
+  }
 
   useEffect(() => {
     setVisibleSet(new Set())
@@ -31,7 +47,7 @@ export default function BeansPage() {
       cardRefs.current.forEach(ref => ref && observer.observe(ref))
     }, 0)
     return () => { clearTimeout(t); observer.disconnect() }
-  }, [activeOrigin])
+  }, [activeOrigin, activeNotes])
 
   return (
     <div className="flex flex-col flex-1 min-h-dvh">
@@ -53,7 +69,7 @@ export default function BeansPage() {
         </span>
       </header>
 
-      {/* Filter chips */}
+      {/* Origin filter chips */}
       <div className="px-4 pt-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
         {ORIGINS.map(o => (
           <button
@@ -69,6 +85,28 @@ export default function BeansPage() {
             {o}
           </button>
         ))}
+      </div>
+
+      {/* Note filter chips */}
+      <div className="px-4 pb-3 flex gap-1.5 overflow-x-auto scrollbar-hide shrink-0">
+        {ALL_NOTES.map(n => {
+          const isAll = n === '전체'
+          const active = isAll ? activeNotes.size === 0 : activeNotes.has(n)
+          return (
+            <button
+              key={n}
+              onClick={() => toggleNote(n)}
+              className="shrink-0 text-[11px] font-medium rounded-full px-3 py-1 transition-colors"
+              style={{
+                background: active ? 'var(--foreground)' : 'var(--card-bg)',
+                color: active ? 'var(--background)' : 'var(--text-secondary)',
+                border: `1px solid ${active ? 'transparent' : 'var(--card-border)'}`,
+              }}
+            >
+              {isAll ? '전체 향미' : n}
+            </button>
+          )
+        })}
       </div>
 
       {/* Bean count */}
