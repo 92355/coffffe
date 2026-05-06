@@ -53,4 +53,9 @@ next-env.d.ts
 # IDE
 .idea/
 
-.claude/*
+.claude/
+
+.vercel
+
+CLAUDE.md
+AGENTS.md
