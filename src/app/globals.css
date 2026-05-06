@@ -5,9 +5,9 @@
 
 /* ── 시안 B: Elegant Cream (라이트 모드) ── */
 :root {
-  --background: #EDE0CF;
+  --background: #f3ede4;;
   --foreground: #2C2C2C;
-  --text-secondary: #7A6755;
+  --text-secondary: #2f241d;
   --accent: #9E6F3E;
 
   --card-bg: #F5EAD8;
