@@ -74,7 +74,7 @@ function CardInner({
   if (isWideComing) {
     return (
       <div
-        className="card-animate rounded-2xl px-5 py-4 border flex flex-row items-center gap-4"
+        className="card-animate rounded-2xl px-5 py-4 border flex flex-row items-center gap-4 bor"
         style={{
           position: 'relative', overflow: 'hidden',
           background: 'var(--card-bg)',
