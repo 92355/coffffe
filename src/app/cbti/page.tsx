@@ -118,6 +118,9 @@ interface CbtiResult {
   name: string
   desc: string
   traits: string[]
+  recommend: string
+  pairingNotes: string[]
+  cafeStyle: string
 }
 
 const RESULTS: Record<string, CbtiResult> = {
@@ -126,96 +129,144 @@ const RESULTS: Record<string, CbtiResult> = {
     name: '예가체프 에스프레소',
     desc: '밝고 화사한 산미의 싱글오리진을 뜨겁게 추출한 당신. 섬세하고 감성적이며, 커피 한 잔에도 스토리를 찾는 로맨티스트예요.',
     traits: ['감성적', '섬세함', '탐구적', '따뜻함'],
+    recommend: '에티오피아 예가체프 싱글오리진 에스프레소',
+    pairingNotes: ['플로럴', '복숭아', '재스민'],
+    cafeStyle: '직접 소량 로스팅하는 로스터리 카페',
   },
   LSEC: {
     emoji: '🍋',
     name: '콜드 싱글오리진 샷',
     desc: '라이트 싱글오리진을 차갑게 즐기는 실험가. 트렌디하고 주관이 뚜렷하며, 새로운 맛에 항상 열려있는 어드벤처러예요.',
     traits: ['트렌디', '주관뚜렷', '실험적', '쿨함'],
+    recommend: '케냐 AA 아이스 에스프레소',
+    pairingNotes: ['블랙커런트', '시트러스', '베리'],
+    cafeStyle: '싱글오리진에 真진심인 스페셜티 에스프레소 바',
   },
   LSFH: {
     emoji: '🎋',
     name: '게이샤 핸드드립',
     desc: '희귀한 싱글오리진을 드리퍼로 천천히 내려 마시는 커피 감별사. 깊이 있는 취향과 인내심을 가진 퍼펙셔니스트예요.',
     traits: ['완벽주의', '깊은취향', '인내심', '감별사'],
+    recommend: '파나마 게이샤 또는 에티오피아 내추럴 핸드드립',
+    pairingNotes: ['재스민', '복숭아', '허브'],
+    cafeStyle: '핸드드립 한 잔에 집중하는 조용한 드립 전문점',
   },
   LSFC: {
     emoji: '🧊',
     name: '싱글오리진 콜드브루',
     desc: '라이트 싱글의 섬세함을 차갑게 오래 우려낸 미식가. 조용하지만 강한 취향을 가진 진짜 커피 마니아예요.',
     traits: ['미식가', '조용한강함', '개성있음', '독자적'],
+    recommend: '에티오피아 내추럴 싱글오리진 콜드브루',
+    pairingNotes: ['블루베리', '와인', '플로럴'],
+    cafeStyle: '싱글오리진 콜드브루를 직접 내리는 로스터리',
   },
   LBEH: {
     emoji: '🌻',
     name: '브라이트 블렌드 라떼',
     desc: '밝은 블렌드를 에스프레소로 따뜻하게 즐기는 소셜 커피인. 사교적이고 트렌드에 민감하며, 커피를 라이프스타일로 즐겨요.',
     traits: ['사교적', '트렌드세터', '밝은에너지', '소통잘함'],
+    recommend: '브라이트 블렌드 플랫화이트 또는 카푸치노',
+    pairingNotes: ['캐러멜', '시트러스', '견과류'],
+    cafeStyle: '분위기 좋고 사람 많은 트렌디 스페셜티 카페',
   },
   LBEC: {
     emoji: '🏃',
     name: '라이트 아이스 아메리카노',
     desc: '산미 있는 블렌드를 시원하게 마시는 활동가. 효율적이고 현실적이며, 커피를 에너지원으로 삼는 현대인 대표예요.',
     traits: ['활동적', '현실적', '효율추구', '스피디'],
+    recommend: '라이트 블렌드 아이스 아메리카노',
+    pairingNotes: ['상큼한산미', '과일향', '깔끔함'],
+    cafeStyle: '접근성 좋고 빠른 서비스의 스페셜티 카페',
   },
   LBFH: {
     emoji: '📚',
     name: '드립 블렌드 감성러',
     desc: '화사한 블렌드를 드립으로 천천히 즐기는 힐링러. 카페 분위기와 커피 향을 동시에 즐기며, 여유로운 시간을 소중히 여겨요.',
     traits: ['힐링추구', '감성적', '여유로움', '카페러버'],
+    recommend: '오늘의 드립 블렌드 한 잔',
+    pairingNotes: ['꽃향기', '과일', '부드러운단맛'],
+    cafeStyle: '조용하고 감성적인 분위기의 드립 카페',
   },
   LBFC: {
     emoji: '🌊',
     name: '라이트 콜드브루',
     desc: '밝은 블렌드의 콜드브루를 즐기는 여유파. 트렌디하면서도 자기만의 페이스를 유지하는 쿨한 커피인이에요.',
     traits: ['힙한감성', '여유로움', '트렌디', '자기페이스'],
+    recommend: '라이트 블렌드 더치커피 또는 콜드브루',
+    pairingNotes: ['상큼함', '허브', '밝은산미'],
+    cafeStyle: '콜드브루를 직접 제조하는 힙한 스페셜티 카페',
   },
   DSEH: {
     emoji: '🔬',
     name: '다크 싱글 에스프레소',
     desc: '진한 싱글오리진을 에스프레소로 추출해 뜨겁게 즐기는 커피 연구자. 깊이 있는 탐구와 높은 기준을 가진 전문가예요.',
     traits: ['전문가기질', '진지함', '높은기준', '탐구적'],
+    recommend: '인도네시아 만델링 또는 과테말라 싱글오리진 에스프레소',
+    pairingNotes: ['다크초콜릿', '허브', '스모키'],
+    cafeStyle: '에스프레소 퀄리티에 진심인 진지한 스페셜티 바',
   },
   DSEC: {
     emoji: '⚡',
     name: '다크 싱글 아이스샷',
     desc: '강렬한 싱글오리진을 차갑게 즐기는 독특한 취향의 소유자. 강하고 독립적이며, 자신만의 커피 세계를 구축한 개인주의자예요.',
     traits: ['강렬함', '독립적', '개인주의', '독특한취향'],
+    recommend: '인도네시아 싱글오리진 아이스 에스프레소',
+    pairingNotes: ['다크초콜릿', '스모키', '강렬한쓴맛'],
+    cafeStyle: '개성 강한 독립 에스프레소 바',
   },
   DSFH: {
     emoji: '🏔️',
     name: '다크 싱글 핸드드립',
     desc: '진한 싱글오리진을 드립으로 천천히 탐구하는 철학자. 깊이 있고 신중하며, 커피 한 잔에 삶의 의미를 찾는 사색가예요.',
     traits: ['철학적', '신중함', '깊이있음', '사색가'],
+    recommend: '과테말라 또는 인도네시아 싱글오리진 핸드드립',
+    pairingNotes: ['다크카카오', '견과류', '흙향'],
+    cafeStyle: '조용하고 진지한 분위기의 드립 전문 카페',
   },
   DSFC: {
     emoji: '🌙',
     name: '다크 싱글 콜드브루',
     desc: '진한 싱글의 깊은 맛을 차갑게 오래 추출하는 미스터리. 세련되고 과묵하며, 강렬한 카리스마를 숨기고 있는 타입이에요.',
     traits: ['카리스마', '과묵함', '세련됨', '미스테리'],
+    recommend: '인도네시아 다크 싱글오리진 콜드브루',
+    pairingNotes: ['스모키', '다크초콜릿', '우디'],
+    cafeStyle: '세련되고 조용한 분위기의 콜드브루 전문점',
   },
   DBEH: {
     emoji: '👑',
     name: '클래식 에스프레소',
     desc: '진한 다크 블렌드를 에스프레소로 즐기는 정통파. 전통과 기본을 사랑하며, 커피의 본질에서 최고를 추구하는 원칙주의자예요.',
     traits: ['정통파', '전통중시', '클래식', '신뢰감'],
+    recommend: '다크 블렌드 에스프레소 또는 리스트레또',
+    pairingNotes: ['카카오', '캐러멜', '견과류'],
+    cafeStyle: '클래식하고 정통 있는 에스프레소 카페',
   },
   DBEC: {
     emoji: '💼',
     name: '아이스 아메리카노의 신',
     desc: '대한민국 커피 인구 대표, 다크 블렌드 아이스 아메리카노. 효율적이고 실용적이며, 언제 어디서나 기대를 저버리지 않는 신뢰의 아이콘이에요.',
     traits: ['실용적', '신뢰감', '효율적', '대세감성'],
+    recommend: '다크 블렌드 아이스 아메리카노 (얼음 많이)',
+    pairingNotes: ['쌉쌀함', '구수함', '진한바디'],
+    cafeStyle: '어디서든 부담 없이 들를 수 있는 카페',
   },
   DBFH: {
     emoji: '🏡',
     name: '다크 드립 힐링러',
     desc: '진한 블렌드를 드립으로 따뜻하게 즐기는 위로의 커피인. 따뜻하고 포근하며, 커피 한 잔으로 하루를 위로받는 감성파예요.',
     traits: ['따뜻함', '위로의존재', '가정적', '힐링'],
+    recommend: '다크 블렌드 핸드드립 한 잔',
+    pairingNotes: ['초콜릿', '캐러멜', '고소한견과류'],
+    cafeStyle: '따뜻하고 포근한 분위기의 드립 카페',
   },
   DBFC: {
     emoji: '🌑',
     name: '다크 콜드브루 마스터',
     desc: '진한 블렌드를 차갑게 오래 추출하는 인내의 커피인. 묵직한 카리스마와 깊이 있는 매력으로 주변을 이끄는 리더형이에요.',
     traits: ['리더십', '묵직한카리스마', '인내심', '깊이'],
+    recommend: '다크 블렌드 더치커피 (질소 주입 추천)',
+    pairingNotes: ['다크초콜릿', '몰트', '쌉쌀한여운'],
+    cafeStyle: '묵직한 분위기의 콜드브루 전문 카페',
   },
 }
 
@@ -435,7 +486,7 @@ export default function CbtiPage() {
             </div>
 
             {/* Traits */}
-            <div className="flex flex-wrap gap-2 justify-center mb-8">
+            <div className="flex flex-wrap gap-2 justify-center mb-5">
               {RESULTS[result].traits.map((t) => (
                 <span
                   key={t}
@@ -444,6 +495,31 @@ export default function CbtiPage() {
                   # {t}
                 </span>
               ))}
+            </div>
+
+            {/* Recommend & Pairing */}
+            <div className="rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden mb-5">
+              <div className="px-4 py-3.5">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-500 mb-1">추천 한 잔</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">{RESULTS[result].recommend}</p>
+              </div>
+              <div className="px-4 py-3.5">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-500 mb-2">어울리는 향미</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {RESULTS[result].pairingNotes.map((note) => (
+                    <span
+                      key={note}
+                      className="text-xs rounded-full px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                    >
+                      {note}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="px-4 py-3.5">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-500 mb-1">어울리는 카페 스타일</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200">{RESULTS[result].cafeStyle}</p>
+              </div>
             </div>
 
             {/* CTAs */}
