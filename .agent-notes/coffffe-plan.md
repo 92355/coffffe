@@ -20,17 +20,51 @@
 
 ### 목표
 
-벤치마킹 UI 기준으로 지도를 앱의 메인 화면으로 승격한다.
-현재 홈(카드 그리드)을 제거하고, 지도 + 사이드바/바텀시트 레이아웃으로 전면 개편한다.
-지도 API는 카카오 Map 유지.
+지도 풀스크린 + 하단 카루셀 구조로 전면 개편.
+크림/오프화이트 라이트 톤으로 coFFFFFe-map만의 감성 확립.
+사이드바 없이 모바일·데스크톱 동일 UX 유지.
+카카오 Map API 유지.
 
-### 벤치마킹 UI 기준
+### UI 방향 확정
 
-- 지도가 전체 화면을 차지하는 메인
-- 데스크톱: 좌측 사이드바 (검색 + 필터 + 카페 리스트 + 선택 카페 상세)
-- 모바일: 상단 플로팅 검색바 + 하단 바텀시트 (선택 카페 카드)
-- 다크 맵 테마 + amber 액센트 (현재 브랜드 유지)
-- 사이드바에 원두·CBTI 등 다른 페이지 링크 포함
+```
+┌─────────────────────────────┐
+│  🔍 검색바  [필터] [원두][CBTI]│  ← 상단 플로팅 헤더
+│                             │
+│         카카오 지도          │
+│      📍   📍    📍          │  ← 로스팅 레벨별 마커 색상
+│                             │
+├─────────────────────────────┤
+│  ┌──────┐ ┌──────┐ ┌──────┐│
+│  │카페A │▶│카페B │ │카페C ││  ← 수평 스크롤 카루셀
+│  └──────┘ └──────┘ └──────┘│
+└─────────────────────────────┘
+        카드 탭 → 위로 확장 (상세)
+        카루셀 스크롤 → 지도 카메라 이동
+```
+
+**컬러 시스템 (크림 라이트 톤)**
+
+| 역할 | 값 |
+|---|---|
+| 배경 | `#F8F4EE` (크림/오프화이트) |
+| 카드 배경 | `#FFFFFF` |
+| 카드 보더 | `#EDE8E0` |
+| 텍스트 주색 | `#1C1917` |
+| 텍스트 보조 | `#78716C` |
+| 액센트 | `#C58B5C` (기존 amber 유지) |
+
+**마커 색상 — 로스팅 레벨 기준**
+
+| 로스팅 | 색상 |
+|---|---|
+| light | `#F5E6C8` (밝은 크림) |
+| medium-light | `#E8C99A` (연한 amber) |
+| medium | `#C58B5C` (amber, 브랜드 액센트) |
+| medium-dark | `#8B5E3C` (브라운) |
+| dark | `#3D2314` (다크 브라운) |
+
+카페에 roastLevels가 여러 개면 첫 번째 값으로 대표색 결정.
 
 ### 현재 상태
 
@@ -38,27 +72,28 @@
 - `/map` → 지도 페이지 (FilterBar + KakaoMap + CafePreviewCard)
 - CafePreviewCard: 지도 하단 오버레이로 선택 카페 표시
 - FilterBar: 로스팅·산지·추출 필터 칩
+- 전체 테마: 다크/라이트 CSS 변수 기반
 
 ### 수정 예상 파일
 
 | 파일 | 변경 내용 |
 |---|---|
-| `src/app/page.tsx` | 카드 그리드 제거 → 지도 풀스크린 레이아웃으로 교체 |
-| `src/app/map/page.tsx` | `/`로 redirect (또는 삭제) |
-| `src/components/MapView.tsx` | 사이드바(데스크톱) + 바텀시트(모바일) 레이아웃으로 개편 |
-| `src/components/FilterBar.tsx` | 사이드바 내부로 이동, 스타일 조정 |
-| `src/components/CafePreviewCard.tsx` | 사이드바 내부 카드(데스크톱) + 바텀시트 카드(모바일)로 분리 |
-| `src/components/SplashScreen.tsx` | 유지 (홈 진입 시 그대로 표시) |
-| `src/app/globals.css` | 레이아웃 관련 스타일 추가 |
+| `src/app/page.tsx` | 카드 그리드 제거 → 지도 풀스크린 + 카루셀 레이아웃 |
+| `src/app/map/page.tsx` | `/`로 redirect |
+| `src/components/MapView.tsx` | 카루셀 + 플로팅 헤더 조합 루트 컴포넌트로 개편 |
+| `src/components/map/KakaoMap.tsx` | 마커 색상을 roastLevel 기준으로 변경 |
+| `src/components/FilterBar.tsx` | 플로팅 헤더 내 필터로 이동, 스타일 조정 |
+| `src/components/CafePreviewCard.tsx` | 제거 또는 카루셀 확장 카드로 흡수 |
+| `src/components/SplashScreen.tsx` | 크림 톤으로 스타일 조정 |
+| `src/app/globals.css` | CSS 변수 크림 톤으로 교체, 카루셀·애니메이션 추가 |
 
 ### 추가할 컴포넌트
 
 | 컴포넌트 | 역할 |
 |---|---|
-| `src/components/Sidebar.tsx` | 데스크톱 좌측 사이드바 (검색·필터·리스트·상세) |
-| `src/components/BottomSheet.tsx` | 모바일 하단 바텀시트 (선택 카페 카드) |
-| `src/components/CafeListItem.tsx` | 사이드바 카페 목록 아이템 |
-| `src/components/SearchBar.tsx` | 사이드바 상단 / 모바일 플로팅 검색바 |
+| `src/components/CafeCarousel.tsx` | 하단 수평 카루셀. 스크롤 → 지도 카메라 이동 |
+| `src/components/CafeCarouselCard.tsx` | 카루셀 개별 카드. 탭 시 확장 상세 표시 |
+| `src/components/FloatingHeader.tsx` | 지도 위 플로팅 검색바 + 필터 + 네비 링크 |
 
 ### 제외 범위
 
@@ -66,53 +101,56 @@
 - `/beans`, `/cbti`, `/cafes/[id]` 페이지 내부 로직 수정 안 함
 - 데이터(cafes.json, beans.ts) 변경 안 함
 - 인증·회원 기능 추가 안 함 (P3)
+- 기분 온보딩(아이디어 3)은 나중에 이벤트성으로 별도 추가
 
 ### 작업 순서
 
-1. `src/app/page.tsx`를 지도 풀스크린 레이아웃으로 교체
-   - SplashScreen 유지
-   - `MapView`를 직접 렌더링 (현재 /map/page.tsx와 동일)
-   - verify: 홈 접속 시 지도가 전체 화면으로 표시됨
+1. `globals.css` CSS 변수 크림 톤으로 교체
+   - `--background: #F8F4EE`, `--card-bg: #FFFFFF` 등 라이트 변수 재정의
+   - 다크모드 유지 여부 결정 (일단 라이트 전용으로 단순화 권장)
+   - verify: 전체 페이지 배경이 크림 톤으로 변경
 
-2. `src/app/map/page.tsx`를 `/`로 redirect 처리
-   - `import { redirect } from 'next/navigation'; redirect('/')`
+2. `src/app/map/page.tsx` → `/` redirect 처리
    - verify: `/map` 접속 시 `/`로 이동
 
-3. `Sidebar.tsx` 신규 작성 (데스크톱 `md:` 이상에서만 표시)
-   - 상단: 로고 + 페이지 링크 (원두, CBTI)
-   - 중단: SearchBar + FilterBar
-   - 하단: 카페 리스트 (CafeListItem)
-   - 선택 시: 사이드바 내부에 카페 상세 표시
-   - verify: 사이드바에서 카페 클릭 시 지도 마커와 연동
+3. `FloatingHeader.tsx` 신규 작성
+   - 지도 위 절대 위치, 검색바 + 필터 칩 + 원두·CBTI 링크
+   - verify: 지도 위에 떠 있고 검색·필터 동작
 
-4. `BottomSheet.tsx` 신규 작성 (모바일 `md:` 미만에서만 표시)
-   - 선택 카페 있으면 하단에서 슬라이드업
-   - 없으면 숨김
-   - verify: 마커 클릭 시 바텀시트 표시, 닫기 가능
+4. `CafeCarouselCard.tsx` 신규 작성
+   - 기본: 카페명, 한줄 설명, 로스팅 레벨 뱃지, 마커 색상 도트
+   - 탭(확장): 영업시간, 추출방식, 인스타 링크, 상세 페이지 이동 버튼
+   - verify: 탭 시 카드 높이 확장 애니메이션
 
-5. `SearchBar.tsx` 신규 작성
-   - 카페명 텍스트 검색 → 필터 결과에 반영
-   - verify: 검색어 입력 시 카페 리스트 + 마커 필터링
+5. `CafeCarousel.tsx` 신규 작성
+   - 수평 스크롤 카루셀, snap scroll 적용
+   - 포커스된 카드 → `onCafeFocus(cafe)` 콜백으로 지도 카메라 이동
+   - verify: 카루셀 스크롤 시 지도 중심 이동
 
-6. `MapView.tsx` 개편
-   - 사이드바 + 지도 + 바텀시트를 조합하는 루트 컴포넌트로 재구성
-   - selectedCafe 상태를 사이드바·바텀시트와 공유
-   - verify: 지도 마커 클릭 → 사이드바(데스크톱)/바텀시트(모바일) 연동
+6. `KakaoMap.tsx` 마커 색상 변경
+   - roastLevel → 색상 매핑 함수 추가
+   - 커스텀 마커 이미지 또는 오버레이로 색상 원형 마커 렌더링
+   - verify: 로스팅별로 마커 색상 다르게 표시
 
-7. `globals.css` 레이아웃 스타일 정리
-   - 사이드바 너비, 바텀시트 높이, 전환 애니메이션
-   - verify: 375px 모바일 / 1280px 데스크톱 모두 overflow 없음
+7. `MapView.tsx` 개편
+   - FloatingHeader + KakaoMap + CafeCarousel 조합
+   - `selectedCafe`, `focusedCafe`, `filters`, `searchQuery` 상태 관리
+   - verify: 마커 클릭 → 카루셀 해당 카드로 스크롤 / 카루셀 스크롤 → 지도 이동
+
+8. `src/app/page.tsx` 교체
+   - SplashScreen 유지 + MapView 렌더링
+   - verify: 홈 접속 시 크림 톤 지도 풀스크린 + 하단 카루셀 표시
 
 ### 성공 기준
 
-- [x] `/` 접속 시 지도가 전체 화면으로 표시
-- [x] 데스크톱(md 이상): 좌측 사이드바 + 지도
-- [x] 모바일(md 미만): 지도 풀스크린 + 하단 바텀시트
-- [x] 카페 마커 클릭 → 사이드바/바텀시트에 카페 정보 표시
-- [x] 검색어 입력 → 카페 리스트 + 마커 필터링
-- [x] `/beans`, `/cbti` 링크 접근 가능
-- [x] 다크/라이트 모드 정상
-- [ ] 모바일 375px overflow 없음
+- [ ] `/` 접속 시 크림 톤 지도 풀스크린 표시
+- [ ] 하단 카루셀 수평 스크롤 → 지도 카메라 이동
+- [ ] 카루셀 카드 탭 → 확장 상세 표시
+- [ ] 마커 색상이 로스팅 레벨별로 다름
+- [ ] 지도 마커 클릭 → 카루셀 해당 카드로 포커스
+- [ ] 플로팅 검색바 + 필터 동작
+- [ ] `/beans`, `/cbti` 링크 접근 가능
+- [ ] 모바일 375px / 데스크톱 1280px overflow 없음
 
 ### 검증 명령어
 
@@ -209,6 +247,44 @@ Supabase Auth 기반 회원 인증 + 즐겨찾기·방문기록·리뷰 기능.
 - `src/app/admin/users/page.tsx` 신규
 - `src/app/admin/reviews/page.tsx` 신규
 - `src/middleware.ts` — admin 역할 체크 추가
+
+---
+
+## 추후 업데이트 예정
+
+### P5-A — 카페 위치 카카오맵에서 가져오기
+
+> P4(관리자 페이지) 완료 후 진행
+
+관리자가 카페를 추가할 때 주소를 직접 입력하는 대신, 카카오맵 장소 검색 API로 카페명을 검색 → 위치(lat, lng)·주소를 자동 입력.
+
+- 카카오 로컬 API (`/v2/local/search/keyword`) 사용
+- 관리자 카페 추가 폼에 장소 검색 UI 추가
+- 검색 결과 선택 시 lat, lng, address 자동 채움
+- 환경 변수 추가: `KAKAO_REST_API_KEY` (서버 전용, 클라이언트 노출 금지)
+
+---
+
+### P5-B — 사용자 카페 위치 제보 + 관리자 승인 플로우
+
+> P3(회원관리) + P5-A 완료 후 진행
+
+**플로우:**
+```
+사용자 제보 → 제보 테이블 저장 → 관리자 알림
+→ 관리자 검토 → 승인(카페 등록) / 반려(사유 전달)
+```
+
+**기능 목록:**
+- 사용자: 지도에서 위치 핀 찍기 + 카페명·설명 입력 → 제보 제출
+- 관리자 페이지: 제보 목록 조회, 카카오맵 연동으로 위치 확인
+- 관리자 승인 시 cafes 테이블에 자동 등록
+- 관리자 반려 시 사용자에게 반려 사유 표시 (마이페이지)
+
+**추가 DB 테이블:**
+```sql
+cafe_reports  -- user_id, name, address, lat, lng, description, status('pending'|'approved'|'rejected'), reject_reason, created_at
+```
 
 ---
 
