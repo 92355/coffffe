@@ -5,19 +5,23 @@ import type { Cafe } from '@/types/cafe'
 
 interface KakaoMapProps {
   cafes: Cafe[]
+  selectedCafe?: Cafe | null
   onCafeSelect: (cafe: Cafe | null) => void
 }
 
 const ANSAN_CENTER = { lat: 37.3084, lng: 126.8419 }
 
-export default function KakaoMap({ cafes, onCafeSelect }: KakaoMapProps) {
+export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<kakao.maps.Map | null>(null)
   const markersRef = useRef<Map<string, kakao.maps.Marker>>(new Map())
   const onSelectRef = useRef(onCafeSelect)
-  onSelectRef.current = onCafeSelect
 
   const cafesRef = useRef(cafes)
+
+  useEffect(() => {
+    onSelectRef.current = onCafeSelect
+  }, [onCafeSelect])
 
   const renderMarkers = useCallback(() => {
     const map = mapRef.current
@@ -36,13 +40,21 @@ export default function KakaoMap({ cafes, onCafeSelect }: KakaoMapProps) {
     })
   }, [])
 
-  // Update markers when filtered cafes change
+  // Update markers when filtered cafes change / 필터 변경 시 마커를 갱신한다.
   useEffect(() => {
     cafesRef.current = cafes
     renderMarkers()
   }, [cafes, renderMarkers])
 
-  // Initialize map once
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !selectedCafe) return
+
+    const position = new kakao.maps.LatLng(selectedCafe.lat, selectedCafe.lng)
+    map.panTo(position)
+  }, [selectedCafe])
+
+  // Initialize map once / 지도는 최초 1회만 초기화한다.
   useEffect(() => {
     const initMap = () => {
       if (!containerRef.current) return
@@ -52,7 +64,7 @@ export default function KakaoMap({ cafes, onCafeSelect }: KakaoMapProps) {
           center,
           level: 6,
         })
-        // close preview when clicking the map background
+        // Close preview when clicking map background / 지도 배경 클릭 시 선택을 해제한다.
         kakao.maps.event.addListener(mapRef.current, 'click', () => {
           onSelectRef.current(null)
         })
@@ -68,5 +80,5 @@ export default function KakaoMap({ cafes, onCafeSelect }: KakaoMapProps) {
     }
   }, [renderMarkers])
 
-  return <div ref={containerRef} className="absolute inset-0" />
+  return <div ref={containerRef} className="absolute inset-0 bg-neutral-900" />
 }

@@ -67,6 +67,11 @@ body {
   display: none;
 }
 
+.map-shell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* ── Card animations ── */
 @keyframes fadeInUp {
   from {

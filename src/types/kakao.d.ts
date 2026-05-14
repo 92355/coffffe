@@ -5,6 +5,7 @@ declare namespace kakao {
     class Map {
       constructor(container: HTMLElement, options: MapOptions)
       setCenter(latlng: LatLng): void
+      panTo(latlng: LatLng): void
       setLevel(level: number): void
     }
 
@@ -43,9 +44,7 @@ declare namespace kakao {
       image?: MarkerImage
     }
 
-    interface MarkerImage {
-      // intentionally minimal
-    }
+    type MarkerImage = object
 
     interface CustomOverlayOptions {
       position: LatLng

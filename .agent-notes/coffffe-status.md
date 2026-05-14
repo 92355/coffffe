@@ -31,8 +31,8 @@
 
 | 경로 | 파일 | 특이사항 |
 |---|---|---|
-| `/` | `src/app/page.tsx` | 홈. SplashScreen(세션당 1회), 카드 그리드 |
-| `/map` | `src/app/map/page.tsx` | 서버 컴포넌트. `MapView` 렌더링 |
+| `/` | `src/app/page.tsx` | 지도 풀스크린 메인. SplashScreen(세션당 1회), `MapView` 렌더링 |
+| `/map` | `src/app/map/page.tsx` | `/`로 redirect |
 | `/cafes/[id]` | `src/app/cafes/[id]/page.tsx` | 서버 컴포넌트. `notFound()` 처리 |
 | `/beans` | `src/app/beans/page.tsx` | 클라이언트. 원산지 + 향미 필터 |
 | `/cbti` | `src/app/cbti/page.tsx` | 클라이언트. 커피 성향 테스트 |
@@ -49,7 +49,11 @@
 | `MapView` | 필터 상태 관리 + KakaoMap + CafePreviewCard 조합 |
 | `KakaoMap` | dynamic import (ssr:false), 지도 렌더링 + 마커 |
 | `FilterBar` | 로스팅·산지·추출 필터 칩 UI |
-| `CafePreviewCard` | 지도에서 마커 클릭 시 하단에 뜨는 카페 미리보기 |
+| `Sidebar` | 데스크톱 좌측 패널. 검색·필터·리스트·상세 표시 |
+| `BottomSheet` | 모바일 선택 카페 하단 패널 |
+| `SearchBar` | 카페명/설명/주소/태그 검색 |
+| `CafeListItem` | 사이드바 카페 목록 아이템 |
+| `CafePreviewCard` | 선택 카페 상세 요약 카드 |
 | `KakaoMapScript` | `<head>`에 Kakao SDK 스크립트 삽입 |
 
 ---
@@ -129,7 +133,7 @@ interface Cafe {
 ## 10. 알려진 상태 / 미완 사항
 
 - `출시 예정` 카드: placeholder, 기능 없음 (클릭 시 토스트만 표시)
-- `/cafes/[id]` 뒤로가기: `/`(홈) 이동 (지도로 돌아가기 텍스트지만 실제로는 홈 링크)
+- `/cafes/[id]` 뒤로가기: `/` 이동
 - 카페 데이터는 목 데이터 (실제 영업 정보 미검증)
-- 검색 기능 없음 (지도 필터는 있음)
+- 지도 메인 검색은 카페명·설명·주소·태그 기준
 - v2.0 후보: 데이터 관리 방식 개선, 검색/필터 고도화, 배포 안정화
