@@ -8,7 +8,7 @@ import SplashScreen from '@/components/SplashScreen'
 export default function HomePage() {
   const [showSplash, setShowSplash] = useState(false)
   const [cafes, setCafes] = useState<Cafe[]>([])
-  const [loadingMessage, setLoadingMessage] = useState('카페 정보를 불러오는 중입니다.')
+  const [cafesLoaded, setCafesLoaded] = useState(false)
 
   useEffect(() => {
     const splashTimer = window.setTimeout(() => {
@@ -36,12 +36,14 @@ export default function HomePage() {
 
         const nextCafes = await response.json() as Cafe[]
         setCafes(nextCafes)
-        setLoadingMessage('')
       } catch (error) {
         if (abortController.signal.aborted) return
 
         console.error(error)
-        setLoadingMessage('카페 정보를 불러오지 못했습니다.')
+      } finally {
+        if (!abortController.signal.aborted) {
+          setCafesLoaded(true)
+        }
       }
     }
 
@@ -58,12 +60,10 @@ export default function HomePage() {
   return (
     <main className="relative h-dvh overflow-hidden bg-neutral-950">
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
-      {loadingMessage ? (
-        <div className="flex h-full items-center justify-center bg-[#f3eee7] px-6 text-center text-sm font-bold text-[#6f3b17]">
-          {loadingMessage}
-        </div>
-      ) : (
+      {cafesLoaded ? (
         <MapView allCafes={cafes} />
+      ) : (
+        <div className="h-full bg-[#EDE0CF]" />
       )}
     </main>
   )
