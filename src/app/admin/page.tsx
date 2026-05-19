@@ -85,6 +85,18 @@ function toCafePayload(form: CafeForm): Cafe {
   }
 }
 
+async function readApiErrorMessage(response: Response): Promise<string> {
+  const fallbackMessage = `Request failed: ${response.status}`
+
+  try {
+    const body = await response.json() as { error?: unknown }
+
+    return typeof body.error === 'string' ? body.error : fallbackMessage
+  } catch {
+    return fallbackMessage
+  }
+}
+
 export default function AdminPage() {
   const [cafes, setCafes] = useState<Cafe[]>([])
   const [form, setForm] = useState<CafeForm>(EMPTY_FORM)
@@ -167,7 +179,8 @@ export default function AdminPage() {
     })
 
     if (!response.ok) {
-      setMessage('카페 정보를 저장하지 못했습니다.')
+      const errorMessage = await readApiErrorMessage(response)
+      setMessage(`저장 실패: ${errorMessage}`)
       return
     }
 
@@ -185,7 +198,8 @@ export default function AdminPage() {
     })
 
     if (!response.ok) {
-      setMessage('카페를 삭제하지 못했습니다.')
+      const errorMessage = await readApiErrorMessage(response)
+      setMessage(`삭제 실패: ${errorMessage}`)
       return
     }
 
