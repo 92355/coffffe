@@ -52,7 +52,9 @@ export default function CafeListItem({ cafe, selected, onSelect }: CafeListItemP
       <div className="flex gap-3">
         <div
           className="relative h-[74px] w-[112px] shrink-0 overflow-hidden rounded-xl bg-[#5c3218]"
-          style={thumbnailStyle(cafe)}
+          style={cafe.images?.[0]
+            ? { backgroundImage: `url(${cafe.images[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : thumbnailStyle(cafe)}
         >
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
           {selected && (

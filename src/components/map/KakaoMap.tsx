@@ -81,6 +81,8 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
 
   // Initialize map once / 지도는 최초 1회만 초기화한다.
   useEffect(() => {
+    if (mapRef.current) return
+
     const initMap = () => {
       if (!containerRef.current) return
       kakao.maps.load(() => {
@@ -116,9 +118,8 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
 
 function focusCafeOnMap(map: kakao.maps.Map, cafe: Cafe): void {
   const position = new kakao.maps.LatLng(cafe.lat, cafe.lng)
-
-  map.setLevel(SELECTED_MAP_LEVEL, { anchor: position })
   map.setCenter(position)
+  map.setLevel(SELECTED_MAP_LEVEL)
 }
 
 function startWatchingUserLocation(
@@ -193,6 +194,7 @@ function createUserLocationContent(): HTMLElement {
 
 function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void): HTMLElement {
   const markerSize = selected ? SELECTED_MARKER_SIZE : DEFAULT_MARKER_SIZE
+  const imageUrl = cafe.images?.[0]
   const root = document.createElement('button')
   root.type = 'button'
   root.setAttribute('aria-label', `${cafe.name} 선택`)
@@ -206,15 +208,25 @@ function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void)
 
   const pin = document.createElement('span')
   pin.className = [
-    'flex items-center justify-center rounded-full border-2 text-white shadow-[0_10px_24px_rgba(73,39,15,0.28)]',
+    'flex items-center justify-center rounded-full border-2 overflow-hidden shadow-[0_10px_24px_rgba(73,39,15,0.28)]',
     selected ? 'border-white bg-[#d66612]' : 'border-[#f4dec8] bg-[#5a2e11]',
   ].join(' ')
   pin.style.width = `${markerSize}px`
   pin.style.height = `${markerSize}px`
 
-  const cup = document.createElement('span')
-  cup.className = 'block h-[14px] w-[18px] rounded-b-full rounded-t-sm border-2 border-current'
-  pin.append(cup)
+  if (imageUrl) {
+    const img = document.createElement('img')
+    img.src = imageUrl
+    img.alt = cafe.name
+    img.style.width = '100%'
+    img.style.height = '100%'
+    img.style.objectFit = 'cover'
+    pin.append(img)
+  } else {
+    const cup = document.createElement('span')
+    cup.className = 'block h-[14px] w-[18px] rounded-b-full rounded-t-sm border-2 border-white text-white'
+    pin.append(cup)
+  }
   root.append(pin)
 
   if (selected) {

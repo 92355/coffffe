@@ -54,6 +54,7 @@ export interface Cafe {
   tags: string[]
   openHours: string
   closedDays: string[]
+  images?: string[]
   phone?: string
   instagramHandle?: string
   kakaoPlaceId?: string
