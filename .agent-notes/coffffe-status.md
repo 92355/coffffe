@@ -137,3 +137,22 @@ interface Cafe {
 - 카페 데이터는 목 데이터 (실제 영업 정보 미검증)
 - 지도 메인 검색은 카페명·설명·주소·태그 기준
 - v2.0 후보: 데이터 관리 방식 개선, 검색/필터 고도화, 배포 안정화
+
+---
+
+## 11. 2026-05-19 Phase 1 진행 상태
+
+- `@supabase/supabase-js` 설치 완료.
+- `src/lib/supabase.ts` 서버 전용 Supabase 클라이언트 추가.
+- `supabase/migrations/20260519000000_create_cafes.sql` 테이블 생성 SQL 추가.
+- `scripts/migrate-cafes-to-supabase.mjs` 마이그레이션 스크립트 추가.
+- `.env.local.example`에 필요한 환경 변수 키 목록 추가.
+- 현재 `.env.local`은 없음. 실제 Supabase 마이그레이션 실행과 Vercel 환경 변수 등록은 남음.
+- `/api/cafes`는 Supabase 조회 우선, 실패 시 기존 `cafes.json` fallback 사용.
+- `/api/kakao/search` 서버 프록시 추가. `KAKAO_REST_API_KEY`는 서버에서만 사용.
+- `/admin` 비밀번호 게이트, 카페 CRUD API, 카카오 검색 기반 관리 UI 추가.
+- `KakaoMap.tsx` 기본 마커를 `CustomOverlay` 커피 핀으로 교체.
+- `cafes.json`은 실제 DB 이관 실행 전이라 유지.
+- `.env.local` 존재 확인 완료.
+- `npm run migrate:cafes` 재실행 성공. 8개 카페를 Supabase에 업서트 완료.
+- `cafes.json`은 `/api/cafes` fallback으로 아직 유지.

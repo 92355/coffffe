@@ -56,6 +56,7 @@ export interface Cafe {
   closedDays: string[]
   phone?: string
   instagramHandle?: string
+  kakaoPlaceId?: string
 }
 
 export interface FilterState {
