@@ -64,6 +64,13 @@ function applyFilters(
 
 async function getCafes(): Promise<Cafe[]> {
   try {
+    return await getAdminCafes()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown Supabase admin error'
+    console.error('Failed to fetch cafes with admin client:', message)
+  }
+
+  try {
     const { data, error } = await createSupabaseClient()
       .from('cafes')
       .select('*')
@@ -71,35 +78,28 @@ async function getCafes(): Promise<Cafe[]> {
 
     if (error) {
       console.error('Failed to fetch cafes from Supabase:', error.message)
-      return getAdminCafes()
-    }
-
-    return (data as DatabaseCafe[]).map(toCafe)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown Supabase error'
-    console.error('Failed to fetch cafes with anon client:', message)
-    return getAdminCafes()
-  }
-}
-
-async function getAdminCafes(): Promise<Cafe[]> {
-  try {
-    const { data, error } = await createSupabaseAdminClient()
-      .from('cafes')
-      .select('*')
-      .order('quality_score', { ascending: false })
-
-    if (error) {
-      console.error('Failed to fetch cafes with admin client:', error.message)
       return fallbackCafes
     }
 
     return (data as DatabaseCafe[]).map(toCafe)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown Supabase admin error'
+    const message = error instanceof Error ? error.message : 'Unknown Supabase error'
     console.error('Using local cafe fallback:', message)
     return fallbackCafes
   }
+}
+
+async function getAdminCafes(): Promise<Cafe[]> {
+  const { data, error } = await createSupabaseAdminClient()
+    .from('cafes')
+    .select('*')
+    .order('quality_score', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return (data as DatabaseCafe[]).map(toCafe)
 }
 
 export async function GET(request: NextRequest) {

@@ -111,10 +111,14 @@ export default function AdminPage() {
   )
 
   async function loadCafes() {
-    const response = await fetch('/api/cafes', { cache: 'no-store' })
+    const response = await fetch('/api/admin/cafes', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
 
     if (!response.ok) {
-      throw new Error(`Failed to load cafes: ${response.status}`)
+      const errorMessage = await readApiErrorMessage(response)
+      throw new Error(`Failed to load cafes: ${errorMessage}`)
     }
 
     setCafes(await response.json() as Cafe[])

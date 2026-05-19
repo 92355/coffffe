@@ -120,6 +120,28 @@ function toDatabasePayload(cafe: CafePayload): DatabaseCafePayload {
   }
 }
 
+function toCafePayload(databaseCafe: DatabaseCafePayload): CafePayload {
+  return {
+    id: databaseCafe.id,
+    name: databaseCafe.name,
+    shortDescription: databaseCafe.short_description,
+    fullDescription: databaseCafe.full_description,
+    address: databaseCafe.address,
+    lat: databaseCafe.lat,
+    lng: databaseCafe.lng,
+    roastLevels: databaseCafe.roast_levels,
+    beanOrigins: databaseCafe.bean_origins,
+    brewMethods: databaseCafe.brew_methods,
+    qualityScore: databaseCafe.quality_score,
+    tags: databaseCafe.tags,
+    openHours: databaseCafe.open_hours,
+    closedDays: databaseCafe.closed_days,
+    phone: databaseCafe.phone ?? undefined,
+    instagramHandle: databaseCafe.instagram_handle ?? undefined,
+    kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,
+  }
+}
+
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }
@@ -142,16 +164,62 @@ function badRequest(error: unknown) {
   return NextResponse.json({ error: message }, { status: 400 })
 }
 
+export async function GET(request: NextRequest) {
+  if (!isAuthorizedAdminRequest(request)) return unauthorized()
+
+  try {
+    const { data, error } = await createSupabaseAdminClient()
+      .from('cafes')
+      .select('*')
+      .order('quality_score', { ascending: false })
+
+    if (error) throw error
+
+    return NextResponse.json((data as DatabaseCafePayload[]).map(toCafePayload), {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    })
+  } catch (error) {
+    return badRequest(error)
+  }
+}
+
+async function saveCafe(payload: DatabaseCafePayload) {
+  const supabase = createSupabaseAdminClient()
+
+  if (payload.kakao_place_id) {
+    const { data: existingCafe, error: findError } = await supabase
+      .from('cafes')
+      .select('id')
+      .eq('kakao_place_id', payload.kakao_place_id)
+      .maybeSingle<{ id: string }>()
+
+    if (findError) throw findError
+
+    if (existingCafe) {
+      return supabase
+        .from('cafes')
+        .update({ ...payload, id: existingCafe.id })
+        .eq('id', existingCafe.id)
+        .select()
+        .single()
+    }
+  }
+
+  return supabase
+    .from('cafes')
+    .upsert(payload, { onConflict: 'id' })
+    .select()
+    .single()
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthorizedAdminRequest(request)) return unauthorized()
 
   try {
     const payload = toDatabasePayload(readCafePayload(await request.json()))
-    const { data, error } = await createSupabaseAdminClient()
-      .from('cafes')
-      .upsert(payload, { onConflict: 'id' })
-      .select()
-      .single()
+    const { data, error } = await saveCafe(payload)
 
     if (error) throw error
 
