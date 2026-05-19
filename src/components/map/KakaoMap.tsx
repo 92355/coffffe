@@ -1,23 +1,30 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
+import type { MutableRefObject } from 'react'
 import type { Cafe } from '@/types/cafe'
 
 interface KakaoMapProps {
   cafes: Cafe[]
   selectedCafe?: Cafe | null
   onCafeSelect: (cafe: Cafe | null) => void
+  locationRequestId?: number
 }
 
 const ANSAN_CENTER = { lat: 37.3084, lng: 126.8419 }
-const SELECTED_MAP_LEVEL = 4
+const SELECTED_MAP_LEVEL = 3
 const DEFAULT_MARKER_SIZE = 40
 const SELECTED_MARKER_SIZE = 52
+const MAP_FOCUS_DELAY_MS = 120
+const GEOLOCATION_TIMEOUT_MS = 10000
+const GEOLOCATION_MAXIMUM_AGE_MS = 5000
 
-export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMapProps) {
+export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRequestId = 0 }: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<kakao.maps.Map | null>(null)
   const overlaysRef = useRef<Map<string, kakao.maps.CustomOverlay>>(new Map())
+  const userLocationOverlayRef = useRef<kakao.maps.CustomOverlay | null>(null)
+  const geolocationWatchIdRef = useRef<number | null>(null)
   const onSelectRef = useRef(onCafeSelect)
 
   const cafesRef = useRef(cafes)
@@ -37,8 +44,8 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
       const selected = cafe.id === selectedCafe?.id
       const pos = new kakao.maps.LatLng(cafe.lat, cafe.lng)
       const content = createMarkerContent(cafe, selected, () => {
-        focusCafeOnMap(map, cafe)
         onSelectRef.current(cafe)
+        focusCafeOnMap(map, cafe)
       })
       const overlay = new kakao.maps.CustomOverlay({
         position: pos,
@@ -58,6 +65,20 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
     cafesRef.current = cafes
     renderMarkers()
   }, [cafes, renderMarkers, selectedCafe])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !selectedCafe) return
+
+    focusCafeOnMap(map, selectedCafe)
+  }, [selectedCafe])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || locationRequestId === 0) return
+
+    startWatchingUserLocation(map, userLocationOverlayRef, geolocationWatchIdRef)
+  }, [locationRequestId])
 
   // Initialize map once / 지도는 최초 1회만 초기화한다.
   useEffect(() => {
@@ -85,14 +106,100 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
     }
   }, [renderMarkers])
 
+  useEffect(() => () => {
+    if (geolocationWatchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(geolocationWatchIdRef.current)
+    }
+  }, [])
+
   return <div ref={containerRef} className="absolute inset-0 bg-neutral-900" />
 }
 
 function focusCafeOnMap(map: kakao.maps.Map, cafe: Cafe): void {
   const position = new kakao.maps.LatLng(cafe.lat, cafe.lng)
 
-  map.setLevel(SELECTED_MAP_LEVEL)
+  map.setLevel(SELECTED_MAP_LEVEL, {
+    animate: true,
+    anchor: position,
+  })
   map.setCenter(position)
+
+  window.setTimeout(() => {
+    map.setCenter(position)
+  }, MAP_FOCUS_DELAY_MS)
+}
+
+function startWatchingUserLocation(
+  map: kakao.maps.Map,
+  overlayRef: MutableRefObject<kakao.maps.CustomOverlay | null>,
+  watchIdRef: MutableRefObject<number | null>,
+): void {
+  if (!navigator.geolocation) {
+    console.error('Geolocation is not supported by this browser.')
+    return
+  }
+
+  if (watchIdRef.current !== null) {
+    navigator.geolocation.clearWatch(watchIdRef.current)
+  }
+
+  let shouldCenterOnNextPosition = true
+
+  watchIdRef.current = navigator.geolocation.watchPosition(
+    (position) => {
+      const userPosition = new kakao.maps.LatLng(
+        position.coords.latitude,
+        position.coords.longitude,
+      )
+
+      renderUserLocationOverlay(map, overlayRef, userPosition)
+
+      if (shouldCenterOnNextPosition) {
+        map.setLevel(SELECTED_MAP_LEVEL, {
+          animate: true,
+          anchor: userPosition,
+        })
+        map.setCenter(userPosition)
+        shouldCenterOnNextPosition = false
+      }
+    },
+    (error) => {
+      console.error('Failed to watch user location:', error.message)
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: GEOLOCATION_TIMEOUT_MS,
+      maximumAge: GEOLOCATION_MAXIMUM_AGE_MS,
+    },
+  )
+}
+
+function renderUserLocationOverlay(
+  map: kakao.maps.Map,
+  overlayRef: MutableRefObject<kakao.maps.CustomOverlay | null>,
+  position: kakao.maps.LatLng,
+): void {
+  overlayRef.current?.setMap(null)
+
+  overlayRef.current = new kakao.maps.CustomOverlay({
+    position,
+    content: createUserLocationContent(),
+    map,
+    xAnchor: 0.5,
+    yAnchor: 0.5,
+    zIndex: 30,
+  })
+}
+
+function createUserLocationContent(): HTMLElement {
+  const root = document.createElement('span')
+  root.setAttribute('aria-label', '현재 위치')
+  root.className = [
+    'block h-5 w-5 rounded-full border-[3px] border-white bg-blue-600',
+    'shadow-[0_0_0_8px_rgba(37,99,235,0.18),0_8px_20px_rgba(37,99,235,0.35)]',
+  ].join(' ')
+
+  return root
 }
 
 function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void): HTMLElement {

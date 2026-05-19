@@ -25,6 +25,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
   const [mobileListOpen, setMobileListOpen] = useState(false)
+  const [locationRequestId, setLocationRequestId] = useState(0)
 
   const filteredCafes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -68,7 +69,12 @@ export default function MapView({ allCafes }: MapViewProps) {
       />
 
       <div className="relative min-w-0 flex-1 overflow-hidden">
-        <KakaoMap cafes={filteredCafes} selectedCafe={visibleSelectedCafe} onCafeSelect={setSelectedCafe} />
+        <KakaoMap
+          cafes={filteredCafes}
+          selectedCafe={visibleSelectedCafe}
+          onCafeSelect={setSelectedCafe}
+          locationRequestId={locationRequestId}
+        />
 
         <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex justify-center px-4">
           <button
@@ -112,6 +118,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           </div>
           <button
             type="button"
+            onClick={() => setLocationRequestId((current) => current + 1)}
             className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
             aria-label="현재 위치"
           >

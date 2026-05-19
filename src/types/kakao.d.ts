@@ -6,7 +6,7 @@ declare namespace kakao {
       constructor(container: HTMLElement, options: MapOptions)
       setCenter(latlng: LatLng): void
       panTo(latlng: LatLng): void
-      setLevel(level: number): void
+      setLevel(level: number, options?: SetLevelOptions): void
     }
 
     class LatLng {
@@ -34,6 +34,11 @@ declare namespace kakao {
     interface MapOptions {
       center: LatLng
       level: number
+    }
+
+    interface SetLevelOptions {
+      animate?: boolean | { duration: number }
+      anchor?: LatLng
     }
 
     interface MarkerOptions {
