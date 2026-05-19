@@ -1,8 +1,8 @@
 'use client'
 
-import type { ReactNode } from 'react'
-import type { FilterState, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
-import { ROAST_LABELS, ORIGIN_LABELS, BREW_LABELS } from '@/types/cafe'
+import { ChevronDown, RotateCcw } from 'lucide-react'
+import type { BeanOrigin, BrewMethod, FilterState, RoastLevel } from '@/types/cafe'
+import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 
 interface FilterBarProps {
   filters: FilterState
@@ -10,78 +10,73 @@ interface FilterBarProps {
   layout?: 'row' | 'stack'
 }
 
-function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 h-8 rounded-full px-3 text-sm font-medium transition-colors ${
-        active
-          ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 active:bg-gray-50 dark:active:bg-gray-700'
-      }`}
-    >
-      {label}
-    </button>
-  )
-}
-
-function Divider() {
-  return <div className="shrink-0 w-px h-5 bg-gray-200 dark:bg-gray-700 self-center mx-0.5" />
-}
-
-function FilterGroup({
+function FilterSelect<T extends string>({
   label,
-  children,
-  layout,
+  value,
+  options,
+  onChange,
 }: {
   label: string
-  children: ReactNode
-  layout: 'row' | 'stack'
+  value: T | null
+  options: Record<T, string>
+  onChange: (value: T | null) => void
 }) {
-  if (layout === 'row') {
-    return (
-      <>
-        <span className="shrink-0 text-xs font-semibold text-gray-400 dark:text-gray-500">{label}</span>
-        {children}
-      </>
-    )
-  }
-
   return (
-    <div>
-      <p className="mb-2 text-xs font-bold text-neutral-500 dark:text-neutral-400">{label}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
+    <label className="relative">
+      <span className="sr-only">{label}</span>
+      <select
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value ? (event.target.value as T) : null)}
+        className="h-9 min-w-[78px] appearance-none rounded-xl border border-[#eadfd3] bg-white py-0 pl-3 pr-8 text-xs font-black text-[#5f4634] outline-none transition-colors hover:border-[#d9c1ad] focus:border-[#b56a2a]"
+      >
+        <option value="">{label}</option>
+        {Object.entries(options).map(([key, optionLabel]) => (
+          <option key={key} value={key}>
+            {optionLabel as string}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={13}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9a806a]"
+      />
+    </label>
   )
 }
 
-export default function FilterBar({ filters, onChange, layout = 'row' }: FilterBarProps) {
-  const toggle = <T extends string>(key: keyof FilterState, value: T, current: T | null) => {
-    onChange({ ...filters, [key]: current === value ? null : value })
+export default function FilterBar({ filters, onChange }: FilterBarProps) {
+  const resetFilters = () => {
+    onChange({ roastLevel: null, beanOrigin: null, brewMethod: null })
   }
 
   return (
-    <div className={layout === 'row' ? 'flex items-center gap-2 overflow-x-auto px-4 py-2.5 scrollbar-hide' : 'space-y-3'}>
-      <FilterGroup label="로스팅" layout={layout}>
-        {(Object.keys(ROAST_LABELS) as RoastLevel[]).map(r => (
-          <Chip key={r} label={ROAST_LABELS[r]} active={filters.roastLevel === r}
-            onClick={() => toggle('roastLevel', r, filters.roastLevel)} />
-        ))}
-      </FilterGroup>
-      {layout === 'row' && <Divider />}
-      <FilterGroup label="산지" layout={layout}>
-        {(Object.keys(ORIGIN_LABELS) as BeanOrigin[]).map(o => (
-          <Chip key={o} label={ORIGIN_LABELS[o]} active={filters.beanOrigin === o}
-            onClick={() => toggle('beanOrigin', o, filters.beanOrigin)} />
-        ))}
-      </FilterGroup>
-      {layout === 'row' && <Divider />}
-      <FilterGroup label="추출" layout={layout}>
-        {(Object.keys(BREW_LABELS) as BrewMethod[]).map(m => (
-          <Chip key={m} label={BREW_LABELS[m]} active={filters.brewMethod === m}
-            onClick={() => toggle('brewMethod', m, filters.brewMethod)} />
-        ))}
-      </FilterGroup>
+    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      <FilterSelect<RoastLevel>
+        label="지역"
+        value={filters.roastLevel}
+        options={ROAST_LABELS}
+        onChange={(roastLevel) => onChange({ ...filters, roastLevel })}
+      />
+      <FilterSelect<BeanOrigin>
+        label="분위기"
+        value={filters.beanOrigin}
+        options={ORIGIN_LABELS}
+        onChange={(beanOrigin) => onChange({ ...filters, beanOrigin })}
+      />
+      <FilterSelect<BrewMethod>
+        label="가격대"
+        value={filters.brewMethod}
+        options={BREW_LABELS}
+        onChange={(brewMethod) => onChange({ ...filters, brewMethod })}
+      />
+      <button
+        type="button"
+        onClick={resetFilters}
+        className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-[#8b6f57] transition-colors hover:bg-white"
+      >
+        <RotateCcw size={13} />
+        필터 초기화
+      </button>
     </div>
   )
 }
