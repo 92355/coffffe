@@ -10,6 +10,7 @@ interface KakaoMapProps {
 }
 
 const ANSAN_CENTER = { lat: 37.3084, lng: 126.8419 }
+const SELECTED_MAP_LEVEL = 4
 const DEFAULT_MARKER_SIZE = 40
 const SELECTED_MARKER_SIZE = 52
 
@@ -36,6 +37,7 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
       const selected = cafe.id === selectedCafe?.id
       const pos = new kakao.maps.LatLng(cafe.lat, cafe.lng)
       const content = createMarkerContent(cafe, selected, () => {
+        focusCafeOnMap(map, cafe)
         onSelectRef.current(cafe)
       })
       const overlay = new kakao.maps.CustomOverlay({
@@ -56,14 +58,6 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
     cafesRef.current = cafes
     renderMarkers()
   }, [cafes, renderMarkers, selectedCafe])
-
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !selectedCafe) return
-
-    const position = new kakao.maps.LatLng(selectedCafe.lat, selectedCafe.lng)
-    map.panTo(position)
-  }, [selectedCafe])
 
   // Initialize map once / 지도는 최초 1회만 초기화한다.
   useEffect(() => {
@@ -92,6 +86,13 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect }: KakaoMap
   }, [renderMarkers])
 
   return <div ref={containerRef} className="absolute inset-0 bg-neutral-900" />
+}
+
+function focusCafeOnMap(map: kakao.maps.Map, cafe: Cafe): void {
+  const position = new kakao.maps.LatLng(cafe.lat, cafe.lng)
+
+  map.setLevel(SELECTED_MAP_LEVEL)
+  map.setCenter(position)
 }
 
 function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void): HTMLElement {
@@ -132,6 +133,7 @@ function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void)
 
   // Prevent map background click from clearing selection. / 지도 배경 클릭 해제를 막는다.
   root.addEventListener('click', (event) => {
+    event.preventDefault()
     event.stopPropagation()
     onClick()
   })

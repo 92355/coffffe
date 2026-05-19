@@ -53,3 +53,10 @@ npx tsc --noEmit
 npm run lint
 npm run build
 ```
+
+
+!! 추가사항 
+
+익명의 회원 -> 어드민에게 카페 추가 요청 -> 어드민 페이지에서 확인 검수
+카카오 회원가입 
+
