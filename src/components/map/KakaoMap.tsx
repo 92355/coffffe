@@ -15,7 +15,6 @@ const ANSAN_CENTER = { lat: 37.3084, lng: 126.8419 }
 const SELECTED_MAP_LEVEL = 3
 const DEFAULT_MARKER_SIZE = 40
 const SELECTED_MARKER_SIZE = 52
-const MAP_FOCUS_DELAY_MS = 120
 const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 5000
 
@@ -118,15 +117,8 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
 function focusCafeOnMap(map: kakao.maps.Map, cafe: Cafe): void {
   const position = new kakao.maps.LatLng(cafe.lat, cafe.lng)
 
-  map.setLevel(SELECTED_MAP_LEVEL, {
-    animate: true,
-    anchor: position,
-  })
+  map.setLevel(SELECTED_MAP_LEVEL, { anchor: position })
   map.setCenter(position)
-
-  window.setTimeout(() => {
-    map.setCenter(position)
-  }, MAP_FOCUS_DELAY_MS)
 }
 
 function startWatchingUserLocation(
@@ -155,10 +147,7 @@ function startWatchingUserLocation(
       renderUserLocationOverlay(map, overlayRef, userPosition)
 
       if (shouldCenterOnNextPosition) {
-        map.setLevel(SELECTED_MAP_LEVEL, {
-          animate: true,
-          anchor: userPosition,
-        })
+        map.setLevel(SELECTED_MAP_LEVEL, { anchor: userPosition })
         map.setCenter(userPosition)
         shouldCenterOnNextPosition = false
       }

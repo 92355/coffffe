@@ -133,6 +133,15 @@ export default function MapView({ allCafes }: MapViewProps) {
           </button>
         </div>
 
+        <button
+          type="button"
+          onClick={() => setLocationRequestId((current) => current + 1)}
+          className="pointer-events-auto absolute bottom-24 right-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] md:hidden"
+          aria-label="현재 위치"
+        >
+          <LocateFixed size={18} />
+        </button>
+
         <div className="pointer-events-none absolute inset-x-4 bottom-5 z-20 flex items-center justify-between gap-3">
           <div className="pointer-events-auto hidden h-12 items-center gap-2 rounded-full border border-[#eee4d8] bg-white px-5 text-sm font-black text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] md:flex">
             <CoffeeDot />
