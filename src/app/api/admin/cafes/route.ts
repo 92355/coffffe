@@ -125,7 +125,19 @@ function unauthorized() {
 }
 
 function badRequest(error: unknown) {
-  const message = error instanceof Error ? error.message : 'Invalid request'
+  let message = 'Invalid request'
+
+  if (error instanceof Error) {
+    message = error.message
+  } else if (isRecord(error)) {
+    const errorParts = ['message', 'details', 'hint', 'code']
+      .map((key) => error[key])
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+
+    if (errorParts.length > 0) {
+      message = errorParts.join(' / ')
+    }
+  }
 
   return NextResponse.json({ error: message }, { status: 400 })
 }
