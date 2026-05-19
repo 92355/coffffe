@@ -175,6 +175,7 @@ export default function AdminPage() {
     const response = await fetch('/api/admin/cafes', {
       method: editingId ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify(toCafePayload(form)),
     })
 
@@ -195,6 +196,7 @@ export default function AdminPage() {
 
     const response = await fetch(`/api/admin/cafes?id=${encodeURIComponent(id)}`, {
       method: 'DELETE',
+      credentials: 'same-origin',
     })
 
     if (!response.ok) {
