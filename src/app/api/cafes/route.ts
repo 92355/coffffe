@@ -18,6 +18,7 @@ interface DatabaseCafe {
   tags: string[]
   open_hours: string
   closed_days: string[]
+  images: string[]
   phone: string | null
   instagram_handle: string | null
   kakao_place_id: string | null
@@ -41,6 +42,7 @@ function toCafe(databaseCafe: DatabaseCafe): Cafe {
     tags: databaseCafe.tags,
     openHours: databaseCafe.open_hours,
     closedDays: databaseCafe.closed_days,
+    images: databaseCafe.images,
     phone: databaseCafe.phone ?? undefined,
     instagramHandle: databaseCafe.instagram_handle ?? undefined,
     kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,

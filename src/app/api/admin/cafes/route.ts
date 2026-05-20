@@ -24,6 +24,7 @@ interface DatabaseCafePayload {
   tags: string[]
   open_hours: string
   closed_days: string[]
+  images: string[]
   phone: string | null
   instagram_handle: string | null
   kakao_place_id: string | null
@@ -82,6 +83,17 @@ function readStringArray(record: Record<string, unknown>, key: string): string[]
   return value
 }
 
+function readOptionalStringArray(record: Record<string, unknown>, key: string): string[] {
+  const value = record[key]
+
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
+    throw new Error(`"${key}" must be a string array`)
+  }
+
+  return value
+}
+
 function readCafePayload(value: unknown): CafePayload {
   if (!isRecord(value)) {
     throw new Error('Request body must be an object')
@@ -102,6 +114,7 @@ function readCafePayload(value: unknown): CafePayload {
     tags: readStringArray(value, 'tags'),
     openHours: readString(value, 'openHours'),
     closedDays: readStringArray(value, 'closedDays'),
+    images: readOptionalStringArray(value, 'images'),
     phone: readOptionalString(value, 'phone'),
     instagramHandle: readOptionalString(value, 'instagramHandle'),
     kakaoPlaceId: readOptionalString(value, 'kakaoPlaceId'),
@@ -124,6 +137,7 @@ function toDatabasePayload(cafe: CafePayload): DatabaseCafePayload {
     tags: cafe.tags,
     open_hours: cafe.openHours,
     closed_days: cafe.closedDays,
+    images: cafe.images ?? [],
     phone: cafe.phone ?? null,
     instagram_handle: cafe.instagramHandle ?? null,
     kakao_place_id: cafe.kakaoPlaceId ?? null,
@@ -146,6 +160,7 @@ function toCafePayload(databaseCafe: DatabaseCafePayload): CafePayload {
     tags: databaseCafe.tags,
     openHours: databaseCafe.open_hours,
     closedDays: databaseCafe.closed_days,
+    images: databaseCafe.images,
     phone: databaseCafe.phone ?? undefined,
     instagramHandle: databaseCafe.instagram_handle ?? undefined,
     kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,

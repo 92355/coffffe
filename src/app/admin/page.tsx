@@ -1,7 +1,7 @@
 'use client'
 
 import { FormEvent, startTransition, useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Coffee, MapPin, Pencil, Search, Trash2, XCircle } from 'lucide-react'
+import { CheckCircle2, Coffee, ImagePlus, MapPin, Pencil, Search, Trash2, XCircle } from 'lucide-react'
 import type { BeanOrigin, BrewMethod, Cafe, RoastLevel } from '@/types/cafe'
 import type { CafeReport, ReportStatus } from '@/types/report'
 
@@ -53,6 +53,7 @@ const EMPTY_FORM: CafeForm = {
   tags: [],
   openHours: '',
   closedDays: [],
+  images: [],
   phone: '',
   instagramHandle: '',
   kakaoPlaceId: '',
@@ -94,6 +95,7 @@ function toCafePayload(form: CafeForm): Cafe {
   return {
     ...form,
     qualityScore: Number.parseFloat(form.qualityScore),
+    images: form.images ?? [],
     phone: form.phone || undefined,
     instagramHandle: form.instagramHandle || undefined,
     kakaoPlaceId: form.kakaoPlaceId || undefined,
@@ -269,6 +271,7 @@ export default function AdminPage() {
     setForm({
       ...cafe,
       qualityScore: String(cafe.qualityScore),
+      images: cafe.images ?? [],
       phone: cafe.phone ?? '',
       instagramHandle: cafe.instagramHandle ?? '',
       kakaoPlaceId: cafe.kakaoPlaceId ?? '',
@@ -500,6 +503,47 @@ interface CafeFormPanelProps {
 }
 
 function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: CafeFormPanelProps) {
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageMessage, setImageMessage] = useState('')
+
+  async function uploadCafeImage(file: File) {
+    if (!form.id.trim()) {
+      setImageMessage('이미지 업로드 전 카페 ID를 먼저 입력해주세요.')
+      return
+    }
+
+    setUploadingImage(true)
+    setImageMessage('이미지를 업로드하는 중입니다.')
+
+    const body = new FormData()
+    body.append('file', file)
+    body.append('cafeId', form.id)
+
+    const response = await fetch('/api/admin/cafe-images', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body,
+    })
+
+    setUploadingImage(false)
+
+    if (!response.ok) {
+      const errorMessage = await readApiErrorMessage(response)
+      setImageMessage(`이미지 업로드 실패: ${errorMessage}`)
+      return
+    }
+
+    const result = await response.json() as { url?: unknown }
+
+    if (typeof result.url !== 'string') {
+      setImageMessage('이미지 URL을 받지 못했습니다.')
+      return
+    }
+
+    onFormChange({ ...form, images: [result.url] })
+    setImageMessage('대표 이미지를 업로드했습니다.')
+  }
+
   return (
     <form onSubmit={onSubmit} className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -526,6 +570,51 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
 
       <TextArea label="짧은 설명" value={form.shortDescription} onChange={(shortDescription) => onFormChange({ ...form, shortDescription })} />
       <TextArea label="상세 설명" value={form.fullDescription} onChange={(fullDescription) => onFormChange({ ...form, fullDescription })} />
+
+      <fieldset className="mt-4 rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-3">
+        <legend className="px-1 text-sm font-black text-[#5f4634]">대표 이미지</legend>
+        {form.images?.[0] ? (
+          <div className="mt-2 overflow-hidden rounded-md border border-[#eadfd3] bg-white">
+            <div
+              aria-label={`${form.name || '카페'} 대표 이미지`}
+              className="h-44 w-full bg-[#5a2e11] bg-cover bg-center"
+              style={{ backgroundImage: `url(${form.images[0]})` }}
+            />
+            <div className="flex items-center justify-between gap-2 px-3 py-2">
+              <p className="truncate text-xs font-semibold text-[#7a6654]">{form.images[0]}</p>
+              <button
+                type="button"
+                onClick={() => onFormChange({ ...form, images: [] })}
+                className="shrink-0 rounded-md border border-red-200 px-2 py-1 text-xs font-black text-red-700 hover:bg-red-50"
+              >
+                제거
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-2 rounded-md border border-dashed border-[#d8c8b8] bg-white px-3 py-4 text-sm font-bold text-[#7a6654]">
+            아직 등록된 대표 이미지가 없습니다.
+          </p>
+        )}
+
+        <label className="mt-3 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-[#5a2e11] text-sm font-black text-white opacity-100">
+          <ImagePlus size={16} />
+          {uploadingImage ? '업로드 중' : '이미지 업로드'}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            disabled={uploadingImage}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              event.target.value = ''
+              if (!file) return
+              void uploadCafeImage(file)
+            }}
+            className="sr-only"
+          />
+        </label>
+        {imageMessage && <p className="mt-2 text-xs font-bold text-[#8b5a32]">{imageMessage}</p>}
+      </fieldset>
 
       <CheckboxGroup label="로스팅" values={ROAST_LEVELS} selected={form.roastLevels} onChange={(roastLevels) => onFormChange({ ...form, roastLevels })} />
       <CheckboxGroup label="원두 산지" values={BEAN_ORIGINS} selected={form.beanOrigins} onChange={(beanOrigins) => onFormChange({ ...form, beanOrigins })} />

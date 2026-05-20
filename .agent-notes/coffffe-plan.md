@@ -1,7 +1,7 @@
 # coFFFFFe-map 현재 계획
 
 > 마지막 갱신: 2026-05-20
-> 상태: **Plan 2 구현 완료 / 수동 브라우저 QA 대기**
+> 상태: **Plan 5 구현 완료 / Supabase SQL 적용 및 브라우저 QA 대기**
 
 ---
 
@@ -30,7 +30,7 @@ Supabase 연동 + 관리자 페이지 + 커스텀 마커 작업 전체 완료.
 | 2 | 익명 사용자 랜덤 한글 닉네임 | **구현 완료** |
 | 3 | 플레이스 제보 (익명/회원) | **다음 계획** |
 | 4 | 관리자 제보 리스트 + 카페 등록 연동 | **완료**    |
-| 5 | 카페 이미지 업로드 (Supabase Storage + 관리자 UI) | 대기        |
+| 5 | 카페 이미지 업로드 (Supabase Storage + 관리자 UI) | **구현 완료 / SQL 적용 대기** |
 | 6 | 카카오 로그인 + 즐겨찾기/리스트 저장 | 대기        |
 | 7 | UI 디자인 고급화 | 대기        |
 | 8 | 커피 뱃지 시스템 | 대기        |
@@ -43,14 +43,14 @@ Supabase 연동 + 관리자 페이지 + 커스텀 마커 작업 전체 완료.
 
 `MapView.tsx`에 UI만 있고 기능 없는 버튼들을 실제로 동작하게 연결한다.
 
-### 현재 상태 분석
+### 현재 상태
 
 | 버튼 | 현재 상태 |
 |---|---|
 | LocateFixed (현재위치) | ✅ `locationRequestId` 연결 완료 (데스크톱·모바일 둘 다) |
-| Plus/Minus (확대/축소) | ❌ `onClick` 없음 |
-| Layers (지도 레이어) | ❌ `onClick` 없음 |
-| "이 지역 검색" | ❌ 기능 없음 |
+| Plus/Minus (확대/축소) | ✅ `zoomRequest`로 `KakaoMap`에 연결 완료 |
+| Layers (지도 레이어) | ✅ 일반 지도 ↔ 스카이뷰 토글 연결 완료 |
+| "이 지역 검색" | ✅ 현재 지도 bounds 기준 필터 연결 완료 |
 
 ### 구현 완료 요약
 
@@ -487,6 +487,10 @@ npm run build
 - 정보 수정 제보: 기존 카페 선택, 수정 유형 체크박스, 메모 입력 지원
 - `useUser`에 `anonymousId` 추가. 기존 localStorage 사용자는 닉네임 유지 후 ID만 보강
 - `KakaoMap` 지도 배경 클릭 좌표 콜백 추가
+- 지도에서 위치 찍기 후 제보 바텀시트 복귀 시 카페 이름 검색 UI를 숨기고, 선택된 지도 위치 카드만 강조 표시
+- 지도 선택 위치의 카페 이름 입력칸을 빈 값, 강조 테두리, 안내 문구로 변경
+- 카카오 장소 검색 결과에서 카페 선택 시 선택된 카페 카드만 남기도록 UI 정리
+- 제보 메모 placeholder를 커피 경험과 원두/메뉴 정보를 자연스럽게 남기도록 감성 문구로 변경
 
 검증:
 
@@ -503,4 +507,56 @@ npm.cmd run build
 - `/`에서 신규 카페 제보 제출 후 Supabase `reports` row 생성 확인
 - 기존 카페 정보 수정 제보 제출 후 관리자 화면에서 보이는지 확인
 - 지도 위치 찍기 후 주소 자동 변환 동작 확인
+- 지도 위치 찍기 후 검색 UI가 숨겨지고 카페 이름 입력이 명확하게 보이는지 브라우저 확인
+- 카카오 검색 결과에서 선택한 카페만 남는지 브라우저 확인
 - 사진 업로드는 Supabase Storage 버킷/정책 설계 후 별도 Plan에서 진행
+
+---
+
+## Plan 5 — 카페 이미지 업로드
+
+상태: 구현 완료, Supabase SQL 직접 적용 및 브라우저 QA 대기
+
+### 구현 내용
+
+- `cafes.images text[]` 컬럼 추가 SQL 작성
+- Supabase Storage `cafe-images` public 버킷 생성 SQL 작성
+- 관리자 전용 이미지 업로드 API `/api/admin/cafe-images` 추가
+- 업로드 API에서 관리자 인증, 이미지 MIME 타입, 5MB 제한 검증
+- `/api/admin/cafes` POST/PUT/GET에 `images` 배열 저장/조회 연결
+- `/api/cafes` GET에 `images` 배열 조회 연결
+- `/admin` 카페 추가/수정 폼에 대표 이미지 업로드, 미리보기, 제거 UI 추가
+- 대표 이미지는 `images[0]`에 저장하며 기존 지도 마커와 카페 리스트 썸네일에 자동 반영
+
+### 수정 파일
+
+- `supabase/migrations/20260520010000_add_cafe_images.sql`
+- `src/app/api/admin/cafe-images/route.ts`
+- `src/app/api/admin/cafes/route.ts`
+- `src/app/api/cafes/route.ts`
+- `src/app/admin/page.tsx`
+
+### Supabase 직접 적용 필요
+
+Supabase SQL Editor에서 아래 파일 내용을 직접 실행해야 한다.
+
+```txt
+supabase/migrations/20260520010000_add_cafe_images.sql
+```
+
+### 검증
+
+```bash
+npx.cmd tsc --noEmit
+npm.cmd run lint
+npm.cmd run build
+```
+
+결과: 모두 통과.
+
+### 남은 작업
+
+- Supabase SQL Editor에서 `20260520010000_add_cafe_images.sql` 실행
+- `/admin`에서 카페 ID 입력 후 대표 이미지 업로드 확인
+- 저장 후 `/` 지도 마커와 카페 리스트 썸네일에 이미지가 반영되는지 확인
+- 새로고침 후 이미지가 유지되는지 확인
