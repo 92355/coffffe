@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Bell, ChevronDown, Layers, List, LocateFixed, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
+import { Bell, ChevronDown, Layers, List, LocateFixed, MapPin, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
+import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
 import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
 import { getAnimalAvatar } from '@/lib/animalAvatar'
 import { useUser } from '@/hooks/useUser'
 import type { LocationPoint } from '@/types/location'
+import type { ReportType } from '@/types/report'
 
 const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), { ssr: false })
 
@@ -41,9 +43,14 @@ export default function MapView({ allCafes }: MapViewProps) {
   const [hasPendingBoundsSearch, setHasPendingBoundsSearch] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
-  const [locationPermissionModalOpen, setLocationPermissionModalOpen] = useState(true)
+  const [locationPermissionModalOpen, setLocationPermissionModalOpen] = useState(false)
   const [isRequestingLocation, setIsRequestingLocation] = useState(false)
   const [locationPermissionError, setLocationPermissionError] = useState<string | null>(null)
+  const [reportSheetOpen, setReportSheetOpen] = useState(false)
+  const [reportInitialType, setReportInitialType] = useState<ReportType>('new_place')
+  const [reportInitialCafe, setReportInitialCafe] = useState<Cafe | null>(null)
+  const [reportInitialLocation, setReportInitialLocation] = useState<LocationPoint | null>(null)
+  const [mapPickMode, setMapPickMode] = useState(false)
 
   const baseFilteredCafes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -95,6 +102,38 @@ export default function MapView({ allCafes }: MapViewProps) {
     setMapType((currentType) => currentType === 'normal' ? 'skyview' : 'normal')
   }, [])
 
+  const openNewPlaceReport = useCallback(() => {
+    setReportInitialType('new_place')
+    setReportInitialCafe(null)
+    setReportInitialLocation(null)
+    setReportSheetOpen(true)
+    setProfileMenuOpen(false)
+    setMobileListOpen(false)
+  }, [])
+
+  const openCorrectionReport = useCallback((cafe: Cafe | null = selectedCafe) => {
+    setReportInitialType('correction')
+    setReportInitialCafe(cafe)
+    setReportInitialLocation(null)
+    setReportSheetOpen(true)
+    setProfileMenuOpen(false)
+  }, [selectedCafe])
+
+  const handleStartMapPick = useCallback(() => {
+    setReportSheetOpen(false)
+    setMapPickMode(true)
+  }, [])
+
+  const handleMapClick = useCallback((location: LocationPoint) => {
+    if (!mapPickMode) return
+
+    setReportInitialType('new_place')
+    setReportInitialCafe(null)
+    setReportInitialLocation(location)
+    setReportSheetOpen(true)
+    setMapPickMode(false)
+  }, [mapPickMode])
+
   const requestUserLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationPermissionError('이 기기에서는 위치 기능을 사용할 수 없어요.')
@@ -128,6 +167,22 @@ export default function MapView({ allCafes }: MapViewProps) {
         maximumAge: GEOLOCATION_MAXIMUM_AGE_MS,
       },
     )
+  }, [])
+
+  useEffect(() => {
+    if (!navigator.permissions) {
+      window.setTimeout(() => setLocationPermissionModalOpen(true), 0)
+      return
+    }
+
+    void navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+      if (result.state === 'granted') {
+        setLocationRequestId((current) => current + 1)
+      } else if (result.state === 'prompt') {
+        setLocationPermissionModalOpen(true)
+      }
+      // denied → 모달 안 띄움
+    })
   }, [])
 
   useEffect(() => {
@@ -179,6 +234,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         activeQuickCategory={activeQuickCategory}
         onQuickCategoryChange={setActiveQuickCategory}
         onClearSelection={() => setSelectedCafe(null)}
+        onReportNewPlace={openNewPlaceReport}
         mobileOpen={mobileListOpen}
         onMobileClose={() => setMobileListOpen(false)}
       />
@@ -193,7 +249,24 @@ export default function MapView({ allCafes }: MapViewProps) {
           zoomRequest={zoomRequest}
           locationRequestId={locationRequestId}
           onUserLocationChange={setUserLocation}
+          onMapClick={handleMapClick}
         />
+
+        {mapPickMode && (
+          <div className="pointer-events-none absolute inset-x-4 top-20 z-30 flex justify-center">
+            <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-2xl border border-[#eadccb] bg-white px-4 py-3 text-sm font-black text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)]">
+              <MapPin size={16} className="shrink-0 text-[#d66612]" />
+              지도에서 제보할 카페 위치를 눌러주세요.
+              <button
+                type="button"
+                onClick={() => setMapPickMode(false)}
+                className="ml-auto rounded-full px-2 py-1 text-xs text-[#80624a] hover:bg-[#f8efe6]"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex justify-center px-4">
           <button
@@ -259,15 +332,17 @@ export default function MapView({ allCafes }: MapViewProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    onClick={openNewPlaceReport}
                     className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
                   >
-                    제보내역
+                    제보하기
                   </button>
                   <button
                     type="button"
+                    onClick={() => openCorrectionReport()}
                     className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
                   >
-                    내 리뷰내역
+                    정보수정
                   </button>
                 </div>
 
@@ -353,6 +428,20 @@ export default function MapView({ allCafes }: MapViewProps) {
         </div>
 
         <BottomSheet cafe={visibleSelectedCafe} onClose={() => setSelectedCafe(null)} />
+        {reportSheetOpen && (
+          <ReportSheet
+            cafes={allCafes}
+            user={user}
+            initialType={reportInitialType}
+            initialCafe={reportInitialCafe}
+            initialLocation={reportInitialLocation}
+            onClose={() => {
+              setReportSheetOpen(false)
+              setReportInitialLocation(null)
+            }}
+            onStartMapPick={handleStartMapPick}
+          />
+        )}
       </div>
 
       {locationPermissionModalOpen && (

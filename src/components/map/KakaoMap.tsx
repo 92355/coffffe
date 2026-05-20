@@ -14,6 +14,7 @@ interface KakaoMapProps {
   zoomRequest?: ZoomRequest | null
   locationRequestId?: number
   onUserLocationChange?: (location: LocationPoint) => void
+  onMapClick?: (location: LocationPoint) => void
 }
 
 export type MapType = 'normal' | 'skyview'
@@ -48,6 +49,7 @@ export default function KakaoMap({
   zoomRequest = null,
   locationRequestId = 0,
   onUserLocationChange,
+  onMapClick,
 }: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<kakao.maps.Map | null>(null)
@@ -57,6 +59,7 @@ export default function KakaoMap({
   const onSelectRef = useRef(onCafeSelect)
   const onBoundsChangeRef = useRef(onMapBoundsChange)
   const onUserLocationChangeRef = useRef(onUserLocationChange)
+  const onMapClickRef = useRef(onMapClick)
   const handledZoomRequestIdRef = useRef(0)
 
   const cafesRef = useRef(cafes)
@@ -72,6 +75,10 @@ export default function KakaoMap({
   useEffect(() => {
     onUserLocationChangeRef.current = onUserLocationChange
   }, [onUserLocationChange])
+
+  useEffect(() => {
+    onMapClickRef.current = onMapClick
+  }, [onMapClick])
 
   const renderMarkers = useCallback(() => {
     const map = mapRef.current
@@ -163,8 +170,14 @@ export default function KakaoMap({
           level: 6,
         })
         // Close preview when clicking map background / 지도 배경 클릭 시 선택을 해제한다.
-        kakao.maps.event.addListener(mapRef.current, 'click', () => {
+        kakao.maps.event.addListener(mapRef.current, 'click', (event) => {
           onSelectRef.current(null)
+          if (event?.latLng) {
+            onMapClickRef.current?.({
+              lat: event.latLng.getLat(),
+              lng: event.latLng.getLng(),
+            })
+          }
         })
         kakao.maps.event.addListener(mapRef.current, 'dragend', () => {
           notifyMapBoundsChange(mapRef.current)

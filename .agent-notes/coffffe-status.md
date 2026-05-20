@@ -1,6 +1,6 @@
 # coFFFFFe-map 현재 상태
 
-> 마지막 갱신: 2026-05-19
+> 마지막 갱신: 2026-05-20
 
 ---
 
@@ -156,10 +156,47 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 - `cafes.json` fallback 유지 중. Supabase 안정적이면 추후 삭제 가능.
 - MapView 하단 "목록 보기" 버튼이 `md:hidden`/`md:flex` 두 개로 중복 렌더링됨 (로직은 동일).
 - `/cafes/[id]` 뒤로가기 → `/` 이동.
-- 지도 우상단 Bell/Profile 버튼, 우중단 +/-/LocateFixed/Layers 버튼은 UI만 있고 기능 없음.
-- 지도 상단 "이 지역 검색" 버튼도 UI만.
+- 지도 우중단 +/-/LocateFixed/Layers 버튼은 동작 연결 완료. Bell 버튼은 UI만 있음.
+- Profile 버튼은 익명 사용자 랜덤 한글 닉네임의 동물 아바타를 표시하고, hover/title로 전체 닉네임을 노출함.
+- Profile 버튼 클릭 시 우측 상단에 직사각형 드롭다운 메뉴를 표시함. 메뉴 항목은 내 아이디, 제보내역, 내 리뷰내역, 카카오 로그인하기.
+- Profile 드롭다운은 임시 닉네임 안내 문구와 닉네임 재생성 새로고침 버튼을 포함함.
+- 익명 사용자 정보는 `coffffe_user` localStorage 키에 저장됨. 카카오 로그인 연동 전까지는 클라이언트 전용 상태.
+- 지도 상단 "이 지역 검색" 버튼은 현재 지도 bounds 기반 필터로 동작 연결 완료.
 - Sidebar 하단 "내 주변 카페 더보기" 버튼은 `/beans`로 이동 (의미상 약간 어색).
 - 관리자 페이지 `POST /api/admin/cafes` 호출 시 `Authorization` 헤더 없이 쿠키만 사용.
 - 카페 데이터는 목 데이터 (실제 영업 정보 미검증).
 - MapView/Sidebar는 CSS 변수 미사용 — 다크모드 미지원.
-- v2.0 후보: 검색/필터 고도화, 지도 버튼 기능 구현, 다크모드 확장.
+- v2.0 후보: 검색/필터 고도화, 다크모드 확장.
+
+---
+
+## 2026-05-20 �߰� ����
+
+- ���� ���� ��� ������ ��ư�� ����ũ��� ����� ��� ǥ���Ѵ�.
+- �˸� ��ư�� ����ó�� ����ũ�鿡���� ǥ���Ѵ�.
+- ����� ������ ��Ӵٿ��� ȭ�� ������ ��ġ�� �ʵ��� `100vw - 2rem`�� �ִ� `20rem` �� ������ �Բ� ����Ѵ�.
+
+---
+
+## 2026-05-20 추가 상태: 제보 기능
+
+- Plan 4 관리자 제보 리스트 + 카페 등록 연동은 완료되어 `main`에 푸시됐다.
+- 마지막 푸시 커밋: `c2847d5 feat: add user profile and report admin flow`.
+- Supabase `reports` 테이블은 `supabase/migrations/20260520000000_create_reports.sql` 기준으로 생성 완료됐다.
+- 관리자 API:
+  - `GET /api/admin/reports`: 관리자 제보 목록 조회
+  - `PATCH /api/admin/reports`: 제보 상태 변경
+- 사용자 제보 API:
+  - `POST /api/reports`: 익명 사용자 제보 저장
+  - `GET /api/kakao/geocode`: 지도 좌표를 Kakao 주소로 변환
+- 사용자 제보 UI는 `src/components/ReportSheet.tsx`에 구현됐다.
+- 진입점:
+  - 프로필 드롭다운 `제보하기`
+  - 프로필 드롭다운 `정보수정`
+  - 검색 결과 0건일 때 `새 카페 제보하기`
+- 신규 카페 제보는 카카오 장소 검색 선택 또는 지도 위치 찍기를 지원한다.
+- 정보 수정 제보는 기존 카페 선택, 수정 유형 체크박스, 메모 입력을 지원한다.
+- `coffffe_user` localStorage 구조에 `anonymousId`가 추가됐다. 기존 사용자는 닉네임/동물은 유지하고 `anonymousId`만 보강된다.
+- 사진 업로드는 아직 미구현이다. Supabase Storage `reports` 버킷과 업로드 정책 설계 후 별도 작업이 필요하다.
+- 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
+- 남은 확인: 브라우저에서 실제 제보 제출 후 Supabase `reports` row 생성 여부와 관리자 화면 노출 여부 수동 QA.

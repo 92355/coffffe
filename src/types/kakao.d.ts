@@ -38,7 +38,7 @@ declare namespace kakao {
       function addListener(
         target: Map | Marker,
         type: string,
-        handler: () => void
+        handler: (event?: MouseEvent) => void
       ): void
     }
 
@@ -55,6 +55,10 @@ declare namespace kakao {
     interface SetLevelOptions {
       animate?: boolean | { duration: number }
       anchor?: LatLng
+    }
+
+    interface MouseEvent {
+      latLng: LatLng
     }
 
     interface MarkerOptions {

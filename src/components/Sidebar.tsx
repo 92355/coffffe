@@ -32,6 +32,7 @@ interface SidebarProps {
   activeQuickCategory: string | null
   onQuickCategoryChange: (value: string | null) => void
   onClearSelection: () => void
+  onReportNewPlace: () => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
@@ -57,6 +58,7 @@ export default function Sidebar({
   activeQuickCategory,
   onQuickCategoryChange,
   onClearSelection,
+  onReportNewPlace,
   mobileOpen = false,
   onMobileClose,
 }: SidebarProps) {
@@ -64,15 +66,12 @@ export default function Sidebar({
     <aside className="flex h-full w-full flex-col overflow-hidden rounded-none border-[#eee4d8] bg-[#fbf8f3] shadow-[0_24px_70px_rgba(58,38,18,0.18)] md:rounded-[22px] md:border">
       <div className="shrink-0 px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-3">
-          <Link href="/" className="flex min-w-0 items-center gap-3 no-underline">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#5a2e11] text-white shadow-[0_10px_24px_rgba(90,46,17,0.26)]">
-              <Coffee size={22} fill="currentColor" />
+          <Link href="/" className="flex min-w-0 items-center gap-2.5 no-underline">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#5a2e11] text-white shadow-[0_8px_18px_rgba(90,46,17,0.24)]">
+              <Coffee size={18} fill="currentColor" />
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-xl font-black tracking-tight text-[#7b3c0f]">
-                coFFFFFe map
-              </span>
-              <span className="block truncate text-xs font-bold text-[#9b8a78]">당신의 스페셜티 커피 지도</span>
+            <span className="min-w-0 truncate text-lg font-black tracking-tight text-[#7b3c0f]">
+              coFFFFFe
             </span>
           </Link>
 
@@ -120,29 +119,39 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="shrink-0 border-y border-[#eee4d8] bg-[#fbf8f3] px-4 py-3">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {QUICK_CATEGORIES.map(({ label, value, icon: Icon }) => {
-            const active = activeQuickCategory === value
-            return (
-              <button
-                key={label}
-                type="button"
-                onClick={() => onQuickCategoryChange(value)}
-                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-black transition-all ${
-                  active
-                    ? 'border-[#d66612] bg-[#d66612] text-white'
-                    : 'border-[#eadfd3] bg-white text-[#5f4634] hover:border-[#d9b18a]'
-                }`}
-              >
-                <Icon size={13} />
-                {label}
-              </button>
-            )
-          })}
+      <div className="shrink-0 border-y border-[#eee4d8] bg-[#fbf8f3] py-3">
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-[#fbf8f3] to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-4 bg-gradient-to-l from-[#fbf8f3] to-transparent" />
+          <div className="overflow-x-auto scrollbar-hide px-4 pb-1">
+            <div className="flex items-center gap-1.5">
+              {QUICK_CATEGORIES.map(({ label, value, icon: Icon }, index) => {
+                const active = activeQuickCategory === value
+                const isFirst = index === 0
+                return (
+                  <div key={label} className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onQuickCategoryChange(value)}
+                      aria-pressed={active}
+                      className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-black transition-all ${
+                        active
+                          ? 'border-[#5a2e11] bg-[#5a2e11] text-white shadow-[0_6px_14px_rgba(90,46,17,0.25)]'
+                          : 'border-[#eadfd3] bg-white text-[#5f4634] hover:border-[#d9b18a] hover:bg-[#fff8ef]'
+                      }`}
+                    >
+                      <Icon size={14} />
+                      {label}
+                    </button>
+                    {isFirst && <span aria-hidden className="h-5 w-px shrink-0 bg-[#eadfd3]" />}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
-        <div className="mt-3">
+        <div className="mt-3 px-4">
           <FilterBar filters={filters} onChange={onFilterChange} />
         </div>
       </div>
@@ -172,7 +181,14 @@ export default function Sidebar({
           ))}
           {cafes.length === 0 && (
             <div className="rounded-2xl border border-dashed border-[#dacdbf] bg-white p-6 text-center text-sm font-semibold text-[#8b7a68]">
-              조건에 맞는 카페가 없습니다.
+              <p>조건에 맞는 카페가 없습니다.</p>
+              <button
+                type="button"
+                onClick={onReportNewPlace}
+                className="mt-4 h-10 rounded-xl bg-[#d66612] px-4 text-sm font-black text-white"
+              >
+                새 카페 제보하기
+              </button>
             </div>
           )}
         </div>

@@ -132,3 +132,24 @@ export async function PATCH(request: NextRequest) {
     return badRequest(error)
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!isAuthorizedAdminRequest(request)) return unauthorized()
+
+  const id = request.nextUrl.searchParams.get('id')
+
+  if (!id) {
+    return NextResponse.json({ error: '"id" query parameter is required' }, { status: 400 })
+  }
+
+  const { error } = await createSupabaseAdminClient()
+    .from('reports')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

@@ -229,6 +229,28 @@ export default function AdminPage() {
     setMessage('제보 상태를 변경했습니다.')
   }
 
+  async function deleteReport(id: string) {
+    setMessage('제보를 삭제하는 중입니다.')
+
+    const response = await fetch(`/api/admin/reports?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    })
+
+    if (!response.ok) {
+      const errorMessage = await readApiErrorMessage(response)
+      setMessage(`제보 삭제 실패: ${errorMessage}`)
+      return
+    }
+
+    if (activeReportId === id) {
+      setActiveReportId(null)
+    }
+
+    await loadReports()
+    setMessage('제보를 삭제했습니다.')
+  }
+
   function editCafe(cafe: Cafe) {
     setEditingId(cafe.id)
     setActiveReportId(null)
@@ -370,15 +392,8 @@ export default function AdminPage() {
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => applyReport(report)}
-                    className="h-9 rounded-md bg-[#5a2e11] text-xs font-black text-white"
-                  >
-                    폼 채우기
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => void updateReportStatus(report.id, 'approved')}
-                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-[#d8c8b8] text-xs font-black text-[#236c3a]"
+                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 text-xs font-black text-[#236c3a] transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-sm active:translate-y-0 active:scale-95"
                   >
                     <CheckCircle2 size={14} />
                     승인
@@ -386,10 +401,35 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => void updateReportStatus(report.id, 'rejected')}
-                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-[#d8c8b8] text-xs font-black text-red-700"
+                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 text-xs font-black text-red-700 transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-100 hover:shadow-sm active:translate-y-0 active:scale-95"
                   >
                     <XCircle size={14} />
                     반려
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void updateReportStatus(report.id, 'pending')}
+                    className="flex h-9 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-xs font-black text-[#9a4f0f] transition-all duration-150 hover:-translate-y-0.5 hover:bg-amber-100 hover:shadow-sm active:translate-y-0 active:scale-95"
+                  >
+                    대기
+                  </button>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyReport(report)}
+                    className="h-9 rounded-md bg-[#5a2e11] text-xs font-black text-white shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:bg-[#6b3715] hover:shadow-md active:translate-y-0 active:scale-95"
+                  >
+                    폼 채워넣기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deleteReport(report.id)}
+                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-neutral-300 bg-white text-xs font-black text-neutral-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-red-200 hover:bg-red-50 hover:text-red-700 hover:shadow-sm active:translate-y-0 active:scale-95"
+                  >
+                    <Trash2 size={14} />
+                    삭제
                   </button>
                 </div>
               </article>

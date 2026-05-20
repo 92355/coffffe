@@ -5,6 +5,7 @@ import { generateNickname, isNicknameAnimal, NICKNAME_STORAGE_KEY, type Nickname
 
 interface AnonymousUser {
   type: 'anonymous'
+  anonymousId: string
   nickname: string
   animal: NicknameAnimal
 }
@@ -18,6 +19,7 @@ interface UserState {
 
 interface StoredUser {
   type?: string
+  anonymousId?: unknown
   nickname?: unknown
   animal?: unknown
 }
@@ -88,9 +90,18 @@ function createAnonymousUser(): User {
 
   return {
     type: 'anonymous',
+    anonymousId: createAnonymousId(),
     nickname: generatedNickname.nickname,
     animal: generatedNickname.animal,
   }
+}
+
+function createAnonymousId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `anonymous-${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 function readStoredUser(): User | null {
@@ -111,6 +122,9 @@ function readStoredUser(): User | null {
 
     return {
       type: 'anonymous',
+      anonymousId: typeof parsedUser.anonymousId === 'string'
+        ? parsedUser.anonymousId
+        : createAnonymousId(),
       nickname: parsedUser.nickname,
       animal: parsedUser.animal,
     }

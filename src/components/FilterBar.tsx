@@ -52,19 +52,19 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
   return (
     <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
       <FilterSelect<RoastLevel>
-        label="지역"
+        label="로스팅"
         value={filters.roastLevel}
         options={ROAST_LABELS}
         onChange={(roastLevel) => onChange({ ...filters, roastLevel })}
       />
       <FilterSelect<BeanOrigin>
-        label="분위기"
+        label="원두"
         value={filters.beanOrigin}
         options={ORIGIN_LABELS}
         onChange={(beanOrigin) => onChange({ ...filters, beanOrigin })}
       />
       <FilterSelect<BrewMethod>
-        label="가격대"
+        label="추출"
         value={filters.brewMethod}
         options={BREW_LABELS}
         onChange={(brewMethod) => onChange({ ...filters, brewMethod })}
