@@ -4,13 +4,24 @@ declare namespace kakao {
 
     class Map {
       constructor(container: HTMLElement, options: MapOptions)
+      getBounds(): LatLngBounds
+      getLevel(): number
       setCenter(latlng: LatLng): void
       panTo(latlng: LatLng): void
       setLevel(level: number, options?: SetLevelOptions): void
+      setMapTypeId(mapTypeId: number): void
     }
 
     class LatLng {
       constructor(lat: number, lng: number)
+      getLat(): number
+      getLng(): number
+    }
+
+    class LatLngBounds {
+      contain(latlng: LatLng): boolean
+      getNorthEast(): LatLng
+      getSouthWest(): LatLng
     }
 
     class Marker {
@@ -29,6 +40,11 @@ declare namespace kakao {
         type: string,
         handler: () => void
       ): void
+    }
+
+    namespace MapTypeId {
+      const ROADMAP: number
+      const SKYVIEW: number
     }
 
     interface MapOptions {

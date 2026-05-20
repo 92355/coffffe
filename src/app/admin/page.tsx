@@ -1,8 +1,9 @@
 'use client'
 
 import { FormEvent, startTransition, useEffect, useMemo, useState } from 'react'
-import { Coffee, MapPin, Pencil, Search, Trash2 } from 'lucide-react'
+import { CheckCircle2, Coffee, MapPin, Pencil, Search, Trash2, XCircle } from 'lucide-react'
 import type { BeanOrigin, BrewMethod, Cafe, RoastLevel } from '@/types/cafe'
+import type { CafeReport, ReportStatus } from '@/types/report'
 
 const ROAST_LEVELS: RoastLevel[] = ['light', 'medium-light', 'medium', 'medium-dark', 'dark']
 const BEAN_ORIGINS: BeanOrigin[] = [
@@ -20,6 +21,8 @@ const BREW_METHODS: BrewMethod[] = ['espresso', 'pour-over', 'cold-brew', 'aerop
 const DEFAULT_SCORE = 4.5
 const DEFAULT_LAT = 37.3084
 const DEFAULT_LNG = 126.8419
+const DEFAULT_REPORT_DESCRIPTION = '제보로 등록된 카페입니다.'
+const DEFAULT_REPORT_OPEN_HOURS = '확인 필요'
 
 interface KakaoPlace {
   kakaoPlaceId: string
@@ -99,8 +102,10 @@ async function readApiErrorMessage(response: Response): Promise<string> {
 
 export default function AdminPage() {
   const [cafes, setCafes] = useState<Cafe[]>([])
+  const [reports, setReports] = useState<CafeReport[]>([])
   const [form, setForm] = useState<CafeForm>(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [activeReportId, setActiveReportId] = useState<string | null>(null)
   const [kakaoQuery, setKakaoQuery] = useState('')
   const [places, setPlaces] = useState<KakaoPlace[]>([])
   const [message, setMessage] = useState('')
@@ -108,6 +113,10 @@ export default function AdminPage() {
   const sortedCafes = useMemo(
     () => [...cafes].sort((a, b) => b.qualityScore - a.qualityScore),
     [cafes],
+  )
+  const pendingReports = useMemo(
+    () => reports.filter((report) => report.status === 'pending'),
+    [reports],
   )
 
   async function loadCafes() {
@@ -126,12 +135,30 @@ export default function AdminPage() {
 
   useEffect(() => {
     startTransition(() => {
+      void loadReports().catch((error) => {
+        console.error(error)
+        setMessage('제보 목록을 불러오지 못했습니다.')
+      })
       void loadCafes().catch((error) => {
         console.error(error)
         setMessage('카페 목록을 불러오지 못했습니다.')
       })
     })
   }, [])
+
+  async function loadReports() {
+    const response = await fetch('/api/admin/reports', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    })
+
+    if (!response.ok) {
+      const errorMessage = await readApiErrorMessage(response)
+      throw new Error(`Failed to load reports: ${errorMessage}`)
+    }
+
+    setReports(await response.json() as CafeReport[])
+  }
 
   async function searchKakaoPlaces(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -161,8 +188,50 @@ export default function AdminPage() {
     }))
   }
 
+  function applyReport(report: CafeReport) {
+    const reportName = report.name ?? ''
+    const reportMemo = report.memo ? `제보 메모: ${report.memo}` : DEFAULT_REPORT_DESCRIPTION
+
+    setEditingId(null)
+    setActiveReportId(report.id)
+    setForm({
+      ...EMPTY_FORM,
+      id: slugify(reportName, `report-${report.id.slice(0, 8)}`),
+      name: reportName,
+      shortDescription: DEFAULT_REPORT_DESCRIPTION,
+      fullDescription: reportMemo,
+      address: report.address ?? '',
+      lat: report.lat ?? DEFAULT_LAT,
+      lng: report.lng ?? DEFAULT_LNG,
+      openHours: DEFAULT_REPORT_OPEN_HOURS,
+      kakaoPlaceId: report.kakaoPlaceId ?? '',
+    })
+    setMessage('제보 내용을 카페 등록 폼에 채웠습니다.')
+  }
+
+  async function updateReportStatus(id: string, status: ReportStatus) {
+    setMessage('제보 상태를 변경하는 중입니다.')
+
+    const response = await fetch('/api/admin/reports', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id, status }),
+    })
+
+    if (!response.ok) {
+      const errorMessage = await readApiErrorMessage(response)
+      setMessage(`제보 상태 변경 실패: ${errorMessage}`)
+      return
+    }
+
+    await loadReports()
+    setMessage('제보 상태를 변경했습니다.')
+  }
+
   function editCafe(cafe: Cafe) {
     setEditingId(cafe.id)
+    setActiveReportId(null)
     setForm({
       ...cafe,
       qualityScore: String(cafe.qualityScore),
@@ -190,9 +259,13 @@ export default function AdminPage() {
     }
 
     await loadCafes()
+    if (activeReportId) {
+      await updateReportStatus(activeReportId, 'approved')
+    }
     setForm(EMPTY_FORM)
     setEditingId(null)
-    setMessage('저장했습니다.')
+    setActiveReportId(null)
+    setMessage(activeReportId ? '카페를 저장하고 제보를 승인 처리했습니다.' : '저장했습니다.')
   }
 
   async function deleteCafe(id: string) {
@@ -253,7 +326,78 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <section className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm lg:col-start-1">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-black">제보 리스트</h2>
+            <span className="rounded-full bg-[#f7eee5] px-3 py-1 text-xs font-black text-[#8b5a32]">
+              대기 {pendingReports.length}
+            </span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {reports.length === 0 && (
+              <p className="rounded-md border border-dashed border-[#d8c8b8] px-3 py-4 text-sm font-bold text-[#7a6654]">
+                표시할 제보가 없습니다.
+              </p>
+            )}
+
+            {reports.map((report) => (
+              <article key={report.id} className="rounded-md border border-[#eadfd3] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-sm font-black">{report.name ?? '이름 없음'}</h3>
+                      <ReportStatusBadge status={report.status} />
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-[#7a6654]">
+                      {report.type === 'new_place' ? '신규 장소' : '정보 수정'} · {report.nickname}
+                    </p>
+                    {report.address && (
+                      <p className="mt-2 flex items-start gap-1 text-xs font-semibold text-[#7a6654]">
+                        <MapPin size={13} />
+                        {report.address}
+                      </p>
+                    )}
+                    {report.memo && <p className="mt-2 text-xs font-semibold text-[#5f4634]">{report.memo}</p>}
+                    {report.correctionTypes.length > 0 && (
+                      <p className="mt-2 text-xs font-bold text-[#8b5a32]">
+                        수정 요청: {report.correctionTypes.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyReport(report)}
+                    className="h-9 rounded-md bg-[#5a2e11] text-xs font-black text-white"
+                  >
+                    폼 채우기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void updateReportStatus(report.id, 'approved')}
+                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-[#d8c8b8] text-xs font-black text-[#236c3a]"
+                  >
+                    <CheckCircle2 size={14} />
+                    승인
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void updateReportStatus(report.id, 'rejected')}
+                    className="flex h-9 items-center justify-center gap-1 rounded-md border border-[#d8c8b8] text-xs font-black text-red-700"
+                  >
+                    <XCircle size={14} />
+                    반려
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-5 lg:col-start-2 lg:row-span-2 lg:row-start-1 xl:grid-cols-[minmax(0,1fr)_420px]">
           <CafeFormPanel
             form={form}
             editingId={editingId}
@@ -261,6 +405,7 @@ export default function AdminPage() {
             onSubmit={saveCafe}
             onCancel={() => {
               setEditingId(null)
+              setActiveReportId(null)
               setForm(EMPTY_FORM)
             }}
           />
@@ -341,6 +486,25 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
         저장
       </button>
     </form>
+  )
+}
+
+function ReportStatusBadge({ status }: { status: ReportStatus }) {
+  const label: Record<ReportStatus, string> = {
+    pending: '대기',
+    approved: '승인',
+    rejected: '반려',
+  }
+  const className: Record<ReportStatus, string> = {
+    pending: 'bg-[#fff7ed] text-[#9a4f0f]',
+    approved: 'bg-[#ecfdf3] text-[#236c3a]',
+    rejected: 'bg-[#fef2f2] text-red-700',
+  }
+
+  return (
+    <span className={`rounded-full px-2 py-1 text-[11px] font-black ${className[status]}`}>
+      {label[status]}
+    </span>
   )
 }
 

@@ -3,34 +3,75 @@
 import { useEffect, useRef, useCallback } from 'react'
 import type { MutableRefObject } from 'react'
 import type { Cafe } from '@/types/cafe'
+import type { LocationPoint } from '@/types/location'
 
 interface KakaoMapProps {
   cafes: Cafe[]
   selectedCafe?: Cafe | null
   onCafeSelect: (cafe: Cafe | null) => void
+  onMapBoundsChange?: (bounds: MapBounds) => void
+  mapType?: MapType
+  zoomRequest?: ZoomRequest | null
   locationRequestId?: number
+  onUserLocationChange?: (location: LocationPoint) => void
+}
+
+export type MapType = 'normal' | 'skyview'
+
+export interface MapBounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
+export interface ZoomRequest {
+  id: number
+  direction: 'in' | 'out'
 }
 
 const ANSAN_CENTER = { lat: 37.3084, lng: 126.8419 }
 const SELECTED_MAP_LEVEL = 3
+const MIN_MAP_LEVEL = 1
+const MAX_MAP_LEVEL = 14
 const DEFAULT_MARKER_SIZE = 40
 const SELECTED_MARKER_SIZE = 52
 const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 5000
 
-export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRequestId = 0 }: KakaoMapProps) {
+export default function KakaoMap({
+  cafes,
+  selectedCafe,
+  onCafeSelect,
+  onMapBoundsChange,
+  mapType = 'normal',
+  zoomRequest = null,
+  locationRequestId = 0,
+  onUserLocationChange,
+}: KakaoMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<kakao.maps.Map | null>(null)
   const overlaysRef = useRef<Map<string, kakao.maps.CustomOverlay>>(new Map())
   const userLocationOverlayRef = useRef<kakao.maps.CustomOverlay | null>(null)
   const geolocationWatchIdRef = useRef<number | null>(null)
   const onSelectRef = useRef(onCafeSelect)
+  const onBoundsChangeRef = useRef(onMapBoundsChange)
+  const onUserLocationChangeRef = useRef(onUserLocationChange)
+  const handledZoomRequestIdRef = useRef(0)
 
   const cafesRef = useRef(cafes)
 
   useEffect(() => {
     onSelectRef.current = onCafeSelect
   }, [onCafeSelect])
+
+  useEffect(() => {
+    onBoundsChangeRef.current = onMapBoundsChange
+  }, [onMapBoundsChange])
+
+  useEffect(() => {
+    onUserLocationChangeRef.current = onUserLocationChange
+  }, [onUserLocationChange])
 
   const renderMarkers = useCallback(() => {
     const map = mapRef.current
@@ -72,11 +113,41 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
     focusCafeOnMap(map, selectedCafe)
   }, [selectedCafe])
 
+  const notifyMapBoundsChange = useCallback((map: kakao.maps.Map | null) => {
+    if (!map) return
+
+    const bounds = map.getBounds()
+    const northEast = bounds.getNorthEast()
+    const southWest = bounds.getSouthWest()
+
+    onBoundsChangeRef.current?.({
+      north: northEast.getLat(),
+      south: southWest.getLat(),
+      east: northEast.getLng(),
+      west: southWest.getLng(),
+    })
+  }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !zoomRequest || handledZoomRequestIdRef.current === zoomRequest.id) return
+
+    handledZoomRequestIdRef.current = zoomRequest.id
+    zoomMap(map, zoomRequest.direction)
+  }, [zoomRequest])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+
+    setMapType(map, mapType)
+  }, [mapType])
+
   useEffect(() => {
     const map = mapRef.current
     if (!map || locationRequestId === 0) return
 
-    startWatchingUserLocation(map, userLocationOverlayRef, geolocationWatchIdRef)
+    startWatchingUserLocation(map, userLocationOverlayRef, geolocationWatchIdRef, onUserLocationChangeRef)
   }, [locationRequestId])
 
   // Initialize map once / 지도는 최초 1회만 초기화한다.
@@ -95,6 +166,14 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
         kakao.maps.event.addListener(mapRef.current, 'click', () => {
           onSelectRef.current(null)
         })
+        kakao.maps.event.addListener(mapRef.current, 'dragend', () => {
+          notifyMapBoundsChange(mapRef.current)
+        })
+        kakao.maps.event.addListener(mapRef.current, 'zoom_changed', () => {
+          notifyMapBoundsChange(mapRef.current)
+        })
+        setMapType(mapRef.current, mapType)
+        notifyMapBoundsChange(mapRef.current)
         renderMarkers()
       })
     }
@@ -105,7 +184,7 @@ export default function KakaoMap({ cafes, selectedCafe, onCafeSelect, locationRe
       window.addEventListener('kakaoMapReady', initMap, { once: true })
       return () => window.removeEventListener('kakaoMapReady', initMap)
     }
-  }, [renderMarkers])
+  }, [mapType, notifyMapBoundsChange, renderMarkers])
 
   useEffect(() => () => {
     if (geolocationWatchIdRef.current !== null) {
@@ -122,10 +201,27 @@ function focusCafeOnMap(map: kakao.maps.Map, cafe: Cafe): void {
   map.setLevel(SELECTED_MAP_LEVEL)
 }
 
+function zoomMap(map: kakao.maps.Map, direction: ZoomRequest['direction']): void {
+  const nextLevel = direction === 'in'
+    ? Math.max(MIN_MAP_LEVEL, map.getLevel() - 1)
+    : Math.min(MAX_MAP_LEVEL, map.getLevel() + 1)
+
+  map.setLevel(nextLevel, { animate: true })
+}
+
+function setMapType(map: kakao.maps.Map, mapType: MapType): void {
+  const nextMapTypeId = mapType === 'skyview'
+    ? kakao.maps.MapTypeId.SKYVIEW
+    : kakao.maps.MapTypeId.ROADMAP
+
+  map.setMapTypeId(nextMapTypeId)
+}
+
 function startWatchingUserLocation(
   map: kakao.maps.Map,
   overlayRef: MutableRefObject<kakao.maps.CustomOverlay | null>,
   watchIdRef: MutableRefObject<number | null>,
+  onUserLocationChangeRef: MutableRefObject<((location: LocationPoint) => void) | undefined>,
 ): void {
   if (!navigator.geolocation) {
     console.error('Geolocation is not supported by this browser.')
@@ -140,11 +236,16 @@ function startWatchingUserLocation(
 
   watchIdRef.current = navigator.geolocation.watchPosition(
     (position) => {
+      const currentLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      }
       const userPosition = new kakao.maps.LatLng(
-        position.coords.latitude,
-        position.coords.longitude,
+        currentLocation.lat,
+        currentLocation.lng,
       )
 
+      onUserLocationChangeRef.current?.(currentLocation)
       renderUserLocationOverlay(map, overlayRef, userPosition)
 
       if (shouldCenterOnNextPosition) {

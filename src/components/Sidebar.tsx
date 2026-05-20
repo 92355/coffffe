@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
+import type { LocationPoint } from '@/types/location'
 import CafeListItem from '@/components/CafeListItem'
 import FilterBar from '@/components/FilterBar'
 import SearchBar from '@/components/SearchBar'
@@ -26,6 +27,7 @@ interface SidebarProps {
   searchQuery: string
   onSearchChange: (value: string) => void
   selectedCafe: Cafe | null
+  distanceOrigin: LocationPoint | null
   onCafeSelect: (cafe: Cafe) => void
   activeQuickCategory: string | null
   onQuickCategoryChange: (value: string | null) => void
@@ -50,6 +52,7 @@ export default function Sidebar({
   searchQuery,
   onSearchChange,
   selectedCafe,
+  distanceOrigin,
   onCafeSelect,
   activeQuickCategory,
   onQuickCategoryChange,
@@ -163,6 +166,7 @@ export default function Sidebar({
               key={cafe.id}
               cafe={cafe}
               selected={selectedCafe?.id === cafe.id}
+              distanceOrigin={distanceOrigin}
               onSelect={onCafeSelect}
             />
           ))}

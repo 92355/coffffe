@@ -2,27 +2,28 @@
 
 import { MapPin, Star } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
+import type { LocationPoint } from '@/types/location'
 
 interface CafeListItemProps {
   cafe: Cafe
   selected: boolean
+  distanceOrigin: LocationPoint | null
   onSelect: (cafe: Cafe) => void
 }
 
-const CENTER = { lat: 37.3084, lng: 126.8419 }
+const EARTH_RADIUS_KM = 6371
 
-function distanceKm(cafe: Cafe) {
-  const earthRadiusKm = 6371
-  const dLat = ((cafe.lat - CENTER.lat) * Math.PI) / 180
-  const dLng = ((cafe.lng - CENTER.lng) * Math.PI) / 180
-  const lat1 = (CENTER.lat * Math.PI) / 180
+function distanceKm(cafe: Cafe, origin: LocationPoint) {
+  const dLat = ((cafe.lat - origin.lat) * Math.PI) / 180
+  const dLng = ((cafe.lng - origin.lng) * Math.PI) / 180
+  const lat1 = (origin.lat * Math.PI) / 180
   const lat2 = (cafe.lat * Math.PI) / 180
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
-  return earthRadiusKm * c
+  return EARTH_RADIUS_KM * c
 }
 
 function thumbnailStyle(cafe: Cafe) {
@@ -35,9 +36,11 @@ function thumbnailStyle(cafe: Cafe) {
   }
 }
 
-export default function CafeListItem({ cafe, selected, onSelect }: CafeListItemProps) {
-  const km = distanceKm(cafe)
-  const distance = km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`
+export default function CafeListItem({ cafe, selected, distanceOrigin, onSelect }: CafeListItemProps) {
+  const km = distanceOrigin ? distanceKm(cafe, distanceOrigin) : null
+  const distance = km === null
+    ? '위치 확인중'
+    : km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`
 
   return (
     <button

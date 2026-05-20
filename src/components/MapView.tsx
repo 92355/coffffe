@@ -1,11 +1,15 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Bell, ChevronDown, Layers, List, LocateFixed, Minus, Plus, Search, UserRound } from 'lucide-react'
+import { Bell, ChevronDown, Layers, List, LocateFixed, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
 import Sidebar from '@/components/Sidebar'
+import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
+import { getAnimalAvatar } from '@/lib/animalAvatar'
+import { useUser } from '@/hooks/useUser'
+import type { LocationPoint } from '@/types/location'
 
 const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), { ssr: false })
 
@@ -18,16 +22,30 @@ const INITIAL_FILTERS: FilterState = {
   beanOrigin: null,
   brewMethod: null,
 }
+const GEOLOCATION_TIMEOUT_MS = 10000
+const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 
 export default function MapView({ allCafes }: MapViewProps) {
+  const { user, regenerateNickname } = useUser()
+  const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(allCafes[0] ?? null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
   const [mobileListOpen, setMobileListOpen] = useState(false)
   const [locationRequestId, setLocationRequestId] = useState(0)
+  const [mapType, setMapType] = useState<MapType>('normal')
+  const [zoomRequest, setZoomRequest] = useState<ZoomRequest | null>(null)
+  const [currentMapBounds, setCurrentMapBounds] = useState<MapBounds | null>(null)
+  const [activeMapBounds, setActiveMapBounds] = useState<MapBounds | null>(null)
+  const [hasPendingBoundsSearch, setHasPendingBoundsSearch] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
+  const [locationPermissionModalOpen, setLocationPermissionModalOpen] = useState(true)
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false)
+  const [locationPermissionError, setLocationPermissionError] = useState<string | null>(null)
 
-  const filteredCafes = useMemo(() => {
+  const baseFilteredCafes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
     const normalizedCategory = activeQuickCategory?.trim().toLowerCase() ?? ''
 
@@ -44,9 +62,105 @@ export default function MapView({ allCafes }: MapViewProps) {
     })
   }, [activeQuickCategory, allCafes, filters, searchQuery])
 
+  const filteredCafes = useMemo(() => {
+    if (!activeMapBounds) return baseFilteredCafes
+
+    return baseFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
+  }, [activeMapBounds, baseFilteredCafes])
+
+  const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
+    setCurrentMapBounds(bounds)
+    setHasPendingBoundsSearch(currentMapBounds !== null)
+  }, [currentMapBounds])
+
+  const handleSearchCurrentMap = useCallback(() => {
+    if (!currentMapBounds) return
+
+    setActiveMapBounds(currentMapBounds)
+    setHasPendingBoundsSearch(false)
+    setSelectedCafe((currentCafe) => {
+      if (!currentCafe || !isCafeInsideBounds(currentCafe, currentMapBounds)) return null
+      return currentCafe
+    })
+  }, [currentMapBounds])
+
+  const handleZoom = useCallback((direction: ZoomRequest['direction']) => {
+    setZoomRequest((currentRequest) => ({
+      id: (currentRequest?.id ?? 0) + 1,
+      direction,
+    }))
+  }, [])
+
+  const handleMapTypeToggle = useCallback(() => {
+    setMapType((currentType) => currentType === 'normal' ? 'skyview' : 'normal')
+  }, [])
+
+  const requestUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationPermissionError('이 기기에서는 위치 기능을 사용할 수 없어요.')
+      return
+    }
+
+    setIsRequestingLocation(true)
+    setLocationPermissionError(null)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+        setLocationPermissionModalOpen(false)
+        setIsRequestingLocation(false)
+        setLocationRequestId((current) => current + 1)
+      },
+      (error) => {
+        const message = error.code === error.PERMISSION_DENIED
+          ? '위치 권한이 거부됐어요. 브라우저 설정에서 위치 권한을 허용한 뒤 다시 눌러주세요.'
+          : '현재 위치를 확인하지 못했어요. 잠시 후 다시 시도해주세요.'
+
+        setLocationPermissionError(message)
+        setIsRequestingLocation(false)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+        maximumAge: GEOLOCATION_MAXIMUM_AGE_MS,
+      },
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+
+    const handlePointerDown = (event: PointerEvent): void => {
+      const target = event.target
+
+      if (!(target instanceof Node) || profileMenuRef.current?.contains(target)) return
+
+      setProfileMenuOpen(false)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== 'Escape') return
+
+      setProfileMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [profileMenuOpen])
+
   const visibleSelectedCafe = selectedCafe && filteredCafes.some(cafe => cafe.id === selectedCafe.id)
     ? selectedCafe
     : null
+  const profileLabel = user?.nickname ?? '익명 사용자'
+  const profileAvatar = user ? getAnimalAvatar(user.animal) : '☕'
 
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-[#f3eee7]">
@@ -57,6 +171,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         selectedCafe={visibleSelectedCafe}
+        distanceOrigin={userLocation}
         onCafeSelect={(cafe) => {
           setSelectedCafe(cafe)
           setMobileListOpen(false)
@@ -73,46 +188,117 @@ export default function MapView({ allCafes }: MapViewProps) {
           cafes={filteredCafes}
           selectedCafe={visibleSelectedCafe}
           onCafeSelect={setSelectedCafe}
+          onMapBoundsChange={handleMapBoundsChange}
+          mapType={mapType}
+          zoomRequest={zoomRequest}
           locationRequestId={locationRequestId}
+          onUserLocationChange={setUserLocation}
         />
 
         <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex justify-center px-4">
           <button
             type="button"
-            className="pointer-events-auto flex h-10 items-center gap-2 rounded-full border border-[#eee4d8] bg-white px-4 text-sm font-black text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
+            onClick={handleSearchCurrentMap}
+            disabled={!hasPendingBoundsSearch || !currentMapBounds}
+            className="pointer-events-auto flex h-10 items-center gap-2 rounded-full border border-[#eee4d8] bg-white px-4 text-sm font-black text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Search size={15} />
             이 지역 검색
           </button>
         </div>
 
-        <div className="pointer-events-none absolute right-4 top-4 z-20 hidden items-center gap-2 md:flex">
+        <div className="pointer-events-none absolute right-4 top-4 z-20 flex items-center gap-2">
           <button
             type="button"
-            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
+            className="pointer-events-auto hidden h-11 w-11 items-center justify-center rounded-full border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] md:flex"
             aria-label="알림"
           >
             <Bell size={18} />
           </button>
-          <button
-            type="button"
-            className="pointer-events-auto flex h-11 items-center gap-2 rounded-full border border-[#eee4d8] bg-white py-1 pl-1.5 pr-3 text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
-            aria-label="프로필"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2d8c1]">
-              <UserRound size={16} />
-            </span>
-            <ChevronDown size={14} />
-          </button>
+          <div ref={profileMenuRef} className="pointer-events-auto relative">
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((current) => !current)}
+              className="flex h-11 items-center gap-2 rounded-full border border-[#eee4d8] bg-white py-1 pl-1.5 pr-3 text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
+              aria-label="프로필 메뉴"
+              aria-expanded={profileMenuOpen}
+              title={profileLabel}
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2d8c1] text-lg leading-none">
+                {profileAvatar}
+              </span>
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {profileMenuOpen && (
+              <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl border border-[#eadccb] bg-white p-3 text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)]">
+                <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
+                  <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] text-base leading-none">
+                    {profileAvatar}
+                  </span>
+                  <span className="min-w-0 truncate text-sm font-black">{profileLabel}</span>
+                    <button
+                      type="button"
+                      onClick={regenerateNickname}
+                      className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+                      aria-label="닉네임 새로고침"
+                      title="닉네임 새로고침"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
+                    회원가입 전 임시 닉네임이에요. 새로고침을 눌러 개성넘치는 조합을 만들어보세요!
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+                  >
+                    제보내역
+                  </button>
+                  <button
+                    type="button"
+                    className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+                  >
+                    내 리뷰내역
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-2 h-10 w-full rounded-lg bg-[#fee500] px-4 text-sm font-black text-[#381e1f] transition-colors hover:bg-[#f7dc00]"
+                >
+                  카카오 로그인하기
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="pointer-events-none absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-3 md:flex">
           <div className="pointer-events-auto overflow-hidden rounded-2xl border border-[#eee4d8] bg-white shadow-[0_12px_28px_rgba(60,40,20,0.12)]">
-            <button type="button" className="flex h-12 w-12 items-center justify-center text-[#6f3b17]" aria-label="확대">
+            <button
+              type="button"
+              onClick={() => handleZoom('in')}
+              className="flex h-12 w-12 items-center justify-center text-[#6f3b17]"
+              aria-label="확대"
+            >
               <Plus size={17} />
             </button>
             <div className="mx-2 h-px bg-[#eee4d8]" />
-            <button type="button" className="flex h-12 w-12 items-center justify-center text-[#6f3b17]" aria-label="축소">
+            <button
+              type="button"
+              onClick={() => handleZoom('out')}
+              className="flex h-12 w-12 items-center justify-center text-[#6f3b17]"
+              aria-label="축소"
+            >
               <Minus size={17} />
             </button>
           </div>
@@ -126,6 +312,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           </button>
           <button
             type="button"
+            onClick={handleMapTypeToggle}
             className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
             aria-label="지도 레이어"
           >
@@ -167,8 +354,57 @@ export default function MapView({ allCafes }: MapViewProps) {
 
         <BottomSheet cafe={visibleSelectedCafe} onClose={() => setSelectedCafe(null)} />
       </div>
+
+      {locationPermissionModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1f150f]/55 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="location-permission-title"
+            className="relative w-full max-w-sm rounded-2xl border border-[#eadccb] bg-white p-5 text-center text-[#5a2e11] shadow-[0_24px_70px_rgba(34,20,10,0.28)]"
+          >
+            <button
+              type="button"
+              onClick={() => setLocationPermissionModalOpen(false)}
+              aria-label="닫기"
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#80624a] hover:bg-[#f8efe6]"
+            >
+              <X size={18} />
+            </button>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8efe6] text-[#d66612]">
+              <LocateFixed size={22} />
+            </div>
+            <h2 id="location-permission-title" className="mt-4 text-lg font-black">
+              위치접근 권한을 허용해주세요
+            </h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#80624a]">
+              내 현 위치를 기준으로 가까운 카페 거리와 지도를 더 정확하게 보여드릴게요.
+            </p>
+            {locationPermissionError && (
+              <p className="mt-3 rounded-xl bg-[#fff4ed] px-3 py-2 text-xs font-bold leading-5 text-[#b94a12]">
+                {locationPermissionError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={requestUserLocation}
+              disabled={isRequestingLocation}
+              className="mt-5 h-11 w-full rounded-xl bg-[#d66612] px-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(150,72,14,0.28)] transition-colors hover:bg-[#c45b0d] disabled:cursor-wait disabled:opacity-70"
+            >
+              {isRequestingLocation ? '위치 확인중' : '위치접근권한 허용하기'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+function isCafeInsideBounds(cafe: Cafe, bounds: MapBounds): boolean {
+  const isInsideLatitude = cafe.lat >= bounds.south && cafe.lat <= bounds.north
+  const isInsideLongitude = cafe.lng >= bounds.west && cafe.lng <= bounds.east
+
+  return isInsideLatitude && isInsideLongitude
 }
 
 function CoffeeDot() {
