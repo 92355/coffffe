@@ -32,8 +32,8 @@
 
 | 경로 | 파일 | 특이사항 |
 |---|---|---|
-| `/` | `src/app/page.tsx` | Client Component. `/api/cafes` fetch → `MapView`. SplashScreen(세션당 1회) |
-| `/map` | `src/app/map/page.tsx` | `/`로 redirect |
+| `/` | `src/app/page.tsx` | 랜딩페이지. 지도/CBTI/원두 CTA 제공 |
+| `/map` | `src/app/map/page.tsx` | Client Component. `/api/cafes` fetch → `MapView`. SplashScreen(세션당 1회) |
 | `/cafes/[id]` | `src/app/cafes/[id]/page.tsx` | 서버 컴포넌트. `notFound()` 처리 |
 | `/beans` | `src/app/beans/page.tsx` | 클라이언트. 원산지 + 향미 필터 |
 | `/cbti` | `src/app/cbti/page.tsx` | 클라이언트. 커피 성향 테스트 |
@@ -138,10 +138,14 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 
 ---
 
-## 10. Git 현황 (2026-05-19 기준)
+## 10. Git 현황 (2026-05-20 기준)
 
 | 커밋 | 내용 |
 |---|---|
+| `688eb3d` | 랜딩페이지 추가 및 로고 변경 |
+| `737ef00` | 랜딩페이지 추가, 지도 라우트 `/map` 이동 |
+| `073a7eb` | favicon 추가 |
+| `c2847d5` | 사용자 프로필 및 제보 관리자 흐름 추가 |
 | `c945639` | 수파베이스 연결 (supabase 연동, admin 페이지, 커스텀 마커 전체) |
 | `e9141d3` | UIUX 개선 (Sidebar 퀵카테고리, FilterBar, MapView, CafeListItem 개선) |
 | `f211987` | docs: update map UI plan |
@@ -155,7 +159,7 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 
 - `cafes.json` fallback 유지 중. Supabase 안정적이면 추후 삭제 가능.
 - MapView 하단 "목록 보기" 버튼이 `md:hidden`/`md:flex` 두 개로 중복 렌더링됨 (로직은 동일).
-- `/cafes/[id]` 뒤로가기 → `/` 이동.
+- `/cafes/[id]` 뒤로가기 → `/map` 이동.
 - 지도 우중단 +/-/LocateFixed/Layers 버튼은 동작 연결 완료. Bell 버튼은 UI만 있음.
 - Profile 버튼은 익명 사용자 랜덤 한글 닉네임의 동물 아바타를 표시하고, hover/title로 전체 닉네임을 노출함.
 - Profile 버튼 클릭 시 우측 상단에 직사각형 드롭다운 메뉴를 표시함. 메뉴 항목은 내 아이디, 제보내역, 내 리뷰내역, 카카오 로그인하기.
@@ -170,11 +174,11 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 
 ---
 
-## 2026-05-20 �߰� ����
+## 2026-05-20 �߰� ����
 
-- ���� ���� ��� ������ ��ư�� ����ũ��� ����� ��� ǥ���Ѵ�.
-- �˸� ��ư�� ����ó�� ����ũ�鿡���� ǥ���Ѵ�.
-- ����� ������ ��Ӵٿ��� ȭ�� ������ ��ġ�� �ʵ��� `100vw - 2rem`�� �ִ� `20rem` �� ������ �Բ� ����Ѵ�.
+- ���� ���� ��� ������ ��ư�� ����ũ��� ����� ��� ǥ���Ѵ�.
+- �˸� ��ư�� ����ó�� ����ũ�鿡���� ǥ���Ѵ�.
+- ����� ������ ��Ӵٿ��� ȭ�� ������ ��ġ�� �ʵ��� `100vw - 2rem`�� �ִ� `20rem` �� ������ �Բ� ����Ѵ�.
 
 ---
 
@@ -200,3 +204,16 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 - 사진 업로드는 아직 미구현이다. Supabase Storage `reports` 버킷과 업로드 정책 설계 후 별도 작업이 필요하다.
 - 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
 - 남은 확인: 브라우저에서 실제 제보 제출 후 Supabase `reports` row 생성 여부와 관리자 화면 노출 여부 수동 QA.
+
+---
+
+## 2026-05-20 추가 상태: 랜딩페이지 / 지도 라우트 전환
+
+- `/`는 랜딩페이지로 변경됐다.
+- 기존 지도 메인 화면은 `/map`으로 이동했다.
+- `src/app/map/page.tsx`가 `/api/cafes`를 fetch하고 `MapView`를 렌더링한다.
+- 랜딩페이지 CTA는 `/map`, `/cbti`, `/beans`로 연결된다.
+- `Sidebar`의 지도 탭과 카페 상세의 "지도로 돌아가기" 링크는 `/map`으로 변경됐다.
+- 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
+- 개발 서버에서 `/`, `/map` 200 응답 확인 완료.
+- 최신 확인 커밋: `688eb3d 랜딩페이지 추가 ㅁ및 로고 변경`.

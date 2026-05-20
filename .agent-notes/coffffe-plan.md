@@ -1,7 +1,7 @@
 # coFFFFFe-map 현재 계획
 
 > 마지막 갱신: 2026-05-20
-> 상태: **Plan 5 구현 완료 / Supabase SQL 적용 및 브라우저 QA 대기**
+> 상태: **랜딩페이지 1차 반영 완료 / Plan 5 Supabase SQL 적용 및 브라우저 QA 대기**
 
 ---
 
@@ -562,5 +562,46 @@ npm.cmd run build
 - `/admin`에서 카페 ID 입력 후 대표 이미지 업로드 확인
 - `/admin`에서 이미지 URL 직접 입력 시 미리보기와 저장이 정상인지 확인
 - 긴 이미지 URL이 대표 이미지 카드 밖으로 넘치지 않는지 확인
-- 저장 후 `/` 지도 마커와 카페 리스트 썸네일에 이미지가 반영되는지 확인
+- 저장 후 `/map` 지도 마커와 카페 리스트 썸네일에 이미지가 반영되는지 확인
 - 새로고침 후 이미지가 유지되는지 확인
+
+---
+
+## 2026-05-20 랜딩페이지 1차 반영
+
+상태: 구현 및 1차 커밋 완료
+
+### 변경 파일
+
+- `src/app/page.tsx`
+- `src/app/map/page.tsx`
+- `src/components/Sidebar.tsx`
+- `src/app/cafes/[id]/page.tsx`
+
+### 구현 내용
+
+- `/`를 랜딩페이지로 변경했다.
+- 기존 지도 화면은 `/map`으로 이동했다.
+- `/map`에서 기존처럼 `/api/cafes`를 fetch하고 `MapView`를 렌더링한다.
+- 랜딩페이지에 지도, CBTI, 원두 페이지 CTA를 추가했다.
+- 지도 사이드바의 지도 탭 링크와 카페 상세의 "지도로 돌아가기" 링크를 `/map`으로 변경했다.
+
+### 확인 결과
+
+```bash
+npx.cmd tsc --noEmit
+npm.cmd run lint
+npm.cmd run build
+```
+
+결과: 모두 통과.
+
+- 개발 서버에서 `/`, `/map` 200 응답 확인 완료.
+- 1차 커밋: `737ef00 feat: add landing page and move map route`
+- 최신 확인 커밋: `688eb3d 랜딩페이지 추가 ㅁ및 로고 변경`
+
+### 남은 TODO
+
+- 브라우저에서 모바일 375px 기준 랜딩페이지 overflow 여부 확인
+- `/map`에서 카카오 지도 SDK와 마커 렌더링 수동 확인
+- Plan 5 Supabase SQL 적용 및 이미지 업로드 브라우저 QA 진행
