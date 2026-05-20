@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Bell,
   BookOpen,
@@ -67,11 +68,18 @@ export default function Sidebar({
       <div className="shrink-0 px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-3">
           <Link href="/" className="flex min-w-0 items-center gap-2.5 no-underline">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#5a2e11] text-white shadow-[0_8px_18px_rgba(90,46,17,0.24)]">
-              <Coffee size={18} fill="currentColor" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_8px_18px_rgba(90,46,17,0.18)]">
+              <Image
+                src="/image/logo/beenRoad.png"
+                alt="원두로 로고"
+                width={40}
+                height={40}
+                className="h-full w-full object-cover"
+                priority
+              />
             </span>
             <span className="min-w-0 truncate text-lg font-black tracking-tight text-[#7b3c0f]">
-              coFFFFFe
+              원두로
             </span>
           </Link>
 

@@ -185,7 +185,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         fontFamily: 'inherit',
       }}>
         <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#2C2C2C', margin: 0 }}>
-          co<span style={{ color: '#9E6F3E' }}>FFFFF</span>e map
+          원두로
         </p>
         <p style={{ fontSize: 12, color: 'rgba(100,65,30,0.55)', marginTop: 6, letterSpacing: '0.06em' }}>
           안산 스페셜티 커피 큐레이션

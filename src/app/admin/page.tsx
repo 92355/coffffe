@@ -505,6 +505,14 @@ interface CafeFormPanelProps {
 function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: CafeFormPanelProps) {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageMessage, setImageMessage] = useState('')
+  const imageUrl = form.images?.[0] ?? ''
+
+  function applyImageUrl(value: string) {
+    const nextUrl = value.trim()
+
+    onFormChange({ ...form, images: nextUrl ? [nextUrl] : [] })
+    setImageMessage(nextUrl ? '대표 이미지 링크를 반영했습니다.' : '대표 이미지 링크를 비웠습니다.')
+  }
 
   async function uploadCafeImage(file: File) {
     if (!form.id.trim()) {
@@ -545,7 +553,7 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+    <form onSubmit={onSubmit} className="min-w-0 rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-black">{editingId ? '카페 수정' : '카페 추가'}</h2>
         {editingId && (
@@ -571,17 +579,17 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
       <TextArea label="짧은 설명" value={form.shortDescription} onChange={(shortDescription) => onFormChange({ ...form, shortDescription })} />
       <TextArea label="상세 설명" value={form.fullDescription} onChange={(fullDescription) => onFormChange({ ...form, fullDescription })} />
 
-      <fieldset className="mt-4 rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-3">
+      <fieldset className="mt-4 min-w-0 rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-3">
         <legend className="px-1 text-sm font-black text-[#5f4634]">대표 이미지</legend>
-        {form.images?.[0] ? (
-          <div className="mt-2 overflow-hidden rounded-md border border-[#eadfd3] bg-white">
+        {imageUrl ? (
+          <div className="mt-2 min-w-0 overflow-hidden rounded-md border border-[#eadfd3] bg-white">
             <div
               aria-label={`${form.name || '카페'} 대표 이미지`}
               className="h-44 w-full bg-[#5a2e11] bg-cover bg-center"
-              style={{ backgroundImage: `url(${form.images[0]})` }}
+              style={{ backgroundImage: `url(${imageUrl})` }}
             />
-            <div className="flex items-center justify-between gap-2 px-3 py-2">
-              <p className="truncate text-xs font-semibold text-[#7a6654]">{form.images[0]}</p>
+            <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2">
+              <p className="min-w-0 flex-1 break-all text-xs font-semibold leading-5 text-[#7a6654]">{imageUrl}</p>
               <button
                 type="button"
                 onClick={() => onFormChange({ ...form, images: [] })}
@@ -596,6 +604,19 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
             아직 등록된 대표 이미지가 없습니다.
           </p>
         )}
+
+        <label className="mt-3 block text-sm font-bold text-[#5f4634]">
+          이미지 링크 / 카카오맵 이미지 주소
+          <input
+            value={imageUrl}
+            onChange={(event) => applyImageUrl(event.target.value)}
+            placeholder="https://... 이미지 주소를 붙여넣기"
+            className="mt-1 h-10 w-full min-w-0 rounded-md border border-[#d8c8b8] bg-white px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
+          />
+        </label>
+        <p className="mt-1 text-xs font-semibold leading-5 text-[#8b7a68]">
+          카카오맵 장소 페이지 주소가 아니라, 브라우저에서 복사한 실제 이미지 주소를 넣어야 미리보기가 표시됩니다.
+        </p>
 
         <label className="mt-3 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-[#5a2e11] text-sm font-black text-white opacity-100">
           <ImagePlus size={16} />
