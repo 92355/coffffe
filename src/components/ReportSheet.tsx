@@ -29,6 +29,7 @@ interface ReportSheetProps {
 
 const CORRECTION_TYPES = ['영업시간 오류', '주소 오류', '폐업', '메뉴/원두 정보 오류', '기타']
 const MIN_SEARCH_LENGTH = 2
+const MAP_PICKED_NAME_PLACEHOLDER = '카페 이름을 입력해주세요'
 
 export default function ReportSheet({
   cafes,
@@ -44,7 +45,7 @@ export default function ReportSheet({
   const [places, setPlaces] = useState<KakaoPlace[]>([])
   const [selectedPlace, setSelectedPlace] = useState<KakaoPlace | null>(null)
   const [selectedCafeId, setSelectedCafeId] = useState(initialCafe?.id ?? '')
-  const [manualName, setManualName] = useState(initialLocation ? '지도에서 선택한 카페' : '')
+  const [manualName, setManualName] = useState('')
   const [manualAddress, setManualAddress] = useState(initialLocation ? '주소 확인 중...' : '')
   const [selectedCorrectionTypes, setSelectedCorrectionTypes] = useState<string[]>([])
   const [memo, setMemo] = useState('')
@@ -57,6 +58,11 @@ export default function ReportSheet({
     () => cafes.find((cafe) => cafe.id === selectedCafeId) ?? null,
     [cafes, selectedCafeId],
   )
+  const isMapPickedLocation = Boolean(initialLocation) && !selectedPlace
+  const visiblePlaces = selectedPlace ? [selectedPlace] : places
+  const memoPlaceholder = user
+    ? `오늘은 어떤 커피의 향을 즐기셨나요? 원두, 메뉴, 분위기처럼 ${user.nickname}님이 기분 좋게 느낀 순간을 남겨주세요. 함께 만들어가는 커피맵에 소중히 담아둘게요.`
+    : '오늘은 어떤 커피의 향을 즐기셨나요? 원두, 메뉴, 분위기처럼 기분 좋게 느낀 순간을 남겨주세요. 함께 만들어가는 커피맵에 소중히 담아둘게요.'
 
   useEffect(() => {
     if (!initialLocation) return
@@ -241,56 +247,70 @@ export default function ReportSheet({
 
           {reportType === 'new_place' ? (
             <div className="mt-4 space-y-3">
-              <div className="flex gap-2">
-                <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key !== 'Enter') return
+              {!isMapPickedLocation && (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter') return
 
-                    event.preventDefault()
-                    void searchPlaces()
-                  }}
-                  placeholder="카페 이름 검색"
-                  className="h-11 min-w-0 flex-1 rounded-xl border border-[#d8c8b8] bg-white px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
-                />
-                <button type="button" onClick={() => void searchPlaces()} disabled={searching} className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#5a2e11] text-white disabled:opacity-60">
-                  <Search size={17} />
-                </button>
-              </div>
+                        event.preventDefault()
+                        void searchPlaces()
+                      }}
+                      placeholder="카페 이름 검색"
+                      className="h-11 min-w-0 flex-1 rounded-xl border border-[#d8c8b8] bg-white px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
+                    />
+                    <button type="button" onClick={() => void searchPlaces()} disabled={searching} className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#5a2e11] text-white disabled:opacity-60">
+                      <Search size={17} />
+                    </button>
+                  </div>
 
-              <button
-                type="button"
-                onClick={onStartMapPick}
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#d8c8b8] bg-white text-sm font-black text-[#6f3b17]"
-              >
-                <MapPin size={16} />
-                지도에서 위치 찍기
-              </button>
+                  <button
+                    type="button"
+                    onClick={onStartMapPick}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#d8c8b8] bg-white text-sm font-black text-[#6f3b17]"
+                  >
+                    <MapPin size={16} />
+                    지도에서 위치 찍기
+                  </button>
+                </>
+              )}
 
-              {places.map((place) => (
+              {visiblePlaces.map((place) => (
                 <button
                   key={place.kakaoPlaceId}
                   type="button"
                   onClick={() => setSelectedPlace(place)}
-                  className={`w-full rounded-xl border p-3 text-left ${selectedPlace?.kakaoPlaceId === place.kakaoPlaceId ? 'border-[#d66612] bg-[#fff7ed]' : 'border-[#eadfd3] bg-white'}`}
+                  className={`w-full rounded-xl border p-3 text-left ${selectedPlace?.kakaoPlaceId === place.kakaoPlaceId ? 'border-2 border-[#d66612] bg-[#fff7ed] shadow-sm' : 'border-[#eadfd3] bg-white'}`}
                 >
                   <span className="block text-sm font-black">{place.name}</span>
                   <span className="mt-1 block text-xs font-semibold text-[#7a6654]">{place.address}</span>
                 </button>
               ))}
 
-              {initialLocation && !selectedPlace && (
-                <div className="rounded-xl border border-[#eadfd3] bg-white p-3">
-                  <label className="block text-xs font-black text-[#5f4634]">
-                    카페 이름
+              {isMapPickedLocation && (
+                <div className="rounded-2xl border-2 border-[#d66612] bg-[#fff7ed] p-4 shadow-sm">
+                  <div className="mb-3 flex items-start gap-2">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#d66612] text-white">
+                      <MapPin size={15} />
+                    </span>
+                    <div>
+                      <p className="text-sm font-black text-[#5a2e11]">지도에서 선택한 위치</p>
+                      <p className="mt-1 text-xs font-bold leading-5 text-[#8a5b35]">아래 칸에 이 장소의 카페 이름을 직접 적어주세요.</p>
+                    </div>
+                  </div>
+                  <label className="block text-sm font-black text-[#5f4634]">
+                    카페 이름 입력
                     <input
                       value={manualName}
                       onChange={(event) => setManualName(event.target.value)}
-                      className="mt-1 h-10 w-full rounded-lg border border-[#d8c8b8] px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
+                      placeholder={MAP_PICKED_NAME_PLACEHOLDER}
+                      className="mt-2 h-11 w-full rounded-xl border-2 border-[#d66612] bg-white px-3 text-sm font-bold outline-none placeholder:text-[#b09b88] focus:ring-2 focus:ring-[#f3b37d]"
                     />
                   </label>
-                  <p className="mt-2 text-xs font-semibold text-[#7a6654]">{manualAddress}</p>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-[#7a6654]">{manualAddress}</p>
                 </div>
               )}
             </div>
@@ -331,7 +351,7 @@ export default function ReportSheet({
               value={memo}
               onChange={(event) => setMemo(event.target.value)}
               rows={4}
-              placeholder="관리자에게 전달할 내용을 적어주세요."
+              placeholder={memoPlaceholder}
               className="mt-1 w-full rounded-xl border border-[#d8c8b8] bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-[#d66612]"
             />
           </label>

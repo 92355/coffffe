@@ -67,6 +67,18 @@ function slugify(value: string, fallback: string): string {
   return slug || fallback
 }
 
+function createKakaoCafeId(place: KakaoPlace): string {
+  const baseSlug = slugify(place.name, 'kakao')
+
+  return `${baseSlug}-${place.kakaoPlaceId}`
+}
+
+function createReportCafeId(report: CafeReport): string {
+  const baseSlug = slugify(report.name ?? '', 'report')
+
+  return `${baseSlug}-${report.id.slice(0, 8)}`
+}
+
 function toCsv(values: string[]): string {
   return values.join(', ')
 }
@@ -178,7 +190,7 @@ export default function AdminPage() {
   function applyPlace(place: KakaoPlace) {
     setForm((current) => ({
       ...current,
-      id: current.id || slugify(place.name, `kakao-${place.kakaoPlaceId}`),
+      id: editingId ? current.id : createKakaoCafeId(place),
       name: place.name,
       address: place.address,
       lat: place.lat,
@@ -196,7 +208,7 @@ export default function AdminPage() {
     setActiveReportId(report.id)
     setForm({
       ...EMPTY_FORM,
-      id: slugify(reportName, `report-${report.id.slice(0, 8)}`),
+      id: createReportCafeId(report),
       name: reportName,
       shortDescription: DEFAULT_REPORT_DESCRIPTION,
       fullDescription: reportMemo,

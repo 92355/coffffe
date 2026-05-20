@@ -43,6 +43,16 @@ function readString(record: Record<string, unknown>, key: string): string {
   return value
 }
 
+function readNonEmptyString(record: Record<string, unknown>, key: string): string {
+  const value = readString(record, key).trim()
+
+  if (value.length === 0) {
+    throw new Error(`"${key}" must be a non-empty string`)
+  }
+
+  return value
+}
+
 function readOptionalString(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key]
 
@@ -78,7 +88,7 @@ function readCafePayload(value: unknown): CafePayload {
   }
 
   return {
-    id: readString(value, 'id'),
+    id: readNonEmptyString(value, 'id'),
     name: readString(value, 'name'),
     shortDescription: readString(value, 'shortDescription'),
     fullDescription: readString(value, 'fullDescription'),
@@ -254,7 +264,7 @@ export async function DELETE(request: NextRequest) {
 
   const id = request.nextUrl.searchParams.get('id')
 
-  if (!id) {
+  if (id === null) {
     return NextResponse.json({ error: '"id" query parameter is required' }, { status: 400 })
   }
 
