@@ -31,7 +31,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const { user, regenerateNickname } = useUser()
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
-  const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(allCafes[0] ?? null)
+  const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
   const [mobileListOpen, setMobileListOpen] = useState(false)
@@ -397,8 +397,17 @@ export default function MapView({ allCafes }: MapViewProps) {
 
         <button
           type="button"
-          onClick={() => setLocationRequestId((current) => current + 1)}
-          className="pointer-events-auto absolute bottom-24 right-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] md:hidden"
+          onClick={() => {
+            if (userLocation) {
+              setLocationRequestId((current) => current + 1)
+            } else {
+              setLocationPermissionError(null)
+              setLocationPermissionModalOpen(true)
+            }
+          }}
+          className={`pointer-events-auto absolute right-4 z-40 flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] transition-[bottom] duration-300 md:hidden ${
+            visibleSelectedCafe ? 'bottom-[19rem]' : 'bottom-24'
+          }`}
           aria-label="현재 위치"
         >
           <LocateFixed size={18} />
