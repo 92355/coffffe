@@ -32,7 +32,7 @@ export default async function CafeDetailPage({ params }: Props) {
       {/* Nav */}
       <nav className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shrink-0">
         <Link
-          href="/"
+          href="/map"
           className="flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 active:text-gray-900 dark:active:text-gray-100 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

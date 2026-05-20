@@ -107,7 +107,7 @@ export default function Sidebar({
 
         <nav className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-white/70 p-1">
           <Link
-            href="/"
+            href="/map"
             className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#5a2e11] text-sm font-black text-white no-underline shadow-sm"
           >
             <Map size={17} />
