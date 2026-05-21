@@ -9,7 +9,7 @@ import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
 import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
-import { getAnimalAvatar } from '@/lib/animalAvatar'
+import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import { useUser } from '@/hooks/useUser'
 import { useSavedCafes } from '@/hooks/useSavedCafes'
 import type { LocationPoint } from '@/types/location'
@@ -317,14 +317,9 @@ export default function MapView({ allCafes }: MapViewProps) {
               aria-expanded={profileMenuOpen}
               title={profileLabel}
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2d8c1] text-lg leading-none">
-                {profileImageUrl ? (
-                  // External Kakao profile image. / 외부 카카오 프로필 이미지.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profileImageUrl} alt="" className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  profileAvatar ?? '☕'
-                )}
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2d8c1] text-lg leading-none overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
               </span>
               <ChevronDown
                 size={14}
@@ -336,14 +331,9 @@ export default function MapView({ allCafes }: MapViewProps) {
               <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl border border-[#eadccb] bg-white p-3 text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)]">
                 <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
                   <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] text-base leading-none">
-                    {profileImageUrl ? (
-                      // External Kakao profile image. / 외부 카카오 프로필 이미지.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profileImageUrl} alt="" className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                      profileAvatar ?? '☕'
-                    )}
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] text-base leading-none overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
                   </span>
                   <span className="min-w-0 truncate text-sm font-black">{profileLabel}</span>
                     {user?.type === 'anonymous' ? (
@@ -372,8 +362,8 @@ export default function MapView({ allCafes }: MapViewProps) {
                   </div>
                   <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
                     {user?.type === 'authenticated'
-                      ? '카카오 로그인으로 저장한 카페를 기기 밖에서도 이어볼 수 있어요.'
-                      : '회원가입 전 임시 닉네임이에요. 저장 카페는 이 브라우저에 먼저 보관돼요.'}
+                      ? '함께 만들어가는 "원두로"에 오신걸 환영합니다'
+                      : '회원가입 전 임시 닉네임이에요. .'}
                   </p>
                 </div>
 
@@ -623,11 +613,11 @@ function getProfileLabel(user: ReturnType<typeof useUser>['user'], profilePrefs:
   return user.type === 'authenticated' ? user.siteNickname : user.nickname
 }
 
-function getProfileAvatar(user: ReturnType<typeof useUser>['user']): string | null {
-  if (!user) return '☕'
-  if (user.type === 'authenticated') return getAnimalAvatar(user.siteAnimal)
+function getProfileAvatar(user: ReturnType<typeof useUser>['user']): string {
+  if (!user) return '/image/animal_profill/cat.webp'
+  if (user.type === 'authenticated') return getAnimalAvatarPath(user.siteAnimal)
 
-  return getAnimalAvatar(user.animal)
+  return getAnimalAvatarPath(user.animal)
 }
 
 function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePrefs: ReturnType<typeof useUser>['profilePrefs']): string | undefined {

@@ -68,6 +68,8 @@ interface MeResponse {
   } | null
 }
 
+const PENDING_PROFILE_KEY = 'coffffe_pending_profile'
+
 let cachedUser: User | null | undefined
 const userStoreListeners = new Set<() => void>()
 
@@ -95,13 +97,24 @@ export function useUser(): UserState {
     })
   }, [])
   const loginWithKakao = useCallback(() => {
+    const currentUser = getUserSnapshot()
+    if (currentUser?.type === 'anonymous') {
+      try {
+        localStorage.setItem(PENDING_PROFILE_KEY, JSON.stringify({
+          nickname: currentUser.nickname,
+          animal: currentUser.animal,
+        }))
+      } catch {
+        // ignore
+      }
+    }
     window.location.href = '/api/auth/kakao/start'
   }, [])
   const logout = useCallback(async () => {
     const response = await fetch('/api/auth/logout', { method: 'POST' })
     if (!response.ok) throw new Error('Failed to logout')
 
-    setUserSnapshot(readStoredUser() ?? createAnonymousUser())
+    setUserSnapshot(createAnonymousUser())
   }, [])
 
   useEffect(() => {
@@ -114,9 +127,53 @@ export function useUser(): UserState {
 
         const data = await response.json() as MeResponse
         const authenticatedUser = parseAuthenticatedUser(data)
-        if (!active || !authenticatedUser) return
+        if (!active) return
 
-        setUserSnapshot(authenticatedUser)
+        if (authenticatedUser) {
+          const pendingRaw = localStorage.getItem(PENDING_PROFILE_KEY)
+          if (pendingRaw) {
+            localStorage.removeItem(PENDING_PROFILE_KEY)
+            try {
+              const pending = JSON.parse(pendingRaw) as { nickname?: unknown; animal?: unknown }
+              if (
+                typeof pending.nickname === 'string' &&
+                typeof pending.animal === 'string' &&
+                isNicknameAnimal(pending.animal)
+              ) {
+                const patchRes = await fetch('/api/auth/me', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ siteNickname: pending.nickname, siteAnimal: pending.animal }),
+                })
+                if (patchRes.ok && active) {
+                  const patchData = await patchRes.json() as { siteNickname?: unknown; siteAnimal?: unknown }
+                  if (
+                    typeof patchData.siteNickname === 'string' &&
+                    typeof patchData.siteAnimal === 'string' &&
+                    isNicknameAnimal(patchData.siteAnimal)
+                  ) {
+                    setUserSnapshot({
+                      ...authenticatedUser,
+                      nickname: patchData.siteNickname,
+                      siteNickname: patchData.siteNickname,
+                      siteAnimal: patchData.siteAnimal,
+                    })
+                    return
+                  }
+                }
+              }
+            } catch {
+              // ignore, fall through
+            }
+          }
+          setUserSnapshot(authenticatedUser)
+          return
+        }
+
+        const currentUser = getUserSnapshot()
+        if (currentUser?.type === 'authenticated') {
+          setUserSnapshot(createAnonymousUser())
+        }
       } catch (error) {
         console.warn('Failed to sync Kakao user. / 카카오 사용자 동기화에 실패했습니다.', error)
       }

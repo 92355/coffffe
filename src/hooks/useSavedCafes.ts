@@ -35,7 +35,13 @@ export function useSavedCafes(user: User | null): SavedCafesState {
 
       try {
         const response = await fetch('/api/me/favorites', { cache: 'no-store' })
-        if (!response.ok) throw new Error('Failed to load favorites')
+        if (!response.ok) {
+          if (response.status === 401) {
+            setFavoriteCafeIds(readLocalFavorites())
+            return
+          }
+          throw new Error('Failed to load favorites')
+        }
 
         const data = await response.json() as FavoritesResponse
         if (!active) return
@@ -45,6 +51,7 @@ export function useSavedCafes(user: User | null): SavedCafesState {
         console.warn('Failed to load favorite cafes. / 즐겨찾기 카페 로드 실패.', error)
         if (!active) return
 
+        setFavoriteCafeIds(readLocalFavorites())
         setFavoriteError('저장 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.')
       }
     }
@@ -77,7 +84,14 @@ export function useSavedCafes(user: User | null): SavedCafesState {
         body: JSON.stringify({ cafeId }),
       })
 
-      if (!response.ok) throw new Error('Failed to save favorite')
+      if (!response.ok) {
+        if (response.status === 401) {
+          saveLocalFavorites(nextFavoriteCafeIds)
+          return
+        }
+
+        throw new Error('Failed to save favorite')
+      }
     } catch (error) {
       console.warn('Failed to save favorite cafe. / 즐겨찾기 저장 실패.', error)
       setFavoriteCafeIds(favoriteCafeIds)

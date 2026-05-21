@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getUserSession } from '@/lib/user-auth'
 import { createSupabaseAdminClient } from '@/lib/supabase'
-import { generateNickname, isNicknameAnimal } from '@/lib/nickname'
+import { generateNickname, isNicknameAnimal, type NicknameAnimal } from '@/lib/nickname'
 
 const ADMIN_KAKAO_IDS_KEY = 'ADMIN_KAKAO_IDS'
 
@@ -25,16 +25,39 @@ export async function GET() {
   })
 }
 
-export async function PATCH() {
+export async function PATCH(request: NextRequest) {
   const session = await getUserSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const generatedProfile = generateNickname()
+  let siteNickname: string
+  let siteAnimal: NicknameAnimal
+
+  try {
+    const body = await request.json() as { siteNickname?: unknown; siteAnimal?: unknown }
+    if (
+      typeof body.siteNickname === 'string' &&
+      body.siteNickname.trim().length > 0 &&
+      typeof body.siteAnimal === 'string' &&
+      isNicknameAnimal(body.siteAnimal)
+    ) {
+      siteNickname = body.siteNickname.trim()
+      siteAnimal = body.siteAnimal
+    } else {
+      const generated = generateNickname()
+      siteNickname = generated.nickname
+      siteAnimal = generated.animal
+    }
+  } catch {
+    const generated = generateNickname()
+    siteNickname = generated.nickname
+    siteAnimal = generated.animal
+  }
+
   const { data, error } = await createSupabaseAdminClient()
     .from('users')
     .update({
-      site_nickname: generatedProfile.nickname,
-      site_animal: generatedProfile.animal,
+      site_nickname: siteNickname,
+      site_animal: siteAnimal,
     })
     .eq('id', session.userId)
     .select('site_nickname, site_animal')

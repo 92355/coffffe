@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import type { ProfilePrefs } from '@/lib/profilePrefs'
 import type { User } from '@/hooks/useUser'
-import { getAnimalAvatar } from '@/lib/animalAvatar'
+import { getAnimalAvatar, getAnimalAvatarPath } from '@/lib/animalAvatar'
 
 interface ProfileEditSheetProps {
   user: User | null
@@ -23,9 +23,9 @@ export default function ProfileEditSheet({
 }: ProfileEditSheetProps) {
   const authenticated = user?.type === 'authenticated'
   const siteNickname = user?.type === 'authenticated' ? user.siteNickname : user?.nickname
-  const siteAvatar = user?.type === 'authenticated'
-    ? getAnimalAvatar(user.siteAnimal)
-    : user ? getAnimalAvatar(user.animal) : '☕'
+  const siteAnimalName = user?.type === 'authenticated' ? user.siteAnimal : user?.animal
+  const siteAvatar = siteAnimalName ? getAnimalAvatar(siteAnimalName) : '☕'
+  const siteAvatarPath = siteAnimalName ? getAnimalAvatarPath(siteAnimalName) : null
   const kakaoNickname = user?.type === 'authenticated' ? user.kakaoNickname : ''
   const kakaoProfileImageUrl = user?.type === 'authenticated' ? user.kakaoProfileImageUrl : undefined
   const displayNickname = profilePrefs.nicknamePreference === 'kakao' && kakaoNickname
@@ -74,6 +74,9 @@ export default function ProfileEditSheet({
                 // External Kakao profile image. / 외부 카카오 프로필 이미지.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={kakaoProfileImageUrl} alt="" className="h-full w-full object-cover" />
+              ) : siteAvatarPath ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={siteAvatarPath} alt={siteAnimalName} className="h-full w-full object-cover" />
               ) : (
                 siteAvatar
               )}
@@ -86,16 +89,21 @@ export default function ProfileEditSheet({
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <PreferenceCard
                 active={profilePrefs.avatarPreference === 'emoji' || !authenticated}
-                title="사이트 아이콘"
-                description="사이트에서 만든 동물 아이콘을 사용합니다."
+                title="원두로 친구들"
+                description="원두로 친구들 프로필을 사용합니다"
                 onClick={() => onProfilePrefsChange({ avatarPreference: 'emoji' })}
               >
-                <span className="text-2xl">{siteAvatar}</span>
+                {siteAvatarPath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={siteAvatarPath} alt="" className="h-9 w-9 object-cover" />
+                ) : (
+                  <span className="text-2xl">{siteAvatar}</span>
+                )}
               </PreferenceCard>
               <PreferenceCard
                 active={profilePrefs.avatarPreference === 'kakao' && authenticated}
-                title="카카오 사진"
-                description={authenticated ? '카카오 프로필 사진을 사용합니다.' : '카카오 로그인 후 사용 가능'}
+                title="카카오톡 프로필"
+                description={authenticated ? '카톡 프로필 사용' : '카카오 로그인 후 사용 가능'}
                 disabled={!authenticated || !kakaoProfileImageUrl}
                 onClick={() => onProfilePrefsChange({ avatarPreference: 'kakao' })}
               >
@@ -115,7 +123,7 @@ export default function ProfileEditSheet({
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <PreferenceCard
                 active={profilePrefs.nicknamePreference === 'random' || !authenticated}
-                title="사이트 닉네임"
+                title="원두로 닉네임"
                 description={siteNickname ?? '랜덤 닉네임'}
                 onClick={() => onProfilePrefsChange({ nicknamePreference: 'random' })}
                 action={
@@ -133,7 +141,12 @@ export default function ProfileEditSheet({
                   </button>
                 }
               >
-                <span className="text-xl">{siteAvatar}</span>
+                {siteAvatarPath ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={siteAvatarPath} alt="" className="h-9 w-9 object-cover" />
+                ) : (
+                  <span className="text-xl">{siteAvatar}</span>
+                )}
               </PreferenceCard>
               <PreferenceCard
                 active={profilePrefs.nicknamePreference === 'kakao' && authenticated}
