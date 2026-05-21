@@ -1,417 +1,393 @@
 # coFFFFFe-map 현재 계획
 
 > 마지막 갱신: 2026-05-21
-> 상태: **Plan 7 완료 + 동물 이미지/카카오 동물 유지 완료 / 브라우저 QA 대기**
 
 ---
 
-## 이전 계획 완료 요약
+## v0.3.2 작업 계획
 
-Supabase 연동 + 관리자 페이지 + 커스텀 마커 작업 전체 완료.
+### 우선순위
 
-- [x] Supabase `cafes` 테이블 생성, 8개 카페 마이그레이션
-- [x] `src/lib/supabase.ts` — server-only 클라이언트 팩토리
-- [x] `src/lib/admin-auth.ts` — 쿠키/Bearer 인증
-- [x] `/api/cafes` — Supabase 우선, cafes.json fallback
-- [x] `/api/kakao/search` — 카카오 REST API 서버 프록시
-- [x] `/api/admin/cafes` — POST/PUT/DELETE CRUD
-- [x] `/admin` — 비밀번호 게이트 + 카카오 검색 + 카페 관리 UI
-- [x] `KakaoMap.tsx` — CustomOverlay 커피 핀 마커 (선택 시 크기 업 + 라벨)
-- [x] `MapView.tsx` — 퀵카테고리 + 검색 + 필터 통합
-- [x] `Sidebar.tsx` — 퀵카테고리 칩, 모바일 슬라이드 패널
+| 순서 | Plan | 내용 |
+|---|---|---|
+| A | UI 고급화 | 랜딩 + 지도 화면 + 공통 컴포넌트 전반 개선 |
+| B | 코드 정리 | cafes.json 삭제, 버튼 중복 제거, 뒤로가기 수정 |
+| C | 즐겨찾기 병합 | 카카오 로그인 시 익명 localStorage → Supabase 자동 이전 |
+| D | 제보 사진 업로드 | Supabase Storage reports 버킷 + ReportSheet 업로드 UI |
+| E | saved_lists UI | 사용자 지정 카페 리스트 생성/관리 |
 
 ---
 
-## 전체 기능 로드맵 (우선순위 순)
+### Plan A — UI 고급화 (최우선)
 
-| 순위 | 기능 | 상태        |
-|---|---|-----------|
-| 1 | 지도 버튼 기능 구현 (확대/축소/이 지역 검색/레이어) | **완료**    |
-| 2 | 익명 사용자 랜덤 한글 닉네임 | **구현 완료** |
-| 3 | 플레이스 제보 (익명/회원) | **다음 계획** |
-| 4 | 관리자 제보 리스트 + 카페 등록 연동 | **완료**    |
-| 5 | 카페 이미지 업로드 (Supabase Storage + 관리자 UI) | **구현 완료 / SQL 적용 대기** |
-| 6 | 카카오 로그인 + 즐겨찾기/리스트 저장 | 대기        |
-| 7 | UI 디자인 고급화 | 대기        |
-| 8 | 커피 뱃지 시스템 | 대기        |
+> 상태: **계획 확정 / 구현 대기**
+
+#### 목표
+
+- `/` 랜딩 제거 → 히어로 + 지도 미리보기 + 콘텐츠 혼합 새 메인 페이지로 교체
+- Framer Motion 추가 → 파티클, 카드 진입, 마커 향 애니메이션
+- 브랜드 컬러 임팩트 강화, 전반적 완성도 향상
 
 ---
 
-## Plan 1 — 지도 버튼 기능 구현 ✅ 완료
-
-### 목표
-
-`MapView.tsx`에 UI만 있고 기능 없는 버튼들을 실제로 동작하게 연결한다.
-
-### 현재 상태
-
-| 버튼 | 현재 상태 |
-|---|---|
-| LocateFixed (현재위치) | ✅ `locationRequestId` 연결 완료 (데스크톱·모바일 둘 다) |
-| Plus/Minus (확대/축소) | ✅ `zoomRequest`로 `KakaoMap`에 연결 완료 |
-| Layers (지도 레이어) | ✅ 일반 지도 ↔ 스카이뷰 토글 연결 완료 |
-| "이 지역 검색" | ✅ 현재 지도 bounds 기준 필터 연결 완료 |
-
-### 구현 완료 요약
-
-- `KakaoMap`에 지도 타입, 줌 요청, 지도 bounds 변경 콜백을 연결했다.
-- `MapView`에서 확대/축소 버튼, 레이어 토글, 현재 지도 영역 검색 상태를 관리한다.
-- 현재 지도 영역 검색은 기존 로스팅/원산지/추출/검색/퀵카테고리 결과와 AND 조건으로 적용된다.
-- `kakao.d.ts`에 `getBounds`, `getLevel`, `setMapTypeId`, `LatLngBounds`, `MapTypeId` 타입을 보강했다.
-
-### 범위
-
-- `src/components/map/KakaoMap.tsx`
-- `src/components/MapView.tsx`
-
-### 제외 범위
-
-- Bell(알림), UserRound(프로필) 버튼 — 로그인 기능 이후
-- UI 디자인 변경 없음
-
-### 구현 상세
-
-#### 1. 확대/축소 버튼
-
-`KakaoMap`에 `onZoomIn`, `onZoomOut` props 추가.
-
-```ts
-// KakaoMap props 추가
-onZoomIn?: () => void
-onZoomOut?: () => void
-```
-
-또는 `useImperativeHandle`로 ref 노출. props 방식이 더 단순하므로 props 사용.
-
-내부에서 `mapRef.current.setLevel(current - 1)` / `setLevel(current + 1)`.
-
-MapView에서 핸들러 작성 → KakaoMap에 전달.
-
-#### 2. Layers 버튼
-
-카카오맵 지도 타입 토글 (일반 ↔ 스카이뷰).
-
-```ts
-// MapView 상태 추가
-const [mapType, setMapType] = useState<'normal' | 'skyview'>('normal')
-```
-
-KakaoMap에 `mapType` prop 전달 → 내부에서 `map.setMapTypeId(kakao.maps.MapTypeId.SKYVIEW)`.
-
-#### 3. "이 지역 검색" 버튼
-
-지도 이동 감지 → 버튼 활성화 → 클릭 시 현재 지도 bounds 내 카페만 표시.
-
-흐름:
-```
-카카오맵 'dragend'/'zoom_changed' 이벤트
-→ onMapBoundsChange(bounds) 콜백 → MapView 상태 업데이트
-→ "이 지역 검색" 버튼 활성화 (시각적 강조)
-→ 버튼 클릭 → filteredCafes를 bounds 내 카페로 추가 필터링
-→ 버튼 비활성화 (검색 완료 상태)
-```
-
-MapView에 `boundsFilter: kakao.maps.LatLngBounds | null` 상태 추가.
-bounds 필터는 기존 `roastLevel`, `beanOrigin`, `brewMethod` 필터와 AND 조건으로 적용.
-
-### 수정 예상 파일
-
-- `src/components/map/KakaoMap.tsx` — props 추가, 이벤트 리스너, 지도 레벨/타입 조작
-- `src/components/MapView.tsx` — 핸들러 및 상태 추가, KakaoMap props 연결
-
-### 검증
-
-- [x] 확대/축소 버튼 클릭 시 지도 레벨 변경 로직 연결
-- [x] Layers 버튼 클릭 시 스카이뷰 ↔ 일반 전환 로직 연결
-- [x] 지도 드래그/줌 후 "이 지역 검색" 버튼 활성화 로직 연결
-- [x] "이 지역 검색" 클릭 시 현재 화면 내 카페만 마커/목록에 표시되도록 필터 연결
-- [x] 기존 필터·검색·퀵카테고리와 AND 조건으로 적용
-- [ ] 모바일 375px 기준 overflow 없음 확인
-
-자동 검증:
+#### A-1. 패키지 추가
 
 ```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
+npm install framer-motion
 ```
-
-결과: 모두 통과.
 
 ---
 
-## Plan 2 — 익명 사용자 랜덤 한글 닉네임
+#### A-2. 새 메인 페이지 (`/`)
 
-### 구현 완료 요약
+기존 `src/app/page.tsx` 전면 교체.
 
-- `src/lib/nickname.ts`에 형용사 20개, 커피명사 16개, 동물명 20개 기반 닉네임 생성 유틸을 추가했다.
-- `src/lib/animalAvatar.ts`에 동물명 → 이모지 아바타 매핑을 분리했다. 추후 SVG 파일로 교체할 때 이 파일만 바꾸면 된다.
-- `src/hooks/useUser.ts`에 `useSyncExternalStore` 기반 익명 사용자 훅을 추가했다.
-- `coffffe_user` localStorage 값이 없으면 익명 사용자를 생성해 저장하고, 저장 값이 유효하면 재사용한다.
-- `MapView` 우상단 프로필 버튼에 익명 사용자 아바타를 표시하고, hover/title로 전체 닉네임을 확인할 수 있게 연결했다.
-- 프로필 버튼 클릭 시 직사각형 드롭다운 메뉴가 열리며 내 아이디, 제보내역, 내 리뷰내역, 카카오 로그인하기 버튼을 표시한다.
-- 드롭다운 닉네임 아래에 임시 닉네임 안내 문구를 추가하고, 닉네임 옆 새로고침 버튼으로 익명 닉네임을 다시 생성할 수 있게 했다.
+**섹션 구성:**
 
-### 목표
+```
+[Hero]
+  - 풀 화면 높이 (100dvh)
+  - 배경: 짙은 브라운 그라디언트 (#1a0a00 → #3d1f00)
+  - 원두 파티클 Framer Motion으로 위에서 아래로 잔잔히 낙하
+  - 메인 카피 + "지도 열기" CTA 버튼
+  - 스크롤 다운 인디케이터
 
-앱 최초 방문 시 랜덤 한글 닉네임을 자동 부여하고 localStorage에 저장한다.
-이후 카카오 로그인 연동 시 마이그레이션 가능한 구조로 설계한다.
+[지도 미리보기]
+  - 실제 Kakao 지도 embed 또는 스크린샷 이미지 + 오버레이
+  - "지도에서 카페 찾기" 버튼 → /map
 
-### 범위
+[추천 카페]
+  - /api/cafes에서 qualityScore 상위 3~4개
+  - Framer Motion: 스크롤 진입 시 아래에서 위로 fade-in
+  - 카드: 이미지, 이름, 태그, 짧은 설명
 
-- `src/lib/nickname.ts` — 닉네임 생성 유틸
-- `src/hooks/useUser.ts` — 사용자 상태 훅 (익명/로그인 통합 인터페이스)
-- `src/components/MapView.tsx` — 프로필 버튼에 닉네임 표시
+[원두 섹션]
+  - beans.ts에서 featured 또는 랜덤 3개
+  - 심플한 가로 스크롤 카드
 
-### 제외 범위
+[CBTI CTA]
+  - "내 커피 성향은?" 진입 배너
 
-- 카카오 로그인 구현 (이후 Plan에서)
-- Supabase 사용자 테이블 생성 (로그인 기능 시 함께)
-- 닉네임 변경 UI
-
-### 구현 상세
-
-#### 1. 닉네임 생성 (`src/lib/nickname.ts`)
-
-**형용사 × 커피명사 × 동물** 3단어 조합. 20 × 16 × 20 = **6,400가지**.
-
-```ts
-// 형용사 20개
-const ADJECTIVES = [
-  '따뜻한', '진한', '부드러운', '향긋한', '달콤한',
-  '신선한', '깊은', '맑은', '차가운', '시원한',
-  '쌉쌀한', '묵직한', '가벼운', '산뜻한', '고소한',
-  '풍부한', '은은한', '강렬한', '섬세한', '포근한',
-]
-
-// 커피명사 16개
-const COFFEE_NOUNS = [
-  '라떼', '에스프레소', '콜드브루', '아메리카노',
-  '카푸치노', '핸드드립', '플랫화이트', '마키아토',
-  '모카', '바닐라라떼', '고구마라떼', '오트라떼',
-  '더치커피', '리스트레토', '룽고', '돌체라떼',
-]
-
-// 동물 20개
-const ANIMALS = [
-  '고양이', '강아지', '토끼', '곰', '판다',
-  '수달', '너구리', '여우', '고슴도치', '햄스터',
-  '부엉이', '펭귄', '카피바라', '알파카', '미어캣',
-  '비버', '다람쥐', '코알라', '나무늘보', '하마',
-]
-
-export function generateNickname(): string
-// → "차가운 고구마라떼 하마"
+[Footer]
+  - 미니멀. 브랜드명 + 링크
 ```
 
-#### 2. 동물 아바타 매핑 (`src/lib/animalAvatar.ts`)
+---
 
-SVG를 나중에 교체할 수 있도록 매핑 레이어를 분리한다.
+#### A-3. 원두 파티클 애니메이션
 
-```ts
-// 현재: 이모지 폴백
-// 나중에: SVG 파일로 교체 (src/assets/animals/하마.svg 등)
-
-export const ANIMAL_EMOJI: Record<string, string> = {
-  '고양이': '🐱', '강아지': '🐶', '토끼': '🐰', '곰': '🐻', '판다': '🐼',
-  '수달': '🦦', '너구리': '🦝', '여우': '🦊', '고슴도치': '🦔', '햄스터': '🐹',
-  '부엉이': '🦉', '펭귄': '🐧', '카피바라': '🦫', '알파카': '🦙', '미어캣': '🦡',
-  '비버': '🦫', '다람쥐': '🐿️', '코알라': '🐨', '나무늘보': '🦥', '하마': '🦛',
-}
-
-// SVG 추가 시 이 함수만 교체하면 됨
-export function getAnimalAvatar(animal: string): string {
-  // 추후: SVG import 또는 /animals/하마.svg 경로 반환
-  return ANIMAL_EMOJI[animal] ?? '☕'
-}
-```
-
-SVG 파일 위치 예약: `src/assets/animals/{동물명}.svg`
-
-#### 3. 사용자 훅 (`src/hooks/useUser.ts`)
-
-```ts
-interface AnonymousUser {
-  type: 'anonymous'
-  nickname: string      // "차가운 고구마라떼 하마"
-  animal: string        // "하마" — 아바타 표시용
-}
-
-// 추후 확장
-// interface AuthenticatedUser { type: 'authenticated'; id: string; nickname: string; animal: string; ... }
-
-export type User = AnonymousUser // | AuthenticatedUser (로그인 기능 후 추가)
-
-export function useUser(): User
-```
-
-localStorage 키: `coffffe_user`
-
-최초 접근 시 닉네임 생성 → 저장. 이후 접근 시 저장된 값 사용.
-
-#### 4. MapView 프로필 버튼 연결
+Hero 섹션 배경에 원두 이미지(또는 ☕ 이모지/SVG) 파티클 10~15개 랜덤 낙하.
 
 ```tsx
-// 현재
-<span className="flex h-8 w-8 ..."><UserRound size={16} /></span>
-
-// 변경 후 — 동물 이모지 (SVG 교체 전)
-<span className="flex h-8 w-8 text-lg ...">🦛</span>
+// 각 파티클: 랜덤 x 위치, 랜덤 duration(8~20s), 랜덤 delay, 랜덤 크기/투명도
+// Framer Motion animate: y: ['-10%', '110%'], opacity: [0, 0.6, 0]
+// repeat: Infinity, ease: 'linear'
 ```
 
-tooltip 또는 hover 시 전체 닉네임 표시.
-
-### 수정 예상 파일
-
-- `src/lib/nickname.ts` — 신규 생성 (닉네임 생성 로직)
-- `src/lib/animalAvatar.ts` — 신규 생성 (동물→이모지/SVG 매핑)
-- `src/hooks/useUser.ts` — 신규 생성 (사용자 상태 훅)
-- `src/components/MapView.tsx` — useUser 훅 사용, 프로필 버튼 아바타 연결
-
-### 검증
-
-- [x] 최초 방문 시 랜덤 닉네임 자동 생성 로직 구현
-- [x] 새로고침 후 동일 닉네임 유지 로직 구현 (localStorage)
-- [x] 프로필 버튼에 동물 이모지 표시 로직 구현
-- [x] hover 시 전체 닉네임 표시 로직 구현 (`title`)
-- [x] 드롭다운에서 닉네임 새로고침 버튼 클릭 시 새 조합 생성 로직 구현
-- [ ] 다른 브라우저/시크릿 탭에서 다른 닉네임 생성 확인
-
-자동 검증:
-
-```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
-```
-
-결과: 모두 통과.
+파티클 에셋: `public/image/bean-particle.svg` (작은 원두 실루엣) 또는 CSS 원형으로 대체.
 
 ---
 
-## Plan 3 — 플레이스 제보
+#### A-4. 커피 마커 향 애니메이션 (`/map`)
 
-### 목표
+카카오맵 `CustomOverlay` 마커 위에 CSS 애니메이션으로 향 피어오르는 효과.
 
-익명/회원 사용자가 새 카페 또는 기존 카페 정보 수정을 관리자에게 제보할 수 있게 한다.
-
-### 진입 루트
-
-| 루트 | 설명 |
-|---|---|
-| 검색 결과 없음 | Sidebar 검색 결과 0건 시 "이 카페 제보하기" 유도 문구 |
-| 플로팅 버튼 | 지도 우하단 "제보하기" 버튼 → 바텀시트 [장소 검색] / [지도에서 위치 찍기] 탭 |
-
-롱프레스 방식은 지도 드래그와 충돌 위험 → 보류.
-
-### 제보 타입
-
-| 타입 | 설명 |
-|---|---|
-| `new_place` | 신규 장소 (카카오 검색 or 직접 위치 선택) |
-| `correction` | 기존 카페 정보 수정 요청 (`cafe_id` 연결) |
-
-### 위치 직접 선택 흐름
-
-```
-플로팅 버튼 → "지도에서 위치 찍기" 탭 선택
-→ 지도 탭 모드 진입 (핀 찍기 안내 표시)
-→ 유저가 지도 탭 → 좌표 캡처
-→ /api/kakao/geocode 서버 프록시로 역지오코딩
-→ 주소 자동 표시 → 제보 폼으로 진행
-```
-
-`/api/kakao/geocode` 신규 추가 필요. 카카오 로컬 API `coord2address` 사용.
-
-### 사용자 식별
-
-`useUser` anonymousId 필드 추가 (UUID v4, `crypto.randomUUID()`).
-
-```ts
-// coffffe_user localStorage 구조 변경
-{
-  anonymousId: "uuid-1234",  // 변경 안 됨 — 제보 연결 키
-  nickname: "차가운 하마",
-  animal: "하마"
+```css
+/* 마커 위 3개 동그라미가 위로 올라가며 opacity 0으로 사라짐 */
+@keyframes coffeeAroma {
+  0%   { transform: translateY(0) scale(1);   opacity: 0.5; }
+  100% { transform: translateY(-18px) scale(1.4); opacity: 0; }
 }
+
+.aroma-puff {
+  animation: coffeeAroma 1.8s ease-out infinite;
+}
+.aroma-puff:nth-child(2) { animation-delay: 0.6s; }
+.aroma-puff:nth-child(3) { animation-delay: 1.2s; }
 ```
 
-보안 문제 없음 — UUID는 공개 식별자, 서버에서 익명 ID로만 사용.
+선택된 마커는 아로마 속도 빠르게 + 크기 업.
 
-### 수정 요청 항목 (correction 타입)
+---
 
-체크박스 + 자유 텍스트 혼합.
+#### A-5. 컬러/타이포그래피 정리
 
-체크박스 항목:
-- 영업시간 오류
-- 주소 오류
-- 폐업
-- 메뉴/원두 정보 오류
-- 기타
+현재 밋밋한 이유: amber가 옅고 배경과 대비 약함.
 
-자유 텍스트: 추가 메모 (선택)
+| 항목 | 현재 | 변경 |
+|---|---|---|
+| 히어로 배경 | 없음 | `#1a0a00` 짙은 에스프레소 |
+| 브랜드 포인트 | `#d66612` | `#e8720a` (채도 올림) |
+| 카드 배경 | 흰색 flat | 흰색 + `shadow-md` + `hover:shadow-xl` + 트랜지션 |
+| 버튼 primary | amber flat | amber + hover 어둡게 + active scale(0.97) |
+| 태그 | 단색 | 카테고리별 색상 (스페셜티: amber, 로스터리: brown, 디저트: rose) |
+| 타이포 헤딩 | 기본 | `font-bold tracking-tight` 강화 |
 
-### 사진
+---
+
+#### A-6. 카드 진입 애니메이션 (추천 카페 섹션)
+
+```tsx
+// Framer Motion whileInView
+<motion.div
+  initial={{ opacity: 0, y: 32 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5, delay: index * 0.1 }}
+  viewport={{ once: true }}
+>
+```
+
+---
+
+#### 수정 예상 파일
+
+- `src/app/page.tsx` — 전면 교체 (새 메인)
+- `src/app/globals.css` — 아로마 CSS 애니메이션 추가
+- `src/components/map/KakaoMap.tsx` — 마커 아로마 HTML 추가
+- `src/app/map/page.tsx` — 필요 시 경미한 수정
+- `public/image/bean-particle.svg` — 신규 (파티클 에셋)
+- `package.json` — framer-motion 추가
+
+#### 제외 범위
+
+- 다크모드 MapView 확장 (별도 Plan)
+- `/beans`, `/cbti`, `/cafes/[id]` 페이지 스타일 변경 (A 이후 판단)
+
+#### 검증
+
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```
+
+- 모바일 375px Hero overflow 없음
+- 파티클 애니메이션 60fps 유지 (will-change: transform 적용)
+- 지도 마커 아로마 선택/비선택 상태 모두 확인
+
+---
+
+### Plan B — 코드 정리
+
+> 상태: **계획 중** / 작업량 작음. Plan A 이후 또는 병행 가능.
+
+#### 작업 목록
+
+- [ ] `cafes.json` fallback 제거 — `src/app/api/cafes/route.ts`에서 fallback 분기 삭제, `src/data/cafes.json` 파일 삭제 (Supabase 안정 확인 후)
+- [ ] Sidebar 목록 버튼 중복 제거 — `md:hidden` / `md:flex` 두 개로 나뉜 "목록 보기" 버튼을 하나로 통합
+- [ ] `/cafes/[id]` 뒤로가기 `/map`으로 변경 — 현재 `/`로 이동하는 링크를 `/map`으로 수정
+
+#### 수정 예상 파일
+
+- `src/app/api/cafes/route.ts`
+- `src/data/cafes.json` (삭제)
+- `src/components/MapView.tsx`
+- `src/app/cafes/[id]/page.tsx`
+
+---
+
+### Plan C — 즐겨찾기 병합
+
+> 상태: **계획 중**
+
+#### 목표
+
+카카오 로그인 완료 시 기존 익명 사용자의 `coffffe_saved_cafes` localStorage 값을 Supabase `favorite_cafes`로 자동 이전한다.
+
+#### 흐름
+
+```
+카카오 로그인 완료 → syncAuthenticatedUser() 실행
+→ localStorage coffffe_saved_cafes 읽기
+→ 값 있으면 POST /api/me/favorites/merge
+→ Supabase favorite_cafes에 upsert
+→ localStorage coffffe_saved_cafes 삭제
+```
+
+#### 수정 예상 파일
+
+- `src/hooks/useUser.ts` — 병합 로직 추가
+- `src/app/api/me/favorites/route.ts` — merge 엔드포인트 추가 또는 기존 확장
+
+---
+
+### Plan D — 제보 사진 업로드
+
+> 상태: **계획 중** / Supabase Storage 설계 선행 필요
+
+#### 목표
+
+`ReportSheet.tsx`에 사진 첨부 기능을 추가한다.
+
+#### 제약
 
 - 대표사진 1장, 최대 5MB
-- Supabase Storage `reports` 버킷에 업로드
-- 이미지 먼저 업로드 → URL → reports 테이블 저장
-- 업로드 시 체크박스: "이 사진의 저작권을 보유하거나 사용 허가를 받았습니다" (필수)
+- 저작권 동의 체크박스 필수
+- Supabase Storage `reports` 버킷 + 업로드 정책 생성 필요 (SQL)
 
-### Supabase `reports` 테이블 스키마
+#### 흐름
 
-```sql
-id            uuid        PK, default gen_random_uuid()
-type          text        'new_place' | 'correction'
-cafe_id       text        nullable — correction 시 기존 카페 연결
-kakao_place_id text       nullable — 카카오 장소 검색으로 제보 시
-name          text        nullable
-address       text        nullable
-lat           float8      nullable
-lng           float8      nullable
-image_url     text        nullable
-correction_types text[]   nullable — 체크박스 항목 배열
-memo          text        nullable
-anonymous_id  text        NOT NULL — 제보자 UUID
-nickname      text        NOT NULL — 제보 당시 닉네임 (스냅샷)
-status        text        'pending' | 'approved' | 'rejected', default 'pending'
-created_at    timestamptz default now()
+```
+파일 선택 → 5MB 초과 시 에러
+→ 저작권 체크박스 미체크 시 제출 불가
+→ 제출 클릭 → 이미지 먼저 Storage 업로드 → URL 획득
+→ reports row에 image_url 저장
 ```
 
-### API
+#### 수정 예상 파일
 
-| 엔드포인트 | 메서드 | 설명 |
+- `supabase/migrations/20260521010000_add_reports_storage.sql` (신규)
+- `src/components/ReportSheet.tsx`
+- `src/app/api/reports/route.ts` (image_url 수신 처리)
+
+---
+
+### Plan E — saved_lists UI
+
+> 상태: **계획 중** / 설계 필요
+
+#### 목표
+
+사용자가 카페를 커스텀 리스트에 묶어 저장할 수 있다.
+
+#### 현재 상태
+
+- Supabase `saved_lists` 테이블 스키마만 존재
+- UI/API 전혀 없음
+- 카카오 로그인 사용자 전용
+
+#### 설계 필요 항목 (구현 전 결정)
+
+- 리스트 진입점: 프로필 드롭다운? 별도 `/lists` 라우트?
+- 카페를 리스트에 추가하는 UX: 하트 옆 "저장" 버튼? 드롭다운 선택?
+- 리스트 공개/비공개 여부
+
+---
+
+## 완료 요약 (코드 구현 기준)
+
+| Plan | 내용 | 상태 |
 |---|---|---|
-| `/api/reports` | POST | 제보 등록 (인증 불필요, rate limit 고려) |
-| `/api/kakao/geocode` | GET | 좌표→주소 역지오코딩 서버 프록시 |
+| 1 | 지도 버튼 기능 (확대/축소/레이어/이 지역 검색/현재위치) | ✅ 완료 |
+| 2 | 익명 사용자 랜덤 한글 닉네임 + 드롭다운 | ✅ 완료 |
+| 3 | 플레이스 제보 (신규/수정, 카카오 검색, 지도 위치 찍기) | ✅ 코드 완료 |
+| 4 | 관리자 제보 리스트 + 카페 등록 연동 | ✅ 완료 |
+| 5 | 카페 이미지 업로드 (관리자 UI + Storage API) | ✅ 코드 완료 |
+| 6 | 카카오 로그인 + 즐겨찾기 저장 | ✅ 코드 완료 |
+| 7 | 프로필 수정 (아바타/닉네임 선택) + 관리자 버튼 노출 조건 | ✅ 코드 완료 |
+| 8 | 동물 프로필 .webp 이미지 + 카카오 로그인 시 익명 동물 유지 | ✅ 코드 완료 |
+| - | 랜딩페이지 (`/`) + 지도 `/map` 분리 | ✅ 완료 |
 
-이미지 업로드는 Supabase Storage SDK 클라이언트에서 직접 처리 (서명된 업로드 URL 방식).
+---
 
-### 범위
+## 사용자가 직접 처리해야 할 외부 작업
 
-- `src/components/ReportSheet.tsx` — 제보 바텀시트 (신규)
-- `src/components/MapView.tsx` — 플로팅 제보 버튼 추가, 지도 탭 모드
-- `src/components/Sidebar.tsx` — 검색 결과 없음 유도 문구
-- `src/hooks/useUser.ts` — anonymousId 필드 추가
-- `src/app/api/reports/route.ts` — POST 제보 등록 (신규)
-- `src/app/api/kakao/geocode/route.ts` — 역지오코딩 프록시 (신규)
+코드는 구현됐지만 아래 외부 작업이 없으면 동작하지 않는다.
 
-### 제외 범위
+### Supabase SQL Editor에서 순서대로 실행
 
-- 관리자 제보 리스트 UI → Plan 4
-- 로그인 사용자 제보 → Plan 5 이후
-- 제보 상태 알림 → 미래 기능
+```sql
+-- 1. 카페 이미지 컬럼 + Storage 버킷
+supabase/migrations/20260520010000_add_cafe_images.sql
 
-### 검증
+-- 2. 카카오 로그인 users / favorite_cafes / saved_lists 테이블
+supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql
+```
 
-- [ ] 플로팅 버튼 → 제보 바텀시트 열림
-- [ ] 카카오 검색으로 장소 선택 → 정보 자동 채워짐
-- [ ] 지도 탭 모드 → 좌표 캡처 → 주소 자동 변환
-- [ ] correction 타입 시 체크박스 + 메모 입력
-- [ ] 사진 업로드 5MB 초과 시 에러
-- [ ] 저작권 체크박스 미체크 시 제출 불가
-- [ ] 제보 Supabase reports 테이블 저장 확인
-- [ ] anonymousId로 제보자 식별 확인
+### Kakao Developers 설정
+
+- [x] `reports` 테이블 생성 완료 (이전에 적용됨)
+- [ ㅇ] Redirect URI 등록: `https://{your-domain}/api/auth/kakao/callback`
+- [ㅇ ] Preview URL도 등록 (Vercel preview 도메인)
+
+### Vercel 환경 변수 등록 확인
+
+| 키 | 필수 |
+|---|---|
+| `NEXT_PUBLIC_KAKAO_MAP_API_KEY` | ✅ |
+| `SUPABASE_URL` | ✅ |
+| `SUPABASE_ANON_KEY` | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ |
+| `KAKAO_REST_API_KEY` | ✅ |
+| `ADMIN_SECRET` | ✅ |
+| `KAKAO_SESSION_SECRET` | ✅ (없으면 `ADMIN_SECRET` fallback) |
+| `ADMIN_KAKAO_IDS` | ✅ |
+| `KAKAO_CLIENT_SECRET` | ✅ |
+| `KAKAO_REDIRECT_URI` | ✅ |
+
+---
+
+## 브라우저 수동 QA 체크리스트
+
+코드는 완료됐으나 브라우저에서 아직 확인 안 된 항목.
+
+### Plan 3 — 제보
+
+- [✅ ] 신규 카페 제보 제출 → Supabase `reports` row 생성 확인
+- [ ] 정보 수정 제보 제출 → 관리자 화면에서 보이는지 확인
+- [✅ ] 지도 위치 찍기 후 주소 자동 변환 동작 확인
+- [✅ ] 카카오 검색 결과에서 선택 시 선택 카드만 남는지 확인
+
+### Plan 5 — 카페 이미지 업로드 (SQL 적용 후)
+
+- [✅ ] `/admin`에서 대표 이미지 업로드 + 미리보기 + 저장 확인
+- [x ] 이미지 URL 직접 입력 시 미리보기와 저장 정상 확인
+- [x ] `/map` 마커·리스트 썸네일에 이미지 반영 확인
+- [✅ ] 새로고침 후 이미지 유지 확인
+
+### Plan 6 — 카카오 로그인 (SQL + Kakao 설정 후)
+
+- [ ✅] 카카오 로그인 콜백, 세션 유지, 로그아웃 확인
+- [ ] 로그인 사용자 즐겨찾기 저장/삭제 → Supabase `favorite_cafes` 반영 확인
+- [ ] 익명 사용자 즐겨찾기 → localStorage 저장 확인
+
+### Plan 7/8 — 프로필 수정 + 동물 이미지
+
+- [✅ ] `내 정보 수정` 시트에서 동물 .webp 이미지 정상 표시
+- [ ] 익명 상태에서 카카오 로그인 후 기존 동물 유지 확인
+- [✅ ] 재로그인 시 서버 동물 변경되지 않는지 확인
+- [✅ ] 🔄 버튼으로 동물 변경 후 즉시 반영 확인
+
+### 기본 라우트 QA
+
+- [ ] 모바일 375px 랜딩페이지 overflow 없음 확인
+- [ ] `/map` 카카오 지도 SDK + 마커 정상 렌더링 확인
+
+---
+
+## 미구현 기능 (다음 계획 대상)
+
+### 제보 사진 업로드
+
+- Supabase Storage `reports` 버킷 + 정책 설계 필요
+- 현재 `ReportSheet.tsx`에 사진 업로드 UI 없음
+- 구현 시 포함할 것:
+  - 대표사진 1장, 최대 5MB
+  - 저작권 동의 체크박스 (필수)
+  - 업로드 → URL → `reports.image_url` 저장
+
+### 사용자 지정 카페 리스트 (saved_lists)
+
+- Supabase `saved_lists` DB 스키마만 존재
+- UI/API 미구현: 리스트 생성/수정/삭제, 카페 추가/제거
+
+### Bell 버튼 (알림)
+
+- 지도 우중단 Bell 버튼은 UI만 있고 동작 연결 없음
+- 알림 기능 자체가 미설계 상태
+
+### MapView 다크모드
+
+- `MapView` / `Sidebar` / `KakaoMap`은 CSS 변수 미사용, 색상 하드코딩
+- 다크모드 확장 시 해당 파일 전체 수정 필요
+
+### UI 디자인 고급화
+
+- 미설계. 우선순위 미정.
+
+### 커피 뱃지 시스템
+
+- 회원 기반 + 데이터 축적 후 설계. 현재 진행 불가.
 
 ---
 
@@ -419,467 +395,6 @@ created_at    timestamptz default now()
 
 | 항목 | 위험도 | 비고 |
 |---|---|---|
-| `cafes.json` 삭제 | 낮 | Supabase 안정 확인 후 진행. fallback 코드도 함께 제거 |
-| MapView 다크모드 확장 | 중 | CSS 변수 미사용 구간 전체 수정 필요 |
-| Vercel 환경 변수 등록 확인 | 높 | 배포 전 필수. 로컬에서 확인 불가 |
-| `/cafes/[id]` 뒤로가기 UX 개선 | 낮 | 현재 `/`로 이동 |
-| 목록 버튼 중복 제거 (`md:hidden`/`md:flex` 두 개) | 낮 | 단순 코드 정리 |
-
----
-
-## 배포 전 필수 확인
-
-1. Vercel 대시보드에 환경 변수 6개 모두 등록 확인
-2. Kakao Developers에 Vercel 도메인 등록 확인
-3. Preview 배포에서 지도 로딩 + 마커 + 관리자 페이지 동작 확인
-
-```bash
-npx tsc --noEmit
-npm run lint
-npm run build
-```
-
----
-
-## 미래 기능 메모
-
-- 익명 사용자 → 관리자에게 플레이스 제보 (사진 업로드 포함, 이용약관 체크박스 필수)
-- 관리자 제보 리스트 확인 + 카페 등록 연동
-- 카카오 로그인 + 즐겨찾기/리스트 저장
-- 카페 이미지: Supabase Storage + 관리자 업로드 UI (상업적 사용 예정 → 스크래핑 배제)
-- 커피 뱃지 시스템 (회원 기반 + 데이터 축적 후)
-
----
-
-## 2026-05-20 �߰� �ݿ�
-
-- [x] ����Ͽ����� ���� ���� ��� ������ ��ư ǥ��
-- [x] ����Ͽ����� �˸� ��ư�� ����� ������ ��ư�� ����
-- [x] ����� ��Ӵٿ� ���� viewport �ȿ� �µ��� ����
-
----
-
-## 2026-05-20 Plan 3/4 진행 반영
-
-### Plan 4 관리자 제보 리스트 + 카페 등록 연동
-
-상태: 완료 및 원격 푸시 완료
-
-- `/api/admin/reports` GET/PATCH 추가
-- 관리자 화면 `/admin`에 제보 리스트 추가
-- 제보 상태 `pending`, `approved`, `rejected` 조회/변경 연결
-- 제보 카드에서 카페 등록 폼 자동 채우기 연결
-- 제보 기반 카페 저장 후 해당 제보 자동 승인 처리
-- `reports` 테이블 생성 migration 추가
-- Supabase SQL Editor에서 `reports` 테이블 생성 완료 확인
-- 커밋/푸시: `c2847d5 feat: add user profile and report admin flow`
-
-### Plan 3 플레이스 제보
-
-상태: 기본 제보 저장 흐름 구현 완료, 브라우저 수동 QA 대기
-
-- `src/components/ReportSheet.tsx` 신규 추가
-- `/api/reports` POST 추가: 사용자 제보를 Supabase `reports` 테이블에 저장
-- `/api/kakao/geocode` GET 추가: 지도 좌표를 주소로 변환
-- 프로필 드롭다운에서 `제보하기`, `정보수정` 진입 연결
-- 검색 결과 0건 화면에서 `새 카페 제보하기` 진입 연결
-- 신규 카페 제보: 카카오 장소 검색 선택 또는 지도 위치 찍기 지원
-- 정보 수정 제보: 기존 카페 선택, 수정 유형 체크박스, 메모 입력 지원
-- `useUser`에 `anonymousId` 추가. 기존 localStorage 사용자는 닉네임 유지 후 ID만 보강
-- `KakaoMap` 지도 배경 클릭 좌표 콜백 추가
-- 지도에서 위치 찍기 후 제보 바텀시트 복귀 시 카페 이름 검색 UI를 숨기고, 선택된 지도 위치 카드만 강조 표시
-- 지도 선택 위치의 카페 이름 입력칸을 빈 값, 강조 테두리, 안내 문구로 변경
-- 카카오 장소 검색 결과에서 카페 선택 시 선택된 카페 카드만 남기도록 UI 정리
-- 제보 메모 placeholder를 커피 경험과 원두/메뉴 정보를 자연스럽게 남기도록 감성 문구로 변경
-
-검증:
-
-```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
-```
-
-결과: 모두 통과.
-
-남은 작업:
-
-- `/`에서 신규 카페 제보 제출 후 Supabase `reports` row 생성 확인
-- 기존 카페 정보 수정 제보 제출 후 관리자 화면에서 보이는지 확인
-- 지도 위치 찍기 후 주소 자동 변환 동작 확인
-- 지도 위치 찍기 후 검색 UI가 숨겨지고 카페 이름 입력이 명확하게 보이는지 브라우저 확인
-- 카카오 검색 결과에서 선택한 카페만 남는지 브라우저 확인
-- 사진 업로드는 Supabase Storage 버킷/정책 설계 후 별도 Plan에서 진행
-
----
-
-## Plan 5 — 카페 이미지 업로드
-
-상태: 구현 완료, Supabase SQL 직접 적용 및 브라우저 QA 대기
-
-### 구현 내용
-
-- `cafes.images text[]` 컬럼 추가 SQL 작성
-- Supabase Storage `cafe-images` public 버킷 생성 SQL 작성
-- 관리자 전용 이미지 업로드 API `/api/admin/cafe-images` 추가
-- 업로드 API에서 관리자 인증, 이미지 MIME 타입, 5MB 제한 검증
-- `/api/admin/cafes` POST/PUT/GET에 `images` 배열 저장/조회 연결
-- `/api/cafes` GET에 `images` 배열 조회 연결
-- `/admin` 카페 추가/수정 폼에 대표 이미지 업로드, 미리보기, 제거 UI 추가
-- `/admin` 대표 이미지 영역 오버플로우 방지 처리
-- 이미지 업로드 외에 이미지 URL 또는 카카오맵에서 복사한 실제 이미지 주소로 대표 이미지 지정 가능
-- 대표 이미지는 `images[0]`에 저장하며 기존 지도 마커와 카페 리스트 썸네일에 자동 반영
-
-### 수정 파일
-
-- `supabase/migrations/20260520010000_add_cafe_images.sql`
-- `src/app/api/admin/cafe-images/route.ts`
-- `src/app/api/admin/cafes/route.ts`
-- `src/app/api/cafes/route.ts`
-- `src/app/admin/page.tsx`
-
-### Supabase 직접 적용 필요
-
-Supabase SQL Editor에서 아래 파일 내용을 직접 실행해야 한다.
-
-```txt
-supabase/migrations/20260520010000_add_cafe_images.sql
-```
-
-### 검증
-
-```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
-```
-
-결과: 모두 통과.
-
-### 남은 작업
-
-- Supabase SQL Editor에서 `20260520010000_add_cafe_images.sql` 실행
-- `/admin`에서 카페 ID 입력 후 대표 이미지 업로드 확인
-- `/admin`에서 이미지 URL 직접 입력 시 미리보기와 저장이 정상인지 확인
-- 긴 이미지 URL이 대표 이미지 카드 밖으로 넘치지 않는지 확인
-- 저장 후 `/map` 지도 마커와 카페 리스트 썸네일에 이미지가 반영되는지 확인
-- 새로고침 후 이미지가 유지되는지 확인
-
----
-
-## 2026-05-20 랜딩페이지 1차 반영
-
-상태: 구현 및 1차 커밋 완료
-
-### 변경 파일
-
-- `src/app/page.tsx`
-- `src/app/map/page.tsx`
-- `src/components/Sidebar.tsx`
-- `src/app/cafes/[id]/page.tsx`
-
-### 구현 내용
-
-- `/`를 랜딩페이지로 변경했다.
-- 기존 지도 화면은 `/map`으로 이동했다.
-- `/map`에서 기존처럼 `/api/cafes`를 fetch하고 `MapView`를 렌더링한다.
-- 랜딩페이지에 지도, CBTI, 원두 페이지 CTA를 추가했다.
-- 지도 사이드바의 지도 탭 링크와 카페 상세의 "지도로 돌아가기" 링크를 `/map`으로 변경했다.
-
-### 확인 결과
-
-```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
-```
-
-결과: 모두 통과.
-
-- 개발 서버에서 `/`, `/map` 200 응답 확인 완료.
-- 1차 커밋: `737ef00 feat: add landing page and move map route`
-- 최신 확인 커밋: `688eb3d 랜딩페이지 추가 ㅁ및 로고 변경`
-
-### 남은 TODO
-
-- 브라우저에서 모바일 375px 기준 랜딩페이지 overflow 여부 확인
-- `/map`에서 카카오 지도 SDK와 마커 렌더링 수동 확인
-- Plan 5 Supabase SQL 적용 및 이미지 업로드 브라우저 QA 진행
-
----
-
-## 2026-05-21 Plan 6 카카오 로그인 + 즐겨찾기/리스트 저장
-
-상태: 구현 완료, Supabase SQL 직접 적용 및 브라우저 OAuth QA 대기
-
-### 구현 내용
-
-- 카카오 OAuth 시작/콜백 Route Handler 추가: `/api/auth/kakao/start`, `/api/auth/kakao/callback`, `/api/auth/me`, `/api/auth/logout`
-- httpOnly HMAC 세션 쿠키 `coffffe_session` 추가
-- Supabase `users`, `favorite_cafes`, `saved_lists` migration 추가
-- `useUser`가 익명 사용자와 카카오 로그인 사용자를 함께 다루도록 확장
-- `useSavedCafes` 추가
-  - 익명 사용자는 `localStorage` 기반 저장
-  - 카카오 로그인 사용자는 `/api/me/favorites` 기반 Supabase 저장
-- 지도 카페 리스트와 모바일 상세 카드에 하트 저장 버튼 추가
-- 프로필 드롭다운에 저장한 카페 목록, 로그인/로그아웃 상태 표시 추가
-- 제보 작성자 ID는 익명 사용자면 `anonymousId`, 카카오 사용자면 `user.id` 사용
-
-### 수정 파일
-
-- `src/lib/user-auth.ts`
-- `src/app/api/auth/kakao/start/route.ts`
-- `src/app/api/auth/kakao/callback/route.ts`
-- `src/app/api/auth/me/route.ts`
-- `src/app/api/auth/logout/route.ts`
-- `src/app/api/me/favorites/route.ts`
-- `src/hooks/useUser.ts`
-- `src/hooks/useSavedCafes.ts`
-- `src/components/MapView.tsx`
-- `src/components/Sidebar.tsx`
-- `src/components/CafeListItem.tsx`
-- `src/components/CafePreviewCard.tsx`
-- `src/components/BottomSheet.tsx`
-- `src/components/ReportSheet.tsx`
-- `supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql`
-
-### 환경 변수
-
-필요:
-
-```txt
-KAKAO_REST_API_KEY
-KAKAO_SESSION_SECRET 또는 ADMIN_SECRET
-```
-
-선택:
-
-```txt
-KAKAO_CLIENT_SECRET
-KAKAO_REDIRECT_URI
-```
-
-### Supabase 직접 적용 필요
-
-Supabase SQL Editor에서 아래 migration 실행 필요.
-
-```txt
-supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql
-```
-
-### 검증
-
-```bash
-npx.cmd tsc --noEmit
-npm.cmd run lint
-npm.cmd run build
-```
-
-결과:
-
-- tsc: 통과
-- lint: 통과
-- build: 통과
-
-참고:
-
-- `npm.cmd run build` 후 PowerShell oh-my-posh init 경고가 출력됐지만, Next.js build exit code는 0으로 통과
-
-### 남은 작업
-
-- Supabase SQL Editor에서 Plan 6 migration 적용
-- Kakao Developers Redirect URI 등록 확인
-- 브라우저에서 카카오 로그인 콜백, 세션 유지, 로그아웃 확인
-- 로그인 사용자 즐겨찾기 저장/삭제가 Supabase `favorite_cafes`에 반영되는지 확인
-- `saved_lists`는 DB 스키마만 준비. 사용자 지정 리스트 UI/API는 후속 작업
-
----
-
-## Plan 7 — 프로필 수정 기능
-
-> 상태: 구현 완료 / 브라우저 수동 QA 대기
-
-### 목표
-
-1. 프로필 드롭다운 "정보수정" 버튼 텍스트를 "내 정보 수정"으로 변경한다.
-2. "내 정보 수정" 진입 시 프로필 수정 UI(바텀시트)를 연다.
-3. 프로필 수정에서 아바타 선택: 사이트 제공 동물 이모지 or 카카오 프로필 사진.
-4. 프로필 수정에서 닉네임 선택: 사이트 랜덤 닉네임 or 카카오 닉네임.
-5. 선택값은 저장되어 지도 상단 프로필 버튼과 드롭다운에 즉시 반영된다.
-
-### 범위
-
-- `src/components/MapView.tsx` — "정보수정" 텍스트 변경, ProfileEditSheet 진입 연결 완료
-- `src/components/ProfileEditSheet.tsx` — 신규 생성 완료
-- `src/hooks/useUser.ts` — 프로필 설정 상태/액션 추가 완료
-- `src/lib/profilePrefs.ts` — 신규 생성 완료 (설정 저장/읽기 유틸)
-
-### 제외 범위
-
-- Supabase `users` 테이블 컬럼 추가 (설정은 localStorage에만 저장, DB 동기화 미포함)
-- 사진 직접 업로드 (카카오 OAuth에서 받은 사진만 사용 가능)
-- 닉네임 자유 입력 (선택 방식만, 타이핑 없음)
-
-### 데이터 구조
-
-#### `coffffe_profile_prefs` localStorage 키 (신규)
-
-```ts
-interface ProfilePrefs {
-  nicknamePreference: 'random' | 'kakao'  // default: 'random'
-  avatarPreference: 'emoji' | 'kakao'     // default: 'emoji'
-}
-```
-
-익명 사용자는 카카오 데이터 없으므로 두 옵션 모두 `random` / `emoji`만 실질적으로 동작.
-카카오 로그인 사용자는 두 옵션 모두 선택 가능.
-
-#### `useUser` 반환값 확장
-
-```ts
-interface UserState {
-  user: User | null
-  profilePrefs: ProfilePrefs
-  updateProfilePrefs: (prefs: Partial<ProfilePrefs>) => void
-  // ... 기존 유지
-}
-```
-
-`AuthenticatedUser`에 원본 카카오 데이터 추가 필요:
-
-```ts
-interface AuthenticatedUser {
-  // 기존 유지
-  kakaoNickname: string       // 카카오에서 받은 원본 닉네임
-  kakaoProfileImageUrl?: string  // 카카오에서 받은 원본 사진 URL (기존 profileImageUrl 역할)
-}
-```
-
-`MapView`에서 `profileLabel`, `profileAvatar`/`profileImageUrl` 계산 시 `profilePrefs`를 반영한다.
-
-### 구현 상세
-
-#### 1. `src/lib/profilePrefs.ts` (신규)
-
-```ts
-const PREFS_KEY = 'coffffe_profile_prefs'
-
-export function readProfilePrefs(): ProfilePrefs  // localStorage에서 읽기
-export function saveProfilePrefs(prefs: ProfilePrefs): void  // localStorage에 저장
-export function getDefaultPrefs(): ProfilePrefs   // { nicknamePreference: 'random', avatarPreference: 'emoji' }
-```
-
-#### 2. `src/hooks/useUser.ts` 변경
-
-- `profilePrefs` 상태 추가 (별도 `useSyncExternalStore` 또는 단순 `useState`)
-- `updateProfilePrefs(partial)` 액션 추가 → localStorage 저장 → 리렌더 트리거
-- `AuthenticatedUser`에 `kakaoNickname`, `kakaoProfileImageUrl` 필드 추가
-- 기존 `nickname`은 계속 저장하되, `MapView`가 `profilePrefs`에 따라 표시 닉네임을 선택
-
-#### 3. `src/components/ProfileEditSheet.tsx` (신규)
-
-구조: `ReportSheet`와 동일한 바텀시트 패턴.
-
-```
-[상단] "내 정보 수정" 타이틀 + 닫기 버튼
-
-[아바타 미리보기]
-현재 선택된 아바타 큰 원 표시
-
-[아바타 선택] — 카드 2개 (라디오 방식)
-① 사이트 아이콘  : 동물 이모지 표시
-② 카카오 사진    : 카카오 프로필 사진 썸네일 표시 (로그인 사용자 전용. 익명이면 비활성화 + "카카오 로그인 후 사용 가능" 안내)
-
-[닉네임 선택] — 카드 2개 (라디오 방식)
-① 사이트 닉네임  : 현재 랜덤 닉네임 표시 + 새로고침 버튼
-② 카카오 닉네임  : 카카오 계정 이름 표시 (로그인 사용자 전용. 익명이면 비활성화 + "카카오 로그인 후 사용 가능" 안내)
-
-[저장 버튼] — 선택값을 profilePrefs에 저장, 시트 닫기
-```
-
-#### 4. `src/components/MapView.tsx` 변경
-
-- line 387: `정보수정` → `내 정보 수정`
-- 해당 버튼 onClick을 `openCorrectionReport()` → `openProfileEdit()` 로 변경 (새 상태)
-- `profileLabel`, `profileAvatar`, `profileImageUrl` 계산 로직에 `profilePrefs` 반영:
-  - `nicknamePreference === 'kakao'` + 인증 사용자 → `user.kakaoNickname` 사용
-  - `avatarPreference === 'kakao'` + 인증 사용자 → `user.kakaoProfileImageUrl` 사용
-  - 나머지는 기존 랜덤 닉네임/동물 이모지 유지
-
-### 수정 예상 파일
-
-- `src/components/MapView.tsx`
-- `src/components/ProfileEditSheet.tsx` — 신규
-- `src/hooks/useUser.ts`
-- `src/lib/profilePrefs.ts` — 신규
-
-### 검증
-
-- [x] 프로필 드롭다운 버튼 텍스트가 "내 정보 수정"으로 표시
-- [x] "내 정보 수정" 클릭 시 ProfileEditSheet 열림
-- [x] 아바타 선택 카드 UI 정상 표시
-- [x] 닉네임 선택 카드 UI 정상 표시
-- [x] 익명 사용자: 카카오 옵션 비활성화 + 안내 문구 표시
-- [x] 카카오 로그인 사용자: 두 옵션 모두 활성화
-- [x] 선택 후 저장 → 드롭다운/프로필 버튼 즉시 반영
-- [x] 새로고침 후 선택값 유지 (localStorage)
-
-```bash
-npx tsc --noEmit
-npm run lint
-npm run build
-```
-
-결과: 모두 통과.
-
-참고: `npm.cmd run build` 후 PowerShell oh-my-posh init 경고가 출력됐지만, Next.js build exit code는 0으로 통과.
-
-### 추가 반영: 관리자 버튼 노출 조건
-
-- 프로필 드롭다운의 `관리자 페이지` 버튼은 `user.isAdmin`이 true일 때만 표시한다.
-- `/api/auth/me`에서 `ADMIN_KAKAO_IDS` 환경변수와 세션의 `kakaoId`를 비교해 `isAdmin`을 내려준다.
-- `ADMIN_KAKAO_IDS`는 콤마 구분으로 여러 관리자 카카오 ID를 등록할 수 있다.
-- 관리자 페이지 자체 보호는 기존 `ADMIN_SECRET` 기반 인증을 유지한다.
-
----
-
-## 2026-05-21 Plan 8 — 동물 프로필 이미지 + 카카오 로그인 시 익명 동물 유지
-
-> 상태: 구현 완료 / 브라우저 수동 QA 대기
-
-### 목표
-
-1. `내 정보 수정` 시트에서 동물 이모지 대신 `.webp` 이미지 표시.
-2. 카카오 로그인(최초 회원가입) 시 기존 익명 동물 닉네임을 서버에 그대로 이어받는다.
-3. 변경하려면 `내 정보 수정` > 🔄 버튼으로 언제든 교체 가능.
-
-### 구현 내용
-
-- `src/lib/animalAvatar.ts`에 `getAnimalAvatarPath(animal)` 추가.
-- `src/components/ProfileEditSheet.tsx` — 미리보기 원형·사이트 아이콘 카드·사이트 닉네임 카드 3곳을 `.webp` 이미지로 교체. 이미지 없으면 이모지 fallback.
-- `src/hooks/useUser.ts`:
-  - `loginWithKakao()` 호출 시 현재 익명 `{ nickname, animal }`을 `coffffe_pending_profile` localStorage에 저장.
-  - `syncAuthenticatedUser()` 실행 시 `coffffe_pending_profile` 감지 → `PATCH /api/auth/me` 호출 → 서버 동물 업데이트 → 로컬 상태 갱신.
-- `src/app/api/auth/me/route.ts` — `PATCH` 핸들러가 body `{ siteNickname, siteAnimal }` 수신 시 지정 값 저장. body 없거나 유효하지 않으면 기존처럼 랜덤 생성.
-
-### 수정 파일
-
-- `src/lib/animalAvatar.ts`
-- `src/components/ProfileEditSheet.tsx`
-- `src/hooks/useUser.ts`
-- `src/app/api/auth/me/route.ts`
-
-### 검증
-
-```bash
-npx tsc --noEmit
-```
-
-결과: 통과.
-
-### 남은 확인
-
-- 브라우저에서 `내 정보 수정` 시트에 동물 이미지 정상 표시 확인
-- 익명 상태에서 카카오 로그인 후 기존 동물이 유지되는지 확인
-- 재로그인 시 서버 동물이 변경되지 않는지 확인
-- `내 정보 수정` 🔄 버튼으로 동물 변경 후 반영 확인
+| `cafes.json` 삭제 | 낮 | Supabase 안정 확인 후. fallback 코드도 함께 제거 |
+| Sidebar 목록 버튼 중복 제거 (`md:hidden`/`md:flex` 두 개) | 낮 | 단순 코드 정리 |
+| `/cafes/[id]` 뒤로가기 `/map`으로 변경 | 낮 | 현재 `/`로 이동 |

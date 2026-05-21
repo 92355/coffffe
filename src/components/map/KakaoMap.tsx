@@ -341,6 +341,17 @@ function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void)
     cup.className = 'block h-[14px] w-[18px] rounded-b-full rounded-t-sm border-2 border-white text-white'
     pin.append(cup)
   }
+
+  // Aroma puffs — render above pin in flex-col order
+  const aromaWrap = document.createElement('div')
+  aromaWrap.className = 'flex items-center justify-center gap-1'
+  aromaWrap.style.height = '16px'
+  for (let j = 0; j < 3; j++) {
+    const puff = document.createElement('span')
+    puff.className = `aroma-puff aroma-puff--${j + 1}${selected ? ' aroma-puff--selected' : ''}`
+    aromaWrap.append(puff)
+  }
+  root.append(aromaWrap)
   root.append(pin)
 
   if (selected) {
