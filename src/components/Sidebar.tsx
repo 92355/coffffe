@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import {
-  Bell,
   BookOpen,
   Brain,
   Coffee,
@@ -68,7 +67,7 @@ export default function Sidebar({
   onMobileClose,
 }: SidebarProps) {
   const panel = (
-    <aside className="flex h-full w-full flex-col overflow-hidden rounded-none border-[#eee4d8] bg-[#fbf8f3] shadow-[0_24px_70px_rgba(58,38,18,0.18)] md:rounded-[22px] md:border">
+    <aside className="flex h-full w-full flex-col overflow-hidden rounded-t-[22px] border-t border-[#eee4d8] bg-[#fbf8f3] shadow-[0_-12px_40px_rgba(58,38,18,0.14)]">
       <div className="shrink-0 px-4 pb-3 pt-4">
         <div className="flex items-center justify-between gap-3">
           <Link href="/home" className="flex min-w-0 items-center gap-2.5 no-underline">
@@ -89,18 +88,11 @@ export default function Sidebar({
 
           <div className="flex items-center gap-1 rounded-full bg-white px-1 py-1 shadow-sm">
             <ThemeToggle />
-            <button
-              type="button"
-              className="hidden h-8 w-8 items-center justify-center rounded-full text-[#7d6149] md:flex"
-              aria-label="알림"
-            >
-              <Bell size={16} />
-            </button>
             {onMobileClose && (
               <button
                 type="button"
                 onClick={onMobileClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d6149] md:hidden"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d6149]"
                 aria-label="목록 닫기"
               >
                 <X size={17} />
@@ -213,15 +205,14 @@ export default function Sidebar({
 
   return (
     <>
-      <div className="hidden h-dvh w-[386px] shrink-0 p-3 md:block">{panel}</div>
       <div
-        className={`fixed inset-0 z-40 bg-black/35 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-40 bg-black/35 transition-opacity ${
           mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={onMobileClose}
       />
       <div
-        className={`fixed inset-x-0 bottom-0 z-50 h-[86dvh] transition-transform duration-300 md:hidden ${
+        className={`fixed inset-x-0 bottom-0 z-50 h-[86dvh] transition-transform duration-300 ${
           mobileOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
