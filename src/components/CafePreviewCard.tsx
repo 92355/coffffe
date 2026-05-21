@@ -1,22 +1,47 @@
 'use client'
 
 import Link from 'next/link'
+import { Heart } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import { ROAST_LABELS, ORIGIN_LABELS, BREW_LABELS } from '@/types/cafe'
 
 interface CafePreviewCardProps {
   cafe: Cafe | null
   compact?: boolean
+  favorite?: boolean
+  onFavoriteToggle?: (cafeId: string) => void
 }
 
-export default function CafePreviewCard({ cafe, compact = false }: CafePreviewCardProps) {
+export default function CafePreviewCard({
+  cafe,
+  compact = false,
+  favorite = false,
+  onFavoriteToggle,
+}: CafePreviewCardProps) {
   if (!cafe) return null
 
   return (
     <article>
-      <h2 className={`${compact ? 'text-lg' : 'text-xl'} font-black text-neutral-950 dark:text-neutral-50`}>
-        {cafe.name}
-      </h2>
+      <div className="flex items-start justify-between gap-3">
+        <h2 className={`${compact ? 'text-lg' : 'text-xl'} font-black text-neutral-950 dark:text-neutral-50`}>
+          {cafe.name}
+        </h2>
+        {onFavoriteToggle && (
+          <button
+            type="button"
+            onClick={() => onFavoriteToggle(cafe.id)}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              favorite
+                ? 'border-[#d66612] bg-[#fff1e7] text-[#d66612]'
+                : 'border-neutral-200 bg-white text-neutral-500 hover:text-[#d66612] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'
+            }`}
+            aria-label={favorite ? `${cafe.name} 저장 해제` : `${cafe.name} 저장`}
+            aria-pressed={favorite}
+          >
+            <Heart size={17} fill={favorite ? 'currentColor' : 'none'} />
+          </button>
+        )}
+      </div>
       <p className="mt-1 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">{cafe.shortDescription}</p>
       {!compact && (
         <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{cafe.fullDescription}</p>

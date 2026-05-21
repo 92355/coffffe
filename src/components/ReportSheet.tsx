@@ -144,7 +144,7 @@ export default function ReportSheet({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...payload,
-        anonymousId: user.anonymousId,
+        anonymousId: user.type === 'anonymous' ? user.anonymousId : user.id,
         nickname: user.nickname,
       }),
     })

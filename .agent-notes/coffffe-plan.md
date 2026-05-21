@@ -605,3 +605,90 @@ npm.cmd run build
 - 브라우저에서 모바일 375px 기준 랜딩페이지 overflow 여부 확인
 - `/map`에서 카카오 지도 SDK와 마커 렌더링 수동 확인
 - Plan 5 Supabase SQL 적용 및 이미지 업로드 브라우저 QA 진행
+
+---
+
+## 2026-05-21 Plan 6 카카오 로그인 + 즐겨찾기/리스트 저장
+
+상태: 구현 완료, Supabase SQL 직접 적용 및 브라우저 OAuth QA 대기
+
+### 구현 내용
+
+- 카카오 OAuth 시작/콜백 Route Handler 추가: `/api/auth/kakao/start`, `/api/auth/kakao/callback`, `/api/auth/me`, `/api/auth/logout`
+- httpOnly HMAC 세션 쿠키 `coffffe_session` 추가
+- Supabase `users`, `favorite_cafes`, `saved_lists` migration 추가
+- `useUser`가 익명 사용자와 카카오 로그인 사용자를 함께 다루도록 확장
+- `useSavedCafes` 추가
+  - 익명 사용자는 `localStorage` 기반 저장
+  - 카카오 로그인 사용자는 `/api/me/favorites` 기반 Supabase 저장
+- 지도 카페 리스트와 모바일 상세 카드에 하트 저장 버튼 추가
+- 프로필 드롭다운에 저장한 카페 목록, 로그인/로그아웃 상태 표시 추가
+- 제보 작성자 ID는 익명 사용자면 `anonymousId`, 카카오 사용자면 `user.id` 사용
+
+### 수정 파일
+
+- `src/lib/user-auth.ts`
+- `src/app/api/auth/kakao/start/route.ts`
+- `src/app/api/auth/kakao/callback/route.ts`
+- `src/app/api/auth/me/route.ts`
+- `src/app/api/auth/logout/route.ts`
+- `src/app/api/me/favorites/route.ts`
+- `src/hooks/useUser.ts`
+- `src/hooks/useSavedCafes.ts`
+- `src/components/MapView.tsx`
+- `src/components/Sidebar.tsx`
+- `src/components/CafeListItem.tsx`
+- `src/components/CafePreviewCard.tsx`
+- `src/components/BottomSheet.tsx`
+- `src/components/ReportSheet.tsx`
+- `supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql`
+
+### 환경 변수
+
+필요:
+
+```txt
+KAKAO_REST_API_KEY
+KAKAO_SESSION_SECRET 또는 ADMIN_SECRET
+```
+
+선택:
+
+```txt
+KAKAO_CLIENT_SECRET
+KAKAO_REDIRECT_URI
+```
+
+### Supabase 직접 적용 필요
+
+Supabase SQL Editor에서 아래 migration 실행 필요.
+
+```txt
+supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql
+```
+
+### 검증
+
+```bash
+npx.cmd tsc --noEmit
+npm.cmd run lint
+npm.cmd run build
+```
+
+결과:
+
+- tsc: 통과
+- lint: 통과
+- build: 통과
+
+참고:
+
+- `npm.cmd run build` 후 PowerShell oh-my-posh init 경고가 출력됐지만, Next.js build exit code는 0으로 통과
+
+### 남은 작업
+
+- Supabase SQL Editor에서 Plan 6 migration 적용
+- Kakao Developers Redirect URI 등록 확인
+- 브라우저에서 카카오 로그인 콜백, 세션 유지, 로그아웃 확인
+- 로그인 사용자 즐겨찾기 저장/삭제가 Supabase `favorite_cafes`에 반영되는지 확인
+- `saved_lists`는 DB 스키마만 준비. 사용자 지정 리스트 UI/API는 후속 작업

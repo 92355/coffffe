@@ -7,9 +7,16 @@ import CafePreviewCard from '@/components/CafePreviewCard'
 interface BottomSheetProps {
   cafe: Cafe | null
   onClose: () => void
+  favorite?: boolean
+  onFavoriteToggle?: (cafeId: string) => void
 }
 
-export default function BottomSheet({ cafe, onClose }: BottomSheetProps) {
+export default function BottomSheet({
+  cafe,
+  onClose,
+  favorite = false,
+  onFavoriteToggle,
+}: BottomSheetProps) {
   return (
     <div
       className={`pointer-events-none fixed inset-x-0 bottom-0 z-30 md:hidden transition-transform duration-300 ease-out ${
@@ -29,7 +36,12 @@ export default function BottomSheet({ cafe, onClose }: BottomSheetProps) {
           <X size={16} />
         </button>
         <div className="px-5 pb-6 pt-3" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-          <CafePreviewCard cafe={cafe} compact />
+          <CafePreviewCard
+            cafe={cafe}
+            compact
+            favorite={favorite}
+            onFavoriteToggle={onFavoriteToggle}
+          />
         </div>
       </div>
     </div>

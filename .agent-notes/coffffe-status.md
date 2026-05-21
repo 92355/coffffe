@@ -217,3 +217,31 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 - 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
 - 개발 서버에서 `/`, `/map` 200 응답 확인 완료.
 - 최신 확인 커밋: `688eb3d 랜딩페이지 추가 ㅁ및 로고 변경`.
+
+---
+
+## 2026-05-21 추가 상태: 카카오 로그인 / 즐겨찾기
+
+- 카카오 OAuth Route Handler가 추가됐다.
+  - `/api/auth/kakao/start`
+  - `/api/auth/kakao/callback`
+  - `/api/auth/me`
+  - `/api/auth/logout`
+- 사용자 세션은 `coffffe_session` httpOnly 쿠키에 HMAC 서명 토큰으로 저장된다.
+- 필요 환경 변수:
+  - `KAKAO_REST_API_KEY`
+  - `KAKAO_SESSION_SECRET` 또는 기존 `ADMIN_SECRET`
+  - 선택: `KAKAO_CLIENT_SECRET`, `KAKAO_REDIRECT_URI`
+- Supabase migration `supabase/migrations/20260521000000_add_kakao_users_and_favorites.sql`가 추가됐다.
+  - `users`
+  - `favorite_cafes`
+  - `saved_lists`
+- `useUser`는 익명 사용자와 카카오 로그인 사용자를 모두 반환한다.
+- `useSavedCafes`가 추가됐다.
+  - 익명 사용자는 `coffffe_saved_cafes` localStorage에 저장한다.
+  - 로그인 사용자는 `/api/me/favorites`로 Supabase `favorite_cafes`에 저장한다.
+- 지도 카페 리스트와 모바일 상세 카드에 하트 저장 버튼이 추가됐다.
+- 프로필 드롭다운에서 저장한 카페 목록과 로그인/로그아웃 상태를 확인할 수 있다.
+- `saved_lists`는 DB 스키마만 준비됐다. 사용자 지정 리스트 UI/API는 아직 미구현이다.
+- 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
+- 남은 확인: Supabase SQL 적용, Kakao Developers Redirect URI 등록, 브라우저 OAuth/즐겨찾기 수동 QA.

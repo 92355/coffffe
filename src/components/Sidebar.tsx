@@ -34,6 +34,8 @@ interface SidebarProps {
   onQuickCategoryChange: (value: string | null) => void
   onClearSelection: () => void
   onReportNewPlace: () => void
+  favoriteCafeIds: Set<string>
+  onFavoriteToggle: (cafeId: string) => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
@@ -60,6 +62,8 @@ export default function Sidebar({
   onQuickCategoryChange,
   onClearSelection,
   onReportNewPlace,
+  favoriteCafeIds,
+  onFavoriteToggle,
   mobileOpen = false,
   onMobileClose,
 }: SidebarProps) {
@@ -185,6 +189,8 @@ export default function Sidebar({
               selected={selectedCafe?.id === cafe.id}
               distanceOrigin={distanceOrigin}
               onSelect={onCafeSelect}
+              favorite={favoriteCafeIds.has(cafe.id)}
+              onFavoriteToggle={onFavoriteToggle}
             />
           ))}
           {cafes.length === 0 && (

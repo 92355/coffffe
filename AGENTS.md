@@ -176,6 +176,7 @@ npm run build
 - 현재 계획은 항상 `.agent-notes/coffffe-plan.md`에만 둔다.
 - 완료된 계획은 필요한 요약만 `.agent-notes/coffffe-archive.md`로 옮긴다.
 - 현재 상태 변경은 `.agent-notes/coffffe-status.md`에 반영한다.
+- 사용자가 "내가 해야하는일 md파일 작성해줘" 또는 유사하게 요청하면 `.agent-notes/user-works.md`에 사용자가 직접 처리해야 할 작업만 한국어로 정리한다.
 - `AGENTS.md`는 300줄 이하로 유지한다.
 
 ---

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Bell, ChevronDown, Layers, List, LocateFixed, MapPin, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
+import { Bell, ChevronDown, Heart, Layers, List, LocateFixed, LogOut, MapPin, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
 import ReportSheet from '@/components/ReportSheet'
@@ -10,6 +10,7 @@ import Sidebar from '@/components/Sidebar'
 import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
 import { getAnimalAvatar } from '@/lib/animalAvatar'
 import { useUser } from '@/hooks/useUser'
+import { useSavedCafes } from '@/hooks/useSavedCafes'
 import type { LocationPoint } from '@/types/location'
 import type { ReportType } from '@/types/report'
 
@@ -28,7 +29,8 @@ const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 
 export default function MapView({ allCafes }: MapViewProps) {
-  const { user, regenerateNickname } = useUser()
+  const { user, regenerateNickname, loginWithKakao, logout } = useUser()
+  const { favoriteCafeIds, favoriteCafeIdSet, toggleFavoriteCafe, favoriteError } = useSavedCafes(user)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
@@ -74,6 +76,13 @@ export default function MapView({ allCafes }: MapViewProps) {
 
     return baseFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
   }, [activeMapBounds, baseFilteredCafes])
+  const favoriteCafes = useMemo(() => {
+    const favoriteOrder = new Map(favoriteCafeIds.map((cafeId, index) => [cafeId, index]))
+
+    return allCafes
+      .filter((cafe) => favoriteOrder.has(cafe.id))
+      .sort((left, right) => (favoriteOrder.get(left.id) ?? 0) - (favoriteOrder.get(right.id) ?? 0))
+  }, [allCafes, favoriteCafeIds])
 
   const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
     setCurrentMapBounds(bounds)
@@ -215,7 +224,8 @@ export default function MapView({ allCafes }: MapViewProps) {
     ? selectedCafe
     : null
   const profileLabel = user?.nickname ?? '익명 사용자'
-  const profileAvatar = user ? getAnimalAvatar(user.animal) : '☕'
+  const profileAvatar = user?.type === 'anonymous' ? getAnimalAvatar(user.animal) : null
+  const profileImageUrl = user?.type === 'authenticated' ? user.profileImageUrl : undefined
 
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-[#f3eee7]">
@@ -235,6 +245,10 @@ export default function MapView({ allCafes }: MapViewProps) {
         onQuickCategoryChange={setActiveQuickCategory}
         onClearSelection={() => setSelectedCafe(null)}
         onReportNewPlace={openNewPlaceReport}
+        favoriteCafeIds={favoriteCafeIdSet}
+        onFavoriteToggle={(cafeId) => {
+          void toggleFavoriteCafe(cafeId)
+        }}
         mobileOpen={mobileListOpen}
         onMobileClose={() => setMobileListOpen(false)}
       />
@@ -298,7 +312,13 @@ export default function MapView({ allCafes }: MapViewProps) {
               title={profileLabel}
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2d8c1] text-lg leading-none">
-                {profileAvatar}
+                {profileImageUrl ? (
+                  // External Kakao profile image. / 외부 카카오 프로필 이미지.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profileImageUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                ) : (
+                  profileAvatar ?? '☕'
+                )}
               </span>
               <ChevronDown
                 size={14}
@@ -311,21 +331,43 @@ export default function MapView({ allCafes }: MapViewProps) {
                 <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
                   <div className="flex items-center gap-2">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] text-base leading-none">
-                    {profileAvatar}
+                    {profileImageUrl ? (
+                      // External Kakao profile image. / 외부 카카오 프로필 이미지.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={profileImageUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      profileAvatar ?? '☕'
+                    )}
                   </span>
                   <span className="min-w-0 truncate text-sm font-black">{profileLabel}</span>
-                    <button
-                      type="button"
-                      onClick={regenerateNickname}
-                      className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
-                      aria-label="닉네임 새로고침"
-                      title="닉네임 새로고침"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
+                    {user?.type === 'anonymous' ? (
+                      <button
+                        type="button"
+                        onClick={regenerateNickname}
+                        className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+                        aria-label="닉네임 새로고침"
+                        title="닉네임 새로고침"
+                      >
+                        <RefreshCw size={14} />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void logout()
+                        }}
+                        className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+                        aria-label="로그아웃"
+                        title="로그아웃"
+                      >
+                        <LogOut size={14} />
+                      </button>
+                    )}
                   </div>
                   <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
-                    회원가입 전 임시 닉네임이에요. 새로고침을 눌러 개성넘치는 조합을 만들어보세요!
+                    {user?.type === 'authenticated'
+                      ? '카카오 로그인으로 저장한 카페를 기기 밖에서도 이어볼 수 있어요.'
+                      : '회원가입 전 임시 닉네임이에요. 저장 카페는 이 브라우저에 먼저 보관돼요.'}
                   </p>
                 </div>
 
@@ -346,12 +388,47 @@ export default function MapView({ allCafes }: MapViewProps) {
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  className="mt-2 h-10 w-full rounded-lg bg-[#fee500] px-4 text-sm font-black text-[#381e1f] transition-colors hover:bg-[#f7dc00]"
-                >
-                  카카오 로그인하기
-                </button>
+                <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2">
+                  <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17]">
+                    <Heart size={13} fill="currentColor" />
+                    저장한 카페 {favoriteCafeIds.length}
+                  </div>
+                  {favoriteError && (
+                    <p className="mb-2 rounded-md bg-[#fff4ed] px-2 py-1.5 text-[11px] font-bold leading-4 text-[#b94a12]">
+                      {favoriteError}
+                    </p>
+                  )}
+                  <div className="max-h-28 space-y-1 overflow-y-auto">
+                    {favoriteCafes.length > 0 ? favoriteCafes.map((cafe) => (
+                      <button
+                        key={cafe.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCafe(cafe)
+                          setProfileMenuOpen(false)
+                        }}
+                        className="flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs font-bold text-[#5a2e11] hover:bg-[#f8efe6]"
+                      >
+                        <span className="min-w-0 truncate">{cafe.name}</span>
+                        <span className="shrink-0 text-[#b45a15]">{cafe.qualityScore.toFixed(1)}</span>
+                      </button>
+                    )) : (
+                      <p className="px-2 py-1 text-[11px] font-bold leading-4 text-[#8a6042]">
+                        카페 카드의 하트를 눌러 저장해보세요.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {user?.type !== 'authenticated' && (
+                  <button
+                    type="button"
+                    onClick={loginWithKakao}
+                    className="mt-2 h-10 w-full rounded-lg bg-[#fee500] px-4 text-sm font-black text-[#381e1f] transition-colors hover:bg-[#f7dc00]"
+                  >
+                    카카오 로그인하기
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -436,7 +513,14 @@ export default function MapView({ allCafes }: MapViewProps) {
           </button>
         </div>
 
-        <BottomSheet cafe={visibleSelectedCafe} onClose={() => setSelectedCafe(null)} />
+        <BottomSheet
+          cafe={visibleSelectedCafe}
+          onClose={() => setSelectedCafe(null)}
+          favorite={visibleSelectedCafe ? favoriteCafeIdSet.has(visibleSelectedCafe.id) : false}
+          onFavoriteToggle={(cafeId) => {
+            void toggleFavoriteCafe(cafeId)
+          }}
+        />
         {reportSheetOpen && (
           <ReportSheet
             cafes={allCafes}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useSyncExternalStore } from 'react'
 import { generateNickname, isNicknameAnimal, NICKNAME_STORAGE_KEY, type NicknameAnimal } from '@/lib/nickname'
 
 interface AnonymousUser {
@@ -10,11 +10,21 @@ interface AnonymousUser {
   animal: NicknameAnimal
 }
 
-export type User = AnonymousUser
+interface AuthenticatedUser {
+  type: 'authenticated'
+  id: string
+  kakaoId: string
+  nickname: string
+  profileImageUrl?: string
+}
+
+export type User = AnonymousUser | AuthenticatedUser
 
 interface UserState {
   user: User | null
   regenerateNickname: () => void
+  loginWithKakao: () => void
+  logout: () => Promise<void>
 }
 
 interface StoredUser {
@@ -22,6 +32,16 @@ interface StoredUser {
   anonymousId?: unknown
   nickname?: unknown
   animal?: unknown
+}
+
+interface MeResponse {
+  user?: {
+    type?: string
+    id?: unknown
+    kakaoId?: unknown
+    nickname?: unknown
+    profileImageUrl?: unknown
+  } | null
 }
 
 let cachedUser: User | null | undefined
@@ -32,8 +52,42 @@ export function useUser(): UserState {
   const regenerateNickname = useCallback(() => {
     setUserSnapshot(createAnonymousUser())
   }, [])
+  const loginWithKakao = useCallback(() => {
+    window.location.href = '/api/auth/kakao/start'
+  }, [])
+  const logout = useCallback(async () => {
+    const response = await fetch('/api/auth/logout', { method: 'POST' })
+    if (!response.ok) throw new Error('Failed to logout')
 
-  return { user, regenerateNickname }
+    setUserSnapshot(readStoredUser() ?? createAnonymousUser())
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    async function syncAuthenticatedUser(): Promise<void> {
+      try {
+        const response = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (!response.ok) return
+
+        const data = await response.json() as MeResponse
+        const authenticatedUser = parseAuthenticatedUser(data)
+        if (!active || !authenticatedUser) return
+
+        setUserSnapshot(authenticatedUser)
+      } catch (error) {
+        console.warn('Failed to sync Kakao user. / 카카오 사용자 동기화에 실패했습니다.', error)
+      }
+    }
+
+    void syncAuthenticatedUser()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  return { user, regenerateNickname, loginWithKakao, logout }
 }
 
 function subscribeToUserStorage(onStoreChange: () => void): () => void {
@@ -96,6 +150,27 @@ function createAnonymousUser(): User {
   }
 }
 
+function parseAuthenticatedUser(response: MeResponse): AuthenticatedUser | null {
+  const user = response.user
+
+  if (
+    user?.type !== 'authenticated' ||
+    typeof user.id !== 'string' ||
+    typeof user.kakaoId !== 'string' ||
+    typeof user.nickname !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    type: 'authenticated',
+    id: user.id,
+    kakaoId: user.kakaoId,
+    nickname: user.nickname,
+    profileImageUrl: typeof user.profileImageUrl === 'string' ? user.profileImageUrl : undefined,
+  }
+}
+
 function createAnonymousId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -111,8 +186,11 @@ function readStoredUser(): User | null {
 
     const parsedUser = JSON.parse(rawUser) as StoredUser
 
+    if (parsedUser.type !== 'anonymous') {
+      return null
+    }
+
     if (
-      parsedUser.type !== 'anonymous' ||
       typeof parsedUser.nickname !== 'string' ||
       typeof parsedUser.animal !== 'string' ||
       !isNicknameAnimal(parsedUser.animal)
