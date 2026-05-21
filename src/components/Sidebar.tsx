@@ -223,7 +223,8 @@ export default function Sidebar({
     <>
       {/* Desktop: inline flex panel */}
       <motion.aside
-        className="glass-panel hidden shrink-0 md:flex h-full flex-col overflow-hidden"
+        className="hidden shrink-0 md:flex h-full flex-col overflow-hidden border-r border-[rgba(229,220,206,0.70)] backdrop-blur-[18px]"
+        style={{ background: 'rgba(246, 243, 236, 0.88)', WebkitBackdropFilter: 'blur(18px)' }}
         animate={{ width: collapsed ? 60 : 360 }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
       >

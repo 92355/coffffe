@@ -306,8 +306,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           </div>
         )}
 
-      {/* Floating top bar */}
-      <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2">
+      {/* Floating top bar — mobile only */}
+      <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2 md:hidden">
         <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[#eee4d8] bg-white/95 px-3 py-2 shadow-[0_12px_28px_rgba(60,40,20,0.14)] backdrop-blur-sm">
           <Link href="/home" className="flex shrink-0 items-center no-underline">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6]">
@@ -516,7 +516,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         </AnimatePresence>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-[84px] z-20 flex justify-center px-4">
+      <div className="pointer-events-none absolute inset-x-0 top-[84px] z-20 flex justify-center px-4 md:top-4">
         <button
           type="button"
           onClick={handleSearchCurrentMap}
@@ -581,7 +581,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={() => setMobileListOpen(true)}
-            className="pointer-events-auto ml-auto flex h-12 items-center gap-2 rounded-full bg-[#d66612] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(150,72,14,0.28)]"
+            className="pointer-events-auto ml-auto flex h-12 items-center gap-2 rounded-full bg-[#8FAE5A] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(143,174,90,0.35)] md:hidden"
           >
             <List size={18} />
             목록 보기
