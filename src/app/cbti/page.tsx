@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import ThemeToggle from '@/components/ThemeToggle'
+import { useUser } from '@/hooks/useUser'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -286,12 +287,42 @@ const INIT_SCORES: Scores = { L: 0, D: 0, S: 0, B: 0, E: 0, F: 0, H: 0, C: 0 }
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CbtiPage() {
+  const { user } = useUser()
   const [phase, setPhase] = useState<Phase>('intro')
   const [currentQ, setCurrentQ] = useState(0)
   const [scores, setScores] = useState<Scores>(INIT_SCORES)
   const [history, setHistory] = useState<Axis[]>([])
   const [result, setResult] = useState<string | null>(null)
   const [selected, setSelected] = useState<0 | 1 | null>(null)
+  const lastSavedResultRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (user?.type !== 'authenticated' || phase !== 'result' || !result || result === lastSavedResultRef.current) return
+
+    let cancelled = false
+
+    async function saveCbtiResult(): Promise<void> {
+      try {
+        const response = await fetch('/api/me/cbti', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cbtiType: result }),
+        })
+        if (!response.ok) return
+        if (cancelled) return
+
+        lastSavedResultRef.current = result
+      } catch (error) {
+        console.warn('Failed to save CBTI profile. / CBTI 프로필 저장 실패.', error)
+      }
+    }
+
+    void saveCbtiResult()
+
+    return () => {
+      cancelled = true
+    }
+  }, [phase, result, user])
 
   function handleChoice(axis: Axis, idx: 0 | 1) {
     if (selected !== null) return

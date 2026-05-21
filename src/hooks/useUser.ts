@@ -62,6 +62,8 @@ interface MeResponse {
     kakaoId?: unknown
     nickname?: unknown
     profileImageUrl?: unknown
+    siteNickname?: unknown
+    siteAnimal?: unknown
     isAdmin?: unknown
   } | null
 }
@@ -73,16 +75,13 @@ export function useUser(): UserState {
   const user = useSyncExternalStore(subscribeToUserStorage, getUserSnapshot, getServerUserSnapshot)
   const [profilePrefs, setProfilePrefs] = useState<ProfilePrefs>(getInitialProfilePrefs)
   const regenerateNickname = useCallback(() => {
-    const generatedUser = createAnonymousUser()
+    if (user?.type === 'authenticated') {
+      void regenerateAuthenticatedNickname(user)
+      return
+    }
 
-    setUserSnapshot(user?.type === 'authenticated'
-      ? {
-          ...user,
-          nickname: generatedUser.nickname,
-          siteNickname: generatedUser.nickname,
-          siteAnimal: generatedUser.animal,
-        }
-      : generatedUser)
+    const generatedUser = createAnonymousUser()
+    setUserSnapshot(generatedUser)
   }, [user])
   const updateProfilePrefs = useCallback((prefs: Partial<ProfilePrefs>) => {
     setProfilePrefs((currentPrefs) => {
@@ -211,7 +210,7 @@ function parseAuthenticatedUser(response: MeResponse): AuthenticatedUser | null 
     return null
   }
 
-  const siteProfile = getCurrentSiteProfile()
+  const siteProfile = readSiteProfileFromResponse(user) ?? getCurrentSiteProfile()
   const kakaoNickname = user.nickname
   const kakaoProfileImageUrl = typeof user.profileImageUrl === 'string' ? user.profileImageUrl : undefined
 
@@ -226,6 +225,16 @@ function parseAuthenticatedUser(response: MeResponse): AuthenticatedUser | null 
     kakaoProfileImageUrl,
     profileImageUrl: kakaoProfileImageUrl,
     isAdmin: user.isAdmin === true,
+  }
+}
+
+function readSiteProfileFromResponse(user: NonNullable<MeResponse['user']>): Pick<AnonymousUser, 'nickname' | 'animal'> | null {
+  if (typeof user.siteNickname !== 'string') return null
+  if (typeof user.siteAnimal !== 'string' || !isNicknameAnimal(user.siteAnimal)) return null
+
+  return {
+    nickname: user.siteNickname,
+    animal: user.siteAnimal,
   }
 }
 
@@ -352,5 +361,30 @@ function saveUser(user: User): void {
     window.localStorage.setItem(NICKNAME_STORAGE_KEY, JSON.stringify(user))
   } catch (error) {
     console.warn('Failed to save coFFFFFe user to localStorage.', error)
+  }
+}
+
+async function regenerateAuthenticatedNickname(currentUser: AuthenticatedUser): Promise<void> {
+  try {
+    const response = await fetch('/api/auth/me', { method: 'PATCH' })
+    if (!response.ok) throw new Error('Failed to regenerate nickname')
+
+    const data = await response.json() as { siteNickname?: unknown; siteAnimal?: unknown }
+    if (
+      typeof data.siteNickname !== 'string' ||
+      typeof data.siteAnimal !== 'string' ||
+      !isNicknameAnimal(data.siteAnimal)
+    ) {
+      throw new Error('Invalid regenerated nickname payload')
+    }
+
+    setUserSnapshot({
+      ...currentUser,
+      nickname: data.siteNickname,
+      siteNickname: data.siteNickname,
+      siteAnimal: data.siteAnimal,
+    })
+  } catch (error) {
+    console.warn('Failed to regenerate authenticated nickname. / 로그인 사용자 닉네임 재생성 실패.', error)
   }
 }

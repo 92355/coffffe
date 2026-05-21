@@ -9,6 +9,7 @@ import {
   getUserSessionMaxAgeSeconds,
   type UserSession,
 } from '@/lib/user-auth'
+import { generateNickname, type NicknameAnimal } from '@/lib/nickname'
 
 const KAKAO_TOKEN_URL = 'https://kauth.kakao.com/oauth/token'
 const KAKAO_USER_URL = 'https://kapi.kakao.com/v2/user/me'
@@ -36,6 +37,8 @@ interface DatabaseUser {
   kakao_id: string
   nickname: string
   profile_image_url: string | null
+  site_nickname: string
+  site_animal: NicknameAnimal
 }
 
 export async function GET(request: NextRequest) {
@@ -122,14 +125,42 @@ async function upsertKakaoUser(kakaoUser: Required<Pick<KakaoUserResponse, 'id'>
   const profile = kakaoUser.kakao_account?.profile
   const nickname = profile?.nickname?.trim() || `Kakao ${kakaoUser.id}`
   const kakaoId = String(kakaoUser.id)
-  const { data, error } = await createSupabaseAdminClient()
+  const databaseClient = createSupabaseAdminClient()
+  const { data: existingUser, error: existingUserError } = await databaseClient
     .from('users')
-    .upsert({
+    .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
+    .eq('kakao_id', kakaoId)
+    .maybeSingle()
+
+  if (existingUserError) throw existingUserError
+
+  if (existingUser) {
+    const { data, error } = await databaseClient
+      .from('users')
+      .update({
+        nickname,
+        profile_image_url: profile?.profile_image_url ?? null,
+      })
+      .eq('id', existingUser.id)
+      .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
+      .single()
+
+    if (error) throw error
+
+    return data as DatabaseUser
+  }
+
+  const generatedSiteProfile = generateNickname()
+  const { data, error } = await databaseClient
+    .from('users')
+    .insert({
       kakao_id: kakaoId,
       nickname,
       profile_image_url: profile?.profile_image_url ?? null,
-    }, { onConflict: 'kakao_id' })
-    .select('id, kakao_id, nickname, profile_image_url')
+      site_nickname: generatedSiteProfile.nickname,
+      site_animal: generatedSiteProfile.animal,
+    })
+    .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
     .single()
 
   if (error) throw error
