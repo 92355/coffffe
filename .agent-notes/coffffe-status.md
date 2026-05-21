@@ -245,3 +245,29 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 - `saved_lists`는 DB 스키마만 준비됐다. 사용자 지정 리스트 UI/API는 아직 미구현이다.
 - 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
 - 남은 확인: Supabase SQL 적용, Kakao Developers Redirect URI 등록, 브라우저 OAuth/즐겨찾기 수동 QA.
+
+---
+
+## 2026-05-21 추가 상태: 프로필 수정 기능
+
+- 프로필 드롭다운의 `정보수정` 버튼은 `내 정보 수정`으로 변경됐다.
+- `src/components/ProfileEditSheet.tsx`가 추가됐다.
+- 프로필 수정에서 아래 선택을 지원한다.
+  - 프로필 사진: 사이트 동물 아이콘 또는 카카오 프로필 사진
+  - 닉네임: 사이트 랜덤 닉네임 또는 카카오 닉네임
+- 선택값은 `coffffe_profile_prefs` localStorage에 저장된다.
+- 익명 사용자는 카카오 옵션이 비활성화된다.
+- 카카오 로그인 사용자는 카카오 닉네임/프로필 사진 옵션을 사용할 수 있다.
+- `useUser`는 카카오 원본 프로필(`kakaoNickname`, `kakaoProfileImageUrl`)과 사이트 랜덤 프로필(`siteNickname`, `siteAnimal`)을 분리해서 보관한다.
+- 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
+- 남은 확인: 브라우저에서 익명/카카오 로그인 상태별 프로필 수정 UI 수동 QA.
+
+---
+
+## 2026-05-21 추가 상태: 관리자 버튼 노출 조건
+
+- 프로필 드롭다운의 `관리자 페이지` 버튼은 카카오 로그인 사용자 중 관리자에게만 표시된다.
+- 관리자 여부는 `/api/auth/me`에서 `ADMIN_KAKAO_IDS` 환경변수와 로그인 사용자의 `kakaoId`를 비교해 `isAdmin`으로 내려준다.
+- `ADMIN_KAKAO_IDS`는 콤마 구분으로 여러 카카오 ID를 등록할 수 있다.
+- 관리자 페이지 자체 인증은 기존 `ADMIN_SECRET` 기반 보호를 유지한다. 이번 변경은 버튼 노출 제어다.
+- 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.

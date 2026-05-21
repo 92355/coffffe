@@ -692,3 +692,151 @@ npm.cmd run build
 - 브라우저에서 카카오 로그인 콜백, 세션 유지, 로그아웃 확인
 - 로그인 사용자 즐겨찾기 저장/삭제가 Supabase `favorite_cafes`에 반영되는지 확인
 - `saved_lists`는 DB 스키마만 준비. 사용자 지정 리스트 UI/API는 후속 작업
+
+---
+
+## Plan 7 — 프로필 수정 기능
+
+> 상태: 구현 완료 / 브라우저 수동 QA 대기
+
+### 목표
+
+1. 프로필 드롭다운 "정보수정" 버튼 텍스트를 "내 정보 수정"으로 변경한다.
+2. "내 정보 수정" 진입 시 프로필 수정 UI(바텀시트)를 연다.
+3. 프로필 수정에서 아바타 선택: 사이트 제공 동물 이모지 or 카카오 프로필 사진.
+4. 프로필 수정에서 닉네임 선택: 사이트 랜덤 닉네임 or 카카오 닉네임.
+5. 선택값은 저장되어 지도 상단 프로필 버튼과 드롭다운에 즉시 반영된다.
+
+### 범위
+
+- `src/components/MapView.tsx` — "정보수정" 텍스트 변경, ProfileEditSheet 진입 연결 완료
+- `src/components/ProfileEditSheet.tsx` — 신규 생성 완료
+- `src/hooks/useUser.ts` — 프로필 설정 상태/액션 추가 완료
+- `src/lib/profilePrefs.ts` — 신규 생성 완료 (설정 저장/읽기 유틸)
+
+### 제외 범위
+
+- Supabase `users` 테이블 컬럼 추가 (설정은 localStorage에만 저장, DB 동기화 미포함)
+- 사진 직접 업로드 (카카오 OAuth에서 받은 사진만 사용 가능)
+- 닉네임 자유 입력 (선택 방식만, 타이핑 없음)
+
+### 데이터 구조
+
+#### `coffffe_profile_prefs` localStorage 키 (신규)
+
+```ts
+interface ProfilePrefs {
+  nicknamePreference: 'random' | 'kakao'  // default: 'random'
+  avatarPreference: 'emoji' | 'kakao'     // default: 'emoji'
+}
+```
+
+익명 사용자는 카카오 데이터 없으므로 두 옵션 모두 `random` / `emoji`만 실질적으로 동작.
+카카오 로그인 사용자는 두 옵션 모두 선택 가능.
+
+#### `useUser` 반환값 확장
+
+```ts
+interface UserState {
+  user: User | null
+  profilePrefs: ProfilePrefs
+  updateProfilePrefs: (prefs: Partial<ProfilePrefs>) => void
+  // ... 기존 유지
+}
+```
+
+`AuthenticatedUser`에 원본 카카오 데이터 추가 필요:
+
+```ts
+interface AuthenticatedUser {
+  // 기존 유지
+  kakaoNickname: string       // 카카오에서 받은 원본 닉네임
+  kakaoProfileImageUrl?: string  // 카카오에서 받은 원본 사진 URL (기존 profileImageUrl 역할)
+}
+```
+
+`MapView`에서 `profileLabel`, `profileAvatar`/`profileImageUrl` 계산 시 `profilePrefs`를 반영한다.
+
+### 구현 상세
+
+#### 1. `src/lib/profilePrefs.ts` (신규)
+
+```ts
+const PREFS_KEY = 'coffffe_profile_prefs'
+
+export function readProfilePrefs(): ProfilePrefs  // localStorage에서 읽기
+export function saveProfilePrefs(prefs: ProfilePrefs): void  // localStorage에 저장
+export function getDefaultPrefs(): ProfilePrefs   // { nicknamePreference: 'random', avatarPreference: 'emoji' }
+```
+
+#### 2. `src/hooks/useUser.ts` 변경
+
+- `profilePrefs` 상태 추가 (별도 `useSyncExternalStore` 또는 단순 `useState`)
+- `updateProfilePrefs(partial)` 액션 추가 → localStorage 저장 → 리렌더 트리거
+- `AuthenticatedUser`에 `kakaoNickname`, `kakaoProfileImageUrl` 필드 추가
+- 기존 `nickname`은 계속 저장하되, `MapView`가 `profilePrefs`에 따라 표시 닉네임을 선택
+
+#### 3. `src/components/ProfileEditSheet.tsx` (신규)
+
+구조: `ReportSheet`와 동일한 바텀시트 패턴.
+
+```
+[상단] "내 정보 수정" 타이틀 + 닫기 버튼
+
+[아바타 미리보기]
+현재 선택된 아바타 큰 원 표시
+
+[아바타 선택] — 카드 2개 (라디오 방식)
+① 사이트 아이콘  : 동물 이모지 표시
+② 카카오 사진    : 카카오 프로필 사진 썸네일 표시 (로그인 사용자 전용. 익명이면 비활성화 + "카카오 로그인 후 사용 가능" 안내)
+
+[닉네임 선택] — 카드 2개 (라디오 방식)
+① 사이트 닉네임  : 현재 랜덤 닉네임 표시 + 새로고침 버튼
+② 카카오 닉네임  : 카카오 계정 이름 표시 (로그인 사용자 전용. 익명이면 비활성화 + "카카오 로그인 후 사용 가능" 안내)
+
+[저장 버튼] — 선택값을 profilePrefs에 저장, 시트 닫기
+```
+
+#### 4. `src/components/MapView.tsx` 변경
+
+- line 387: `정보수정` → `내 정보 수정`
+- 해당 버튼 onClick을 `openCorrectionReport()` → `openProfileEdit()` 로 변경 (새 상태)
+- `profileLabel`, `profileAvatar`, `profileImageUrl` 계산 로직에 `profilePrefs` 반영:
+  - `nicknamePreference === 'kakao'` + 인증 사용자 → `user.kakaoNickname` 사용
+  - `avatarPreference === 'kakao'` + 인증 사용자 → `user.kakaoProfileImageUrl` 사용
+  - 나머지는 기존 랜덤 닉네임/동물 이모지 유지
+
+### 수정 예상 파일
+
+- `src/components/MapView.tsx`
+- `src/components/ProfileEditSheet.tsx` — 신규
+- `src/hooks/useUser.ts`
+- `src/lib/profilePrefs.ts` — 신규
+
+### 검증
+
+- [x] 프로필 드롭다운 버튼 텍스트가 "내 정보 수정"으로 표시
+- [x] "내 정보 수정" 클릭 시 ProfileEditSheet 열림
+- [x] 아바타 선택 카드 UI 정상 표시
+- [x] 닉네임 선택 카드 UI 정상 표시
+- [x] 익명 사용자: 카카오 옵션 비활성화 + 안내 문구 표시
+- [x] 카카오 로그인 사용자: 두 옵션 모두 활성화
+- [x] 선택 후 저장 → 드롭다운/프로필 버튼 즉시 반영
+- [x] 새로고침 후 선택값 유지 (localStorage)
+
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```
+
+결과: 모두 통과.
+
+참고: `npm.cmd run build` 후 PowerShell oh-my-posh init 경고가 출력됐지만, Next.js build exit code는 0으로 통과.
+
+### 추가 반영: 관리자 버튼 노출 조건
+
+- 프로필 드롭다운의 `관리자 페이지` 버튼은 `user.isAdmin`이 true일 때만 표시한다.
+- `/api/auth/me`에서 `ADMIN_KAKAO_IDS` 환경변수와 세션의 `kakaoId`를 비교해 `isAdmin`을 내려준다.
+- `ADMIN_KAKAO_IDS`는 콤마 구분으로 여러 관리자 카카오 ID를 등록할 수 있다.
+- 관리자 페이지 자체 보호는 기존 `ADMIN_SECRET` 기반 인증을 유지한다.

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { Bell, ChevronDown, Heart, Layers, List, LocateFixed, LogOut, MapPin, Minus, Plus, RefreshCw, Search, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
+import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
 import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
@@ -29,7 +30,14 @@ const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 
 export default function MapView({ allCafes }: MapViewProps) {
-  const { user, regenerateNickname, loginWithKakao, logout } = useUser()
+  const {
+    user,
+    profilePrefs,
+    regenerateNickname,
+    updateProfilePrefs,
+    loginWithKakao,
+    logout,
+  } = useUser()
   const { favoriteCafeIds, favoriteCafeIdSet, toggleFavoriteCafe, favoriteError } = useSavedCafes(user)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
@@ -44,6 +52,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const [activeMapBounds, setActiveMapBounds] = useState<MapBounds | null>(null)
   const [hasPendingBoundsSearch, setHasPendingBoundsSearch] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [profileEditSheetOpen, setProfileEditSheetOpen] = useState(false)
   const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
   const [locationPermissionModalOpen, setLocationPermissionModalOpen] = useState(false)
   const [isRequestingLocation, setIsRequestingLocation] = useState(false)
@@ -120,13 +129,10 @@ export default function MapView({ allCafes }: MapViewProps) {
     setMobileListOpen(false)
   }, [])
 
-  const openCorrectionReport = useCallback((cafe: Cafe | null = selectedCafe) => {
-    setReportInitialType('correction')
-    setReportInitialCafe(cafe)
-    setReportInitialLocation(null)
-    setReportSheetOpen(true)
+  const openProfileEdit = useCallback(() => {
+    setProfileEditSheetOpen(true)
     setProfileMenuOpen(false)
-  }, [selectedCafe])
+  }, [])
 
   const handleStartMapPick = useCallback(() => {
     setReportSheetOpen(false)
@@ -223,9 +229,9 @@ export default function MapView({ allCafes }: MapViewProps) {
   const visibleSelectedCafe = selectedCafe && filteredCafes.some(cafe => cafe.id === selectedCafe.id)
     ? selectedCafe
     : null
-  const profileLabel = user?.nickname ?? '익명 사용자'
-  const profileAvatar = user?.type === 'anonymous' ? getAnimalAvatar(user.animal) : null
-  const profileImageUrl = user?.type === 'authenticated' ? user.profileImageUrl : undefined
+  const profileLabel = getProfileLabel(user, profilePrefs)
+  const profileAvatar = getProfileAvatar(user)
+  const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-[#f3eee7]">
@@ -381,12 +387,24 @@ export default function MapView({ allCafes }: MapViewProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => openCorrectionReport()}
+                    onClick={openProfileEdit}
                     className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
                   >
-                    정보수정
+                    내 정보 수정
                   </button>
                 </div>
+
+                {user?.type === 'authenticated' && user.isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.location.href = '/admin'
+                    }}
+                    className="mt-2 h-10 w-full rounded-lg border border-[#5a2e11] bg-[#5a2e11] px-4 text-sm font-black text-white transition-colors hover:bg-[#43210c]"
+                  >
+                    관리자 페이지
+                  </button>
+                )}
 
                 <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2">
                   <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17]">
@@ -535,6 +553,15 @@ export default function MapView({ allCafes }: MapViewProps) {
             onStartMapPick={handleStartMapPick}
           />
         )}
+        {profileEditSheetOpen && (
+          <ProfileEditSheet
+            user={user}
+            profilePrefs={profilePrefs}
+            onProfilePrefsChange={updateProfilePrefs}
+            onRegenerateNickname={regenerateNickname}
+            onClose={() => setProfileEditSheetOpen(false)}
+          />
+        )}
       </div>
 
       {locationPermissionModalOpen && (
@@ -587,6 +614,26 @@ function isCafeInsideBounds(cafe: Cafe, bounds: MapBounds): boolean {
   const isInsideLongitude = cafe.lng >= bounds.west && cafe.lng <= bounds.east
 
   return isInsideLatitude && isInsideLongitude
+}
+
+function getProfileLabel(user: ReturnType<typeof useUser>['user'], profilePrefs: ReturnType<typeof useUser>['profilePrefs']): string {
+  if (!user) return '익명 사용자'
+  if (user.type === 'authenticated' && profilePrefs.nicknamePreference === 'kakao') return user.kakaoNickname
+
+  return user.type === 'authenticated' ? user.siteNickname : user.nickname
+}
+
+function getProfileAvatar(user: ReturnType<typeof useUser>['user']): string | null {
+  if (!user) return '☕'
+  if (user.type === 'authenticated') return getAnimalAvatar(user.siteAnimal)
+
+  return getAnimalAvatar(user.animal)
+}
+
+function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePrefs: ReturnType<typeof useUser>['profilePrefs']): string | undefined {
+  if (user?.type !== 'authenticated' || profilePrefs.avatarPreference !== 'kakao') return undefined
+
+  return user.kakaoProfileImageUrl
 }
 
 function CoffeeDot() {

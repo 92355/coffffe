@@ -1,7 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { generateNickname, isNicknameAnimal, NICKNAME_STORAGE_KEY, type NicknameAnimal } from '@/lib/nickname'
+import {
+  getDefaultProfilePrefs,
+  readProfilePrefs,
+  saveProfilePrefs,
+  type ProfilePrefs,
+} from '@/lib/profilePrefs'
 
 interface AnonymousUser {
   type: 'anonymous'
@@ -15,14 +21,21 @@ interface AuthenticatedUser {
   id: string
   kakaoId: string
   nickname: string
+  siteNickname: string
+  siteAnimal: NicknameAnimal
+  kakaoNickname: string
+  kakaoProfileImageUrl?: string
   profileImageUrl?: string
+  isAdmin: boolean
 }
 
 export type User = AnonymousUser | AuthenticatedUser
 
 interface UserState {
   user: User | null
+  profilePrefs: ProfilePrefs
   regenerateNickname: () => void
+  updateProfilePrefs: (prefs: Partial<ProfilePrefs>) => void
   loginWithKakao: () => void
   logout: () => Promise<void>
 }
@@ -30,8 +43,16 @@ interface UserState {
 interface StoredUser {
   type?: string
   anonymousId?: unknown
+  id?: unknown
+  kakaoId?: unknown
   nickname?: unknown
   animal?: unknown
+  siteNickname?: unknown
+  siteAnimal?: unknown
+  kakaoNickname?: unknown
+  kakaoProfileImageUrl?: unknown
+  profileImageUrl?: unknown
+  isAdmin?: unknown
 }
 
 interface MeResponse {
@@ -41,6 +62,7 @@ interface MeResponse {
     kakaoId?: unknown
     nickname?: unknown
     profileImageUrl?: unknown
+    isAdmin?: unknown
   } | null
 }
 
@@ -49,8 +71,29 @@ const userStoreListeners = new Set<() => void>()
 
 export function useUser(): UserState {
   const user = useSyncExternalStore(subscribeToUserStorage, getUserSnapshot, getServerUserSnapshot)
+  const [profilePrefs, setProfilePrefs] = useState<ProfilePrefs>(getInitialProfilePrefs)
   const regenerateNickname = useCallback(() => {
-    setUserSnapshot(createAnonymousUser())
+    const generatedUser = createAnonymousUser()
+
+    setUserSnapshot(user?.type === 'authenticated'
+      ? {
+          ...user,
+          nickname: generatedUser.nickname,
+          siteNickname: generatedUser.nickname,
+          siteAnimal: generatedUser.animal,
+        }
+      : generatedUser)
+  }, [user])
+  const updateProfilePrefs = useCallback((prefs: Partial<ProfilePrefs>) => {
+    setProfilePrefs((currentPrefs) => {
+      const nextPrefs = {
+        ...currentPrefs,
+        ...prefs,
+      }
+
+      saveProfilePrefs(nextPrefs)
+      return nextPrefs
+    })
   }, [])
   const loginWithKakao = useCallback(() => {
     window.location.href = '/api/auth/kakao/start'
@@ -87,7 +130,13 @@ export function useUser(): UserState {
     }
   }, [])
 
-  return { user, regenerateNickname, loginWithKakao, logout }
+  return { user, profilePrefs, regenerateNickname, updateProfilePrefs, loginWithKakao, logout }
+}
+
+function getInitialProfilePrefs(): ProfilePrefs {
+  if (typeof window === 'undefined') return getDefaultProfilePrefs()
+
+  return readProfilePrefs()
 }
 
 function subscribeToUserStorage(onStoreChange: () => void): () => void {
@@ -139,7 +188,7 @@ function notifyUserStoreListeners(): void {
   })
 }
 
-function createAnonymousUser(): User {
+function createAnonymousUser(): AnonymousUser {
   const generatedNickname = generateNickname()
 
   return {
@@ -162,12 +211,60 @@ function parseAuthenticatedUser(response: MeResponse): AuthenticatedUser | null 
     return null
   }
 
+  const siteProfile = getCurrentSiteProfile()
+  const kakaoNickname = user.nickname
+  const kakaoProfileImageUrl = typeof user.profileImageUrl === 'string' ? user.profileImageUrl : undefined
+
   return {
     type: 'authenticated',
     id: user.id,
     kakaoId: user.kakaoId,
-    nickname: user.nickname,
-    profileImageUrl: typeof user.profileImageUrl === 'string' ? user.profileImageUrl : undefined,
+    nickname: siteProfile.nickname,
+    siteNickname: siteProfile.nickname,
+    siteAnimal: siteProfile.animal,
+    kakaoNickname,
+    kakaoProfileImageUrl,
+    profileImageUrl: kakaoProfileImageUrl,
+    isAdmin: user.isAdmin === true,
+  }
+}
+
+function getCurrentSiteProfile(): Pick<AnonymousUser, 'nickname' | 'animal'> {
+  if (cachedUser?.type === 'anonymous') {
+    return {
+      nickname: cachedUser.nickname,
+      animal: cachedUser.animal,
+    }
+  }
+
+  if (cachedUser?.type === 'authenticated') {
+    return {
+      nickname: cachedUser.siteNickname,
+      animal: cachedUser.siteAnimal,
+    }
+  }
+
+  const storedUser = readStoredUser()
+
+  if (storedUser?.type === 'anonymous') {
+    return {
+      nickname: storedUser.nickname,
+      animal: storedUser.animal,
+    }
+  }
+
+  if (storedUser?.type === 'authenticated') {
+    return {
+      nickname: storedUser.siteNickname,
+      animal: storedUser.siteAnimal,
+    }
+  }
+
+  const generatedUser = createAnonymousUser()
+
+  return {
+    nickname: generatedUser.nickname,
+    animal: generatedUser.animal,
   }
 }
 
@@ -186,29 +283,67 @@ function readStoredUser(): User | null {
 
     const parsedUser = JSON.parse(rawUser) as StoredUser
 
+    if (parsedUser.type === 'authenticated') {
+      return readStoredAuthenticatedUser(parsedUser)
+    }
+
     if (parsedUser.type !== 'anonymous') {
       return null
     }
 
-    if (
-      typeof parsedUser.nickname !== 'string' ||
-      typeof parsedUser.animal !== 'string' ||
-      !isNicknameAnimal(parsedUser.animal)
-    ) {
-      return null
-    }
-
-    return {
-      type: 'anonymous',
-      anonymousId: typeof parsedUser.anonymousId === 'string'
-        ? parsedUser.anonymousId
-        : createAnonymousId(),
-      nickname: parsedUser.nickname,
-      animal: parsedUser.animal,
-    }
+    return readStoredAnonymousUser(parsedUser)
   } catch (error) {
     console.warn('Failed to read coFFFFFe user from localStorage.', error)
     return null
+  }
+}
+
+function readStoredAnonymousUser(parsedUser: StoredUser): AnonymousUser | null {
+  if (
+    typeof parsedUser.nickname !== 'string' ||
+    typeof parsedUser.animal !== 'string' ||
+    !isNicknameAnimal(parsedUser.animal)
+  ) {
+    return null
+  }
+
+  return {
+    type: 'anonymous',
+    anonymousId: typeof parsedUser.anonymousId === 'string'
+      ? parsedUser.anonymousId
+      : createAnonymousId(),
+    nickname: parsedUser.nickname,
+    animal: parsedUser.animal,
+  }
+}
+
+function readStoredAuthenticatedUser(parsedUser: StoredUser): AuthenticatedUser | null {
+  if (
+    typeof parsedUser.id !== 'string' ||
+    typeof parsedUser.kakaoId !== 'string' ||
+    typeof parsedUser.siteNickname !== 'string' ||
+    typeof parsedUser.siteAnimal !== 'string' ||
+    !isNicknameAnimal(parsedUser.siteAnimal) ||
+    typeof parsedUser.kakaoNickname !== 'string'
+  ) {
+    return null
+  }
+
+  const kakaoProfileImageUrl = typeof parsedUser.kakaoProfileImageUrl === 'string'
+    ? parsedUser.kakaoProfileImageUrl
+    : typeof parsedUser.profileImageUrl === 'string' ? parsedUser.profileImageUrl : undefined
+
+  return {
+    type: 'authenticated',
+    id: parsedUser.id,
+    kakaoId: parsedUser.kakaoId,
+    nickname: parsedUser.siteNickname,
+    siteNickname: parsedUser.siteNickname,
+    siteAnimal: parsedUser.siteAnimal,
+    kakaoNickname: parsedUser.kakaoNickname,
+    kakaoProfileImageUrl,
+    profileImageUrl: kakaoProfileImageUrl,
+    isAdmin: parsedUser.isAdmin === true,
   }
 }
 
