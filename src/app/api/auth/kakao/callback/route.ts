@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import {
   KAKAO_OAUTH_STATE_COOKIE,
+  KAKAO_PENDING_SIGNUP_COOKIE,
   USER_SESSION_COOKIE,
   createSessionToken,
   getKakaoClientSecret,
@@ -9,7 +10,7 @@ import {
   getUserSessionMaxAgeSeconds,
   type UserSession,
 } from '@/lib/user-auth'
-import { generateNickname, type NicknameAnimal } from '@/lib/nickname'
+import { generateNickname, isNicknameAnimal, type NicknameAnimal } from '@/lib/nickname'
 
 const KAKAO_TOKEN_URL = 'https://kauth.kakao.com/oauth/token'
 const KAKAO_USER_URL = 'https://kapi.kakao.com/v2/user/me'
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
     const redirectUri = getRedirectUri(request)
     const accessToken = await requestKakaoAccessToken(code, redirectUri)
     const kakaoUser = await requestKakaoUser(accessToken)
-    const user = await upsertKakaoUser(kakaoUser)
+    const pendingProfile = parsePendingSignupCookie(request.cookies.get(KAKAO_PENDING_SIGNUP_COOKIE)?.value)
+    const user = await upsertKakaoUser(kakaoUser, pendingProfile)
     const session: UserSession = {
       userId: user.id,
       kakaoId: user.kakao_id,
@@ -66,6 +68,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.redirect(redirectTarget)
 
     response.cookies.delete(KAKAO_OAUTH_STATE_COOKIE)
+    response.cookies.delete(KAKAO_PENDING_SIGNUP_COOKIE)
     response.cookies.set(USER_SESSION_COOKIE, createSessionToken(session), {
       httpOnly: true,
       sameSite: 'lax',
@@ -121,7 +124,28 @@ async function requestKakaoUser(accessToken: string): Promise<Required<Pick<Kaka
   return data as Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse
 }
 
-async function upsertKakaoUser(kakaoUser: Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse): Promise<DatabaseUser> {
+interface PendingSignupProfile {
+  nickname: string
+  animal: NicknameAnimal
+}
+
+function parsePendingSignupCookie(raw: string | undefined): PendingSignupProfile | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as { nickname?: unknown; animal?: unknown }
+    if (typeof parsed.nickname === 'string' && typeof parsed.animal === 'string' && isNicknameAnimal(parsed.animal)) {
+      return { nickname: parsed.nickname, animal: parsed.animal }
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+async function upsertKakaoUser(
+  kakaoUser: Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse,
+  pendingProfile: PendingSignupProfile | null,
+): Promise<DatabaseUser> {
   const profile = kakaoUser.kakao_account?.profile
   const nickname = profile?.nickname?.trim() || `Kakao ${kakaoUser.id}`
   const kakaoId = String(kakaoUser.id)
@@ -150,15 +174,15 @@ async function upsertKakaoUser(kakaoUser: Required<Pick<KakaoUserResponse, 'id'>
     return data as DatabaseUser
   }
 
-  const generatedSiteProfile = generateNickname()
+  const siteProfile = pendingProfile ?? generateNickname()
   const { data, error } = await databaseClient
     .from('users')
     .insert({
       kakao_id: kakaoId,
       nickname,
       profile_image_url: profile?.profile_image_url ?? null,
-      site_nickname: generatedSiteProfile.nickname,
-      site_animal: generatedSiteProfile.animal,
+      site_nickname: siteProfile.nickname,
+      site_animal: siteProfile.animal,
     })
     .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
     .single()

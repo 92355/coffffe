@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import { KAKAO_OAUTH_STATE_COOKIE, getKakaoRestApiKey } from '@/lib/user-auth'
+import { KAKAO_OAUTH_STATE_COOKIE, KAKAO_PENDING_SIGNUP_COOKIE, getKakaoRestApiKey } from '@/lib/user-auth'
+import { isNicknameAnimal } from '@/lib/nickname'
 
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize'
 const OAUTH_STATE_MAX_AGE_SECONDS = 60 * 10
@@ -16,13 +17,25 @@ export function GET(request: NextRequest) {
   authorizeUrl.searchParams.set('state', state)
 
   const response = NextResponse.redirect(authorizeUrl)
-  response.cookies.set(KAKAO_OAUTH_STATE_COOKIE, state, {
+  const cookieOptions = {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     secure: request.nextUrl.protocol === 'https:',
     maxAge: OAUTH_STATE_MAX_AGE_SECONDS,
     path: '/',
-  })
+  }
+
+  response.cookies.set(KAKAO_OAUTH_STATE_COOKIE, state, cookieOptions)
+
+  const pendingNickname = request.nextUrl.searchParams.get('nickname')
+  const pendingAnimal = request.nextUrl.searchParams.get('animal')
+  if (pendingNickname && pendingAnimal && isNicknameAnimal(pendingAnimal)) {
+    response.cookies.set(
+      KAKAO_PENDING_SIGNUP_COOKIE,
+      JSON.stringify({ nickname: pendingNickname, animal: pendingAnimal }),
+      cookieOptions,
+    )
+  }
 
   return response
 }

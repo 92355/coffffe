@@ -1,6 +1,6 @@
 # coFFFFFe-map 현재 상태
 
-> 마지막 갱신: 2026-05-20
+> 마지막 갱신: 2026-05-21
 
 ---
 
@@ -271,3 +271,28 @@ Supabase 컬럼: snake_case. `/api/cafes/route.ts`의 `toCafe()` 함수로 camel
 - `ADMIN_KAKAO_IDS`는 콤마 구분으로 여러 카카오 ID를 등록할 수 있다.
 - 관리자 페이지 자체 인증은 기존 `ADMIN_SECRET` 기반 보호를 유지한다. 이번 변경은 버튼 노출 제어다.
 - 자동 검증 결과: `npx.cmd tsc --noEmit`, `npm.cmd run lint`, `npm.cmd run build` 모두 통과.
+
+---
+
+## 2026-05-21 추가 상태: 동물 프로필 이미지 적용 + 카카오 로그인 시 익명 동물 유지
+
+### 동물 프로필 이미지 적용
+
+- `public/image/animal_profill/` 에 동물별 `.webp` 이미지 20종이 추가됐다.
+- `src/lib/animalAvatar.ts`에 `getAnimalAvatarPath(animal)` 함수가 추가됐다. 경로 형식: `/image/animal_profill/{slug}.webp`
+- `src/components/ProfileEditSheet.tsx`에서 이모지 대신 `.webp` 이미지를 사용한다.
+  - 미리보기 원형, 사이트 아이콘 카드, 사이트 닉네임 카드 3곳 모두 이미지 교체.
+  - 이미지 없는 경우 이모지 fallback 유지.
+- 자동 검증 결과: `tsc --noEmit` 통과.
+
+### 카카오 로그인 시 익명 동물 유지
+
+- 카카오 로그인 클릭 시 현재 익명 사용자의 `nickname`, `animal`을 `coffffe_pending_profile` localStorage 키에 임시 저장한다.
+- 로그인 완료 후 `syncAuthenticatedUser()` 실행 시 `coffffe_pending_profile`을 감지, `PATCH /api/auth/me`로 서버 업데이트한다.
+- `PATCH /api/auth/me`가 body `{ siteNickname, siteAnimal }` 수신 시 지정 값으로 저장하도록 확장됐다 (기존 body 없을 때 랜덤 생성 동작 유지).
+- 재로그인 또는 다른 기기에서는 `coffffe_pending_profile` 없으므로 서버 동물 그대로 유지.
+- `내 정보 수정` 시트의 🔄 버튼으로 언제든 새 동물로 변경 가능.
+- 수정 파일:
+  - `src/hooks/useUser.ts`
+  - `src/app/api/auth/me/route.ts`
+- 자동 검증 결과: `tsc --noEmit` 통과.
