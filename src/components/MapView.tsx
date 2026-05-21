@@ -506,15 +506,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={() => setMobileListOpen(true)}
-            className="pointer-events-auto ml-auto flex h-12 items-center gap-2 rounded-full bg-[#d66612] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(150,72,14,0.28)] md:hidden"
-          >
-            <List size={18} />
-            목록 보기
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileListOpen(true)}
-            className="pointer-events-auto ml-auto hidden h-12 items-center gap-2 rounded-full bg-[#d66612] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(150,72,14,0.28)] md:flex"
+            className="pointer-events-auto ml-auto flex h-12 items-center gap-2 rounded-full bg-[#d66612] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(150,72,14,0.28)]"
           >
             <List size={18} />
             목록 보기

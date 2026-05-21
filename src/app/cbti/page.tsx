@@ -366,7 +366,7 @@ export default function CbtiPage() {
       <header className="flex items-center justify-between px-4 h-14 border-b border-gray-100 dark:border-gray-800 shrink-0">
         <div className="flex items-center gap-2">
           <Link
-            href="/"
+            href="/home"
             className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="홈으로"
           >
@@ -374,7 +374,7 @@ export default function CbtiPage() {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
-          <Link href="/" className="flex items-baseline gap-2 no-underline">
+          <Link href="/home" className="flex items-baseline gap-2 no-underline">
             <span className="text-base font-bold tracking-tight text-gray-900 dark:text-gray-100">
               co<span className="text-amber-700 dark:text-amber-500">FFFFF</span>e map
             </span>

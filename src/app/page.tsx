@@ -1,14 +1,44 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Bean, Coffee, Compass, MapPin, Search, Sparkles } from 'lucide-react'
-import type { Cafe } from '@/types/cafe'
-import cafesData from '@/data/cafes.json'
+import type { Cafe, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
+import { createSupabaseAdminClient } from '@/lib/supabase'
 import HeroParticles from '@/components/home/HeroParticles'
 import FeaturedCafesSection from '@/components/home/FeaturedCafesSection'
 
-const featuredCafes = (cafesData as unknown as Cafe[])
-  .sort((a, b) => b.qualityScore - a.qualityScore)
-  .slice(0, 3)
+async function getFeaturedCafes(): Promise<Cafe[]> {
+  try {
+    const { data, error } = await createSupabaseAdminClient()
+      .from('cafes')
+      .select('*')
+      .order('quality_score', { ascending: false })
+      .limit(3)
+    if (error || !data) return []
+    return data.map((d) => ({
+      id: d.id,
+      name: d.name,
+      shortDescription: d.short_description,
+      fullDescription: d.full_description,
+      address: d.address,
+      lat: d.lat,
+      lng: d.lng,
+      roastLevels: d.roast_levels as RoastLevel[],
+      beanOrigins: d.bean_origins as BeanOrigin[],
+      brewMethods: d.brew_methods as BrewMethod[],
+      qualityScore: d.quality_score,
+      tags: d.tags,
+      openHours: d.open_hours,
+      closedDays: d.closed_days,
+      images: d.images,
+      phone: d.phone ?? undefined,
+      instagramHandle: d.instagram_handle ?? undefined,
+      kakaoPlaceId: d.kakao_place_id ?? undefined,
+      updatedAt: d.updated_at,
+    }))
+  } catch {
+    return []
+  }
+}
 
 const FEATURES = [
   {
@@ -31,7 +61,9 @@ const FEATURES = [
   },
 ]
 
-export default function HomePage() {
+export default async function HomePage() {
+  const featuredCafes = await getFeaturedCafes()
+
   return (
     <main className="min-h-dvh">
 
@@ -67,10 +99,10 @@ export default function HomePage() {
               <Coffee size={14} /> CBTI
             </Link>
             <Link
-              href="/map"
+              href="/home"
               className="flex h-9 items-center gap-1.5 rounded-full bg-[#e8720a] px-4 text-sm font-black text-white no-underline shadow-[0_6px_18px_rgba(232,114,10,0.38)] transition-all hover:bg-[#d66612] active:scale-95"
             >
-              지도 <ArrowRight size={13} />
+              시작하기 <ArrowRight size={13} />
             </Link>
           </nav>
         </header>

@@ -27,7 +27,7 @@ function FilterSelect<T extends string>({
       <select
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value ? (event.target.value as T) : null)}
-        className="h-9 min-w-[78px] appearance-none rounded-xl border border-[#eadfd3] bg-white py-0 pl-3 pr-8 text-xs font-black text-[#5f4634] outline-none transition-colors hover:border-[#d9c1ad] focus:border-[#b56a2a]"
+        className="h-9 min-w-[78px] appearance-none rounded-full border border-[#eadfd3] bg-white py-0 pl-3.5 pr-8 text-xs font-black text-[#5f4634] outline-none shadow-sm transition-all hover:border-[#c9a87e] hover:shadow-md focus:border-[#b56a2a] focus:shadow-[0_0_0_3px_rgba(181,106,42,0.12)]"
       >
         <option value="">{label}</option>
         {Object.entries(options).map(([key, optionLabel]) => (
@@ -72,7 +72,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       <button
         type="button"
         onClick={resetFilters}
-        className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-xl px-2 text-xs font-bold text-[#8b6f57] transition-colors hover:bg-white"
+        className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-2.5 text-xs font-bold text-[#8b6f57] transition-all hover:border-[#eadfd3] hover:bg-white hover:shadow-sm"
       >
         <RotateCcw size={13} />
         필터 초기화

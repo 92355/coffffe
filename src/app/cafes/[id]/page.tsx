@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import cafesData from '@/data/cafes.json'
-import type { Cafe } from '@/types/cafe'
+import type { Cafe, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
 import { ROAST_LABELS, ORIGIN_LABELS, BREW_LABELS } from '@/types/cafe'
 import ThemeToggle from '@/components/ThemeToggle'
+import { createSupabaseAdminClient } from '@/lib/supabase'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -24,8 +24,33 @@ function Tag({ children, color = 'gray' }: { children: React.ReactNode; color?: 
 
 export default async function CafeDetailPage({ params }: Props) {
   const { id } = await params
-  const cafe = (cafesData as Cafe[]).find(c => c.id === id)
-  if (!cafe) notFound()
+  const { data } = await createSupabaseAdminClient()
+    .from('cafes')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (!data) notFound()
+  const cafe: Cafe = {
+    id: data.id,
+    name: data.name,
+    shortDescription: data.short_description,
+    fullDescription: data.full_description,
+    address: data.address,
+    lat: data.lat,
+    lng: data.lng,
+    roastLevels: data.roast_levels as RoastLevel[],
+    beanOrigins: data.bean_origins as BeanOrigin[],
+    brewMethods: data.brew_methods as BrewMethod[],
+    qualityScore: data.quality_score,
+    tags: data.tags,
+    openHours: data.open_hours,
+    closedDays: data.closed_days,
+    images: data.images,
+    phone: data.phone ?? undefined,
+    instagramHandle: data.instagram_handle ?? undefined,
+    kakaoPlaceId: data.kakao_place_id ?? undefined,
+    updatedAt: data.updated_at,
+  }
 
   return (
     <div className="flex flex-col flex-1">

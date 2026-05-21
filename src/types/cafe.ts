@@ -58,6 +58,7 @@ export interface Cafe {
   phone?: string
   instagramHandle?: string
   kakaoPlaceId?: string
+  updatedAt?: string
 }
 
 export interface FilterState {

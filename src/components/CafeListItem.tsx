@@ -1,6 +1,6 @@
 'use client'
 
-import { Heart, MapPin, Star } from 'lucide-react'
+import { Heart, MapPin, Star, Clock } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
 
@@ -14,6 +14,17 @@ interface CafeListItemProps {
 }
 
 const EARTH_RADIUS_KM = 6371
+
+function formatUpdatedAt(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`
+}
 
 function distanceKm(cafe: Cafe, origin: LocationPoint): number {
   const dLat = ((cafe.lat - origin.lat) * Math.PI) / 180
@@ -54,10 +65,10 @@ export default function CafeListItem({
 
   return (
     <article
-      className={`group w-full rounded-2xl border bg-white p-2 text-left shadow-[0_8px_22px_rgba(80,54,28,0.06)] transition-all ${
+      className={`group w-full rounded-2xl border bg-white p-2 text-left transition-all duration-200 ${
         selected
-          ? 'border-[#d66612] ring-2 ring-[#f08a24]/20'
-          : 'border-[#eee4d8] hover:border-[#e09a5c]'
+          ? 'border-[#d66612] shadow-[0_12px_32px_rgba(214,102,18,0.18)] ring-2 ring-[#f08a24]/20'
+          : 'border-[#eee4d8] shadow-[0_8px_22px_rgba(80,54,28,0.06)] hover:-translate-y-0.5 hover:border-[#e09a5c] hover:shadow-[0_16px_40px_rgba(80,54,28,0.12)]'
       }`}
     >
       <div className="flex gap-3">
@@ -107,11 +118,16 @@ export default function CafeListItem({
             <p className="mt-1 truncate text-xs text-[#9c8b7c]">{cafe.address}</p>
           </button>
           <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-[#8f7b68]">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span>영업 중</span>
+            <Clock size={11} />
+            <span>{cafe.openHours}</span>
             <MapPin size={11} />
             <span>{distance}</span>
           </div>
+          {cafe.updatedAt && (
+            <p className="mt-0.5 text-[10px] text-[#b0916d]">
+              마지막 확인일: {formatUpdatedAt(cafe.updatedAt)}
+            </p>
+          )}
         </div>
       </div>
     </article>

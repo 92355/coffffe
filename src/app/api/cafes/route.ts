@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import cafes from '@/data/cafes.json'
 import type { Cafe, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
 import { createSupabaseAdminClient, createSupabaseClient } from '@/lib/supabase'
 
@@ -22,9 +21,8 @@ interface DatabaseCafe {
   phone: string | null
   instagram_handle: string | null
   kakao_place_id: string | null
+  updated_at: string
 }
-
-const fallbackCafes = cafes as Cafe[]
 
 function toCafe(databaseCafe: DatabaseCafe): Cafe {
   return {
@@ -46,6 +44,7 @@ function toCafe(databaseCafe: DatabaseCafe): Cafe {
     phone: databaseCafe.phone ?? undefined,
     instagramHandle: databaseCafe.instagram_handle ?? undefined,
     kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,
+    updatedAt: databaseCafe.updated_at,
   }
 }
 
@@ -72,23 +71,17 @@ async function getCafes(): Promise<Cafe[]> {
     console.error('Failed to fetch cafes with admin client:', message)
   }
 
-  try {
-    const { data, error } = await createSupabaseClient()
-      .from('cafes')
-      .select('*')
-      .order('quality_score', { ascending: false })
+  const { data, error } = await createSupabaseClient()
+    .from('cafes')
+    .select('*')
+    .order('quality_score', { ascending: false })
 
-    if (error) {
-      console.error('Failed to fetch cafes from Supabase:', error.message)
-      return fallbackCafes
-    }
-
-    return (data as DatabaseCafe[]).map(toCafe)
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown Supabase error'
-    console.error('Using local cafe fallback:', message)
-    return fallbackCafes
+  if (error) {
+    console.error('Failed to fetch cafes from Supabase:', error.message)
+    return []
   }
+
+  return (data as DatabaseCafe[]).map(toCafe)
 }
 
 async function getAdminCafes(): Promise<Cafe[]> {

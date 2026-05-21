@@ -76,7 +76,7 @@ export default function BeansPage() {
         style={{ borderBottom: '1px solid var(--card-border)' }}
       >
         <Link
-          href="/"
+          href="/home"
           className="w-8 h-8 flex items-center justify-center rounded-full no-underline"
           style={{ color: 'var(--text-secondary)' }}
         >
