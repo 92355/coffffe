@@ -3,30 +3,48 @@
 /* class-based dark mode for Tailwind v4 */
 @variant dark (&:where(.dark, .dark *));
 
-/* ── 시안 B: Elegant Cream (라이트 모드) ── */
+/* ── 디자인 시스템 ── */
 :root {
-  --background: #f3ede4;;
-  --foreground: #2C2C2C;
-  --text-secondary: #2f241d;
-  --accent: #9E6F3E;
+  /* 기본 팔레트 */
+  --bg: #F6F3EC;
+  --surface: #FFFFFF;
 
-  --card-bg: #F5EAD8;
-  --card-border: rgba(158, 111, 62, 0.35);
-  --card-shadow: 0 12px 40px rgba(100, 60, 20, 0.10);
-  --card-icon-bg: rgba(158, 111, 62, 0.15);
-  --card-ring: rgba(158, 111, 62, 0.28);
+  --primary: #151412;
+  --brown: #6B432A;
+  --accent: #8FAE5A;
+  --sub: #C08A5A;
 
-  --map-card-bg-from: #F5EAD8;
-  --map-card-bg-to: #E8D0B0;
-  --map-card-border: rgba(158, 111, 62, 0.45);
+  --text: #1F1D1A;
+  --muted: #746A60;
+  --border: #E5DCCE;
+
+  --brown-soft: #F0E5DA;
+  --accent-soft: #EEF5DF;
+  --sub-soft: #F5E7D8;
+  --primary-soft: #E9E7E3;
+
+  /* 하위 호환 별칭 — 기존 컴포넌트 참조 유지 */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --text-secondary: var(--muted);
+
+  --card-bg: var(--brown-soft);
+  --card-border: rgba(107, 67, 42, 0.22);
+  --card-shadow: 0 12px 40px rgba(107, 67, 42, 0.10);
+  --card-icon-bg: rgba(107, 67, 42, 0.10);
+  --card-ring: rgba(107, 67, 42, 0.20);
+
+  --map-card-bg-from: var(--brown-soft);
+  --map-card-bg-to: #E4D0BE;
+  --map-card-border: rgba(107, 67, 42, 0.30);
 }
 
-/* ── 시안 A: Dark & Metallic Bronze (다크 모드) ── */
+/* ── 다크 모드 (추후 업데이트 예정) ── */
 .dark {
   --background: #161616;
   --foreground: #EFEFEF;
   --text-secondary: #999999;
-  --accent: #C58B5C;
+  --accent: #A0C068;
 
   --card-bg: #222222;
   --card-border: rgba(197, 139, 92, 0.30);
@@ -51,8 +69,8 @@ body {
 }
 
 body {
-  background-color: #F7F5F0; /* 좌우 여백 — 라이트 */
-  color: var(--foreground);
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .dark body {
@@ -203,27 +221,44 @@ body {
   animation: scrollBounce 1.8s ease-in-out infinite;
 }
 
-/* ── Kakao map marker coffee aroma ── */
-@keyframes coffeeAroma {
-  0%   { transform: translateY(4px) scale(0.6); opacity: 0; }
-  20%  { opacity: 0.55; }
-  80%  { opacity: 0.28; }
-  100% { transform: translateY(-14px) scale(1.5); opacity: 0; }
+/* ── 글래스모피즘 유틸 ── */
+.glass-panel {
+  background: rgba(246, 243, 236, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-right: 1px solid rgba(229, 220, 206, 0.70);
+}
+
+.glass-bar {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(229, 220, 206, 0.60);
+}
+
+/* ── Kakao map marker coffee aroma (S자 곡선 증기) ── */
+@keyframes coffeeAromaS {
+  0%   { transform: translateY(0px)   translateX(0px)  scaleY(0.6) scaleX(1);   opacity: 0; }
+  15%  { opacity: 0.65; }
+  30%  { transform: translateY(-8px)  translateX(2px)  scaleY(1.0) scaleX(0.8); opacity: 0.55; }
+  55%  { transform: translateY(-16px) translateX(-2px) scaleY(1.2) scaleX(0.7); opacity: 0.35; }
+  80%  { transform: translateY(-24px) translateX(1px)  scaleY(1.4) scaleX(0.6); opacity: 0.15; }
+  100% { transform: translateY(-32px) translateX(0px)  scaleY(1.6) scaleX(0.5); opacity: 0; }
 }
 
 .aroma-puff {
   display: inline-block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(255, 200, 120, 0.65);
-  animation: coffeeAroma 2.4s ease-out infinite;
+  width: 3px;
+  height: 9px;
+  border-radius: 40% 40% 50% 50%;
+  background: rgba(255, 210, 130, 0.70);
+  animation: coffeeAromaS 2.8s ease-out infinite;
   will-change: transform, opacity;
 }
-.aroma-puff--1 { animation-delay: 0s; }
-.aroma-puff--2 { animation-delay: 0.8s; }
-.aroma-puff--3 { animation-delay: 1.6s; }
+.aroma-puff--1 { animation-delay: 0s;    width: 3px; }
+.aroma-puff--2 { animation-delay: 0.95s; width: 2px; height: 7px; }
+.aroma-puff--3 { animation-delay: 1.9s;  width: 3px; }
 .aroma-puff--selected {
-  animation-duration: 1.6s;
-  background: rgba(255, 160, 60, 0.85);
+  animation-duration: 1.8s;
+  background: rgba(143, 174, 90, 0.90);
 }

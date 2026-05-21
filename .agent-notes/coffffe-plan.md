@@ -1,246 +1,123 @@
-# 원두로 (coFFFFFe-map) 현재 계획
+# 작업 계획 — /map UI 전면 개선 + Framer Motion + 커피향 파티클
 
 > 마지막 갱신: 2026-05-21
 
 ---
 
-## 브랜드 / 서비스 방향 확정
+## 1. 요구사항 요약
 
-**브랜드**: 원두로  
-**현재 핵심 서비스**: 원두로 지도 (coFFFFFe-map) — 안산 스페셜티 카페 큐레이션  
-**미래 서비스**: 원두 마켓플레이스, 모바일 앱  
-**목적**: 실서비스 (실제 사용자가 쓰는 앱)
+- 데스크톱 좌측 사이드바 복원 (접기/펼치기 360px ↔ 60px)
+- 새 디자인 시스템 적용 (사용자 정의 CSS 변수 + 글래스모피즘)
+- 사이드바 헤더 구조 변경 (로고+검색 1행, Map/CBTI 탭 제거)
+- Framer Motion: 카드 stagger + 필터 패널 height + BottomSheet 슬라이드
+- 커피향 파티클 강화 (S자 곡선 연기)
+- 다크모드는 이번 범위 제외 — 라이트모드만
 
-### URL 구조 확정
+---
 
-| URL | 역할 |
+## 2. 결정된 사항
+
+| 항목 | 결정 |
 |---|---|
-| `/` | 원두로 브랜드 랜딩 (홍보, 신규 유저) |
-| `/home` | 앱 홈 — 지도/CBTI/원두 서비스 허브 |
-| `/map` | 원두로 지도 서비스 |
-| `/cbti` | 커피 성향 테스트 |
-| `/beans` | 원두 정보 |
+| 레이아웃 | 좌측 고정 사이드바 (카카오/네이버/구글 동일 패턴) |
+| 사이드바 비주얼 | 글래스모피즘 배경 (기존 흰 카드에서 탈피) |
+| 사이드바 헤더 | 로고+검색 1행, 탭 제거, 카테고리→필터→리스트 |
+| 사이드바 너비 | 360px ↔ 60px 접기/펼치기 (Framer Motion width 애니메이션) |
+| 글래스 적용 범위 | 사이드바 + 모바일 탑바 + 필터 드롭다운 전부 |
+| Framer Motion | 카드 stagger + 필터 패널 AnimatePresence + BottomSheet spring |
+| 커피향 파티클 | S자 곡선 oscillation 강화 |
+| 다크모드 | 범위 제외 |
 
 ---
 
-## 현재 블로커
+## 3. 새 CSS 변수 (사용자 정의)
 
-1. **디자인** — 전반적 완성도 MVP 수준. 외부 공유 불가 수준
-2. **데이터** — 카페 8곳. 발품 필요해서 코드 작업과 병렬 진행
+```css
+:root {
+  --bg: #F6F3EC;
+  --surface: #FFFFFF;
 
----
+  --primary: #151412;
+  --brown: #6B432A;
+  --accent: #8FAE5A;
+  --sub: #C08A5A;
 
-## 작업 우선순위
+  --text: #1F1D1A;
+  --muted: #746A60;
+  --border: #E5DCCE;
 
-| 순서 | Plan | 내용 | 상태 |
-|---|---|---|---|
-| 1 | 디자인 시스템 | 색상/카드/버튼/타이포 공통화 | 계획 확정 |
-| 2 | `/home` 신규 페이지 | 앱 허브 (지도+CBTI+원두 카드) | 계획 확정 |
-| 3 | `/` 랜딩 고급화 | 원두로 브랜드 홍보 페이지 | 계획 확정 |
-| 4 | `/map` 디자인 개선 | 완성도 올리기 | 계획 확정 |
-| 5 | 데이터 추가 | 카페 5~10곳 추가 | 병렬/천천히 |
-
----
-
-## Plan 1 — 디자인 시스템 정립
-
-> 상태: **계획 확정 / 구현 대기**
-
-### 목표
-
-전체 서비스에서 일관된 디자인 언어를 정의한다.  
-이후 `/home`, `/`, `/map` 모두 이 시스템을 따른다.
-
-### 디자인 방향
-
-- **톤**: 프리미엄/무드 + 미니멀 혼합
-  - 히어로/포인트 영역: 짙은 에스프레소 배경 + 앰버 포인트
-  - 정보 영역: 깔끔한 흰/크림 배경, 군더더기 없음
-- **애니메이션**: Framer Motion (파티클, 카드 진입, hover)
-
-### 색상 시스템
-
-| 역할 | 현재 | 확정값 |
-|---|---|---|
-| 브랜드 딥 | `#5a2e11` | 유지 |
-| 브랜드 포인트 | `#d66612` | `#e8720a` (채도 올림) |
-| 히어로 배경 | 없음 | `#1a0a00` |
-| 히어로 그라디언트 끝 | 없음 | `#3d1f00` |
-| 카드 배경 | 흰색 flat | 흰색 + `shadow-md` + hover `shadow-xl` |
-| 텍스트 보조 | 기본 | `#6b4423` |
-
-### 타이포그래피
-
-- 헤딩: `font-bold tracking-tight`
-- 브랜드명: 기존 폰트 유지 (Noto Sans KR)
-
-### 공통 컴포넌트 정의
-
-- `Button` primary: 앰버 + hover 어둡게 + active `scale(0.97)`
-- `Card`: `rounded-xl shadow-md hover:shadow-xl transition-shadow`
-- `Tag`: 카테고리별 색상 (스페셜티: amber, 로스터리: brown, 디저트: rose)
-
-### 패키지 추가
-
-```bash
-npm install framer-motion
+  --brown-soft: #F0E5DA;
+  --accent-soft: #EEF5DF;
+  --sub-soft: #F5E7D8;
+  --primary-soft: #E9E7E3;
+}
 ```
 
-### 수정 예상 파일
-
-- `src/app/globals.css` — CSS 변수 및 공통 애니메이션 추가
-- `package.json` — framer-motion 추가
-
----
-
-## Plan 2 — `/home` 앱 홈 신규 페이지
-
-> 상태: **계획 확정 / 구현 대기**
-
-### 목표
-
-원두로의 서비스 허브 역할을 하는 앱 홈 페이지를 만든다.  
-재방문 유저와 로그인 유저가 "여기서 시작"하는 화면.
-
-### 섹션 구성
-
-```
-[헤더]
-  - 원두로 로고 + 네비게이션
-
-[지도 바로가기]
-  - 큰 카드 또는 CTA 버튼
-  - "안산 스페셜티 카페 지도" → /map
-
-[CBTI 진입]
-  - "내 커피 성향 찾기" 카드 → /cbti
-
-[원두 정보]
-  - 추천 원두 3개 카드 (beans.ts featured 또는 랜덤) → /beans
-
-[푸터]
-  - 미니멀. 원두로 브랜드명 + 링크
-```
-
-### 애니메이션
-
-- 카드 진입: Framer Motion `whileInView` fade-in + slide-up
-- hover: `scale(1.02)` + shadow 강화
-
-### 수정 예상 파일
-
-- `src/app/home/page.tsx` — 신규
-- `src/components/home/` — 섹션 컴포넌트 신규
+글래스 유틸 클래스 2종:
+- `.glass-panel` — 사이드바 패널 (bg rgba(246,243,236,0.88) + blur(18px))
+- `.glass-bar` — 모바일 탑바 + 필터 드롭다운 (bg rgba(255,255,255,0.82) + blur(14px))
 
 ---
 
-## Plan 3 — `/` 랜딩 고급화
+## 4. 수정 예상 파일
 
-> 상태: **계획 확정 / 구현 대기**
-
-### 목표
-
-원두로 브랜드 홍보 페이지.  
-신규 유저가 "원두로가 뭔지" 이해하고 앱 홈으로 진입하게 만든다.
-
-### 섹션 구성
-
-```
-[Hero]
-  - 풀 화면 (100dvh)
-  - 배경: #1a0a00 → #3d1f00 그라디언트
-  - 원두 파티클 Framer Motion 낙하 (10~15개)
-  - 메인 카피 + "시작하기" CTA → /home
-
-[서비스 소개]
-  - 원두로 지도, CBTI, 원두 정보 3가지 소개 카드
-
-[추천 카페]
-  - /api/cafes qualityScore 상위 3~4개
-  - Framer Motion whileInView 카드 진입
-
-[Footer]
-  - 미니멀
-```
-
-### 파티클 에셋
-
-- `public/image/bean-particle.svg` 신규 (작은 원두 실루엣)
-
-### 수정 예상 파일
-
-- `src/app/page.tsx` — 전면 교체
-- `public/image/bean-particle.svg` — 신규
+| 파일 | 변경 규모 |
+|---|---|
+| `src/app/globals.css` | CSS 변수 교체 + glass 유틸 추가 + aroma-puff 강화 |
+| `src/components/Sidebar.tsx` | 대규모 — 헤더 구조 + 글래스 + FM stagger + 접기 |
+| `src/components/MapView.tsx` | 중간 — sidebarCollapsed 상태 + 필터 패널 FM + 색상 |
+| `src/components/BottomSheet.tsx` | 소규모 — CSS transition → FM AnimatePresence + spring |
 
 ---
 
-## Plan 4 — `/map` 디자인 개선
+## 5. 작업 순서
 
-> 상태: **계획 확정 / 구현 대기**
+### Step 1 — globals.css
+- [ ] `:root` 변수 교체
+- [ ] `.glass-panel`, `.glass-bar` 유틸 클래스 추가
+- [ ] `aroma-puff` S자 곡선 강화 (translateX oscillation 추가, 형태 elongated로)
+  - verify: /map 열어 마커 파티클 확인
 
-### 목표
+### Step 2 — BottomSheet.tsx
+- [ ] CSS `transition-transform` 제거
+- [ ] `AnimatePresence` + `motion.div` spring 슬라이드 (damping 28, stiffness 280)
+  - verify: 카페 마커 클릭 → spring 슬라이드
 
-지도 화면 완성도 올리기. 현재 색상 하드코딩 + MVP 수준 UI 개선.
+### Step 3 — MapView.tsx
+- [ ] `sidebarCollapsed` state 추가
+- [ ] Sidebar에 `collapsed` + `onCollapsedChange` prop 전달
+- [ ] 필터 패널 `AnimatePresence` + height 0→auto 애니메이션
+- [ ] 새 CSS 변수로 탑바·버튼 색상 업데이트
+  - verify: 필터 패널 height 애니메이션
 
-### 작업 목록
-
-- [ ] 마커 위 커피 향 CSS 애니메이션 추가 (aroma puff)
-- [ ] `Sidebar` 카드/버튼 디자인 시스템 적용
-- [ ] `FilterBar` 칩 스타일 개선 (카테고리별 색상 태그)
-- [ ] `CafeListItem` hover 효과 + shadow 적용
-- [ ] 선택 마커 아로마 속도 빠르게 + 크기 업
-
-### 수정 예상 파일
-
-- `src/app/globals.css` — 아로마 CSS 추가
-- `src/components/map/KakaoMap.tsx` — 마커 아로마 HTML
-- `src/components/Sidebar.tsx` — 디자인 시스템 적용
-- `src/components/FilterBar.tsx` — 칩 스타일 개선
-- `src/components/CafeListItem.tsx` — hover/shadow
-
----
-
-## Plan 5 — 데이터 추가 (병렬/천천히)
-
-> 상태: **진행 중 / 발품 필요**
-
-- 카페 추가 기준: 안산 스페셜티 or 로스터리 카페
-- 관리자 페이지(`/admin`)로 입력
-- 목표: 20곳 이상
+### Step 4 — Sidebar.tsx
+- [ ] `collapsed`, `onCollapsedChange` prop 추가
+- [ ] 데스크톱: `motion.div` width `360 ↔ 60` 애니메이션
+- [ ] 접힌 상태: 로고 아이콘 + 펼치기 버튼만
+- [ ] 헤더: 로고+검색 1행, Map/CBTI 탭 제거
+- [ ] `.glass-panel` 배경 적용
+- [ ] 카드 리스트 stagger (staggerChildren 0.04, hidden→show variants)
+  - key: `cafes.map(c=>c.id).join(',')` → 필터 변경 시 재애니메이션
+  - verify: 필터 바꿀 때 카드 순차 등장
 
 ---
 
-## 보류 계획 (이전 계획에서 이월)
+## 6. 성공 기준
 
-| Plan | 내용 | 상태 |
-|---|---|---|
-| B | 코드 정리 (cafes.json 삭제, 버튼 중복 제거) | Plan 1~4 완료 후 |
-| C | 즐겨찾기 병합 (익명→Supabase) | 보류 |
-| D | 제보 사진 업로드 | 보류 |
-| E | saved_lists UI | 보류 |
-
----
-
-## 검증 명령어
-
-```bash
-npx tsc --noEmit
-npm run lint
-npm run build
-```
+- `/map` 데스크톱: 360px 글래스 사이드바, 접기 → 60px 축소
+- `/map` 모바일: 탑바 glass 효과, 목록 바텀시트 spring
+- 필터 패널: height 애니메이션
+- 카드 리스트: 필터 변경 시 stagger 진입
+- 마커 커피향: S자 흔들리며 올라감
+- `npx tsc --noEmit` 통과
+- `npm run build` 통과
 
 ---
 
-## 완료 요약 (이전 작업)
+## 7. 수정하지 않을 범위
 
-| Plan | 내용 | 상태 |
-|---|---|---|
-| 1 | 지도 버튼 기능 | ✅ 완료 |
-| 2 | 익명 사용자 랜덤 닉네임 + 드롭다운 | ✅ 완료 |
-| 3 | 플레이스 제보 | ✅ 완료 |
-| 4 | 관리자 제보 리스트 + 카페 등록 연동 | ✅ 완료 |
-| 5 | 카페 이미지 업로드 | ✅ 완료 |
-| 6 | 카카오 로그인 + 즐겨찾기 | ✅ 완료 |
-| 7 | 프로필 수정 + 관리자 버튼 노출 | ✅ 완료 |
-| 8 | 동물 프로필 .webp + 카카오 로그인 시 익명 동물 유지 | ✅ 완료 |
-| - | 랜딩페이지 + 지도 /map 분리 | ✅ 완료 |
+- `CafeListItem.tsx` — 카드 내부 구조 없음 (Sidebar에서 motion.div로 감쌈)
+- `FilterBar.tsx` — 내부 변경 없음
+- `KakaoMap.tsx` — JS 변경 없음 (CSS만)
+- 다크모드 변수
+- `/home`, `/beans`, `/cbti` 등 다른 페이지

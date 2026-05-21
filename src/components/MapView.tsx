@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
+import { AnimatePresence, motion } from 'framer-motion'
 import { BookOpen, ChevronDown, Coffee, CupSoda, Heart, Layers, List, LocateFixed, LogOut, MapPin, Minus, PawPrint, Plus, RefreshCw, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
@@ -63,6 +64,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const [currentMapBounds, setCurrentMapBounds] = useState<MapBounds | null>(null)
   const [activeMapBounds, setActiveMapBounds] = useState<MapBounds | null>(null)
   const [hasPendingBoundsSearch, setHasPendingBoundsSearch] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [filterPanelOpen, setFilterPanelOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [profileEditSheetOpen, setProfileEditSheetOpen] = useState(false)
@@ -248,7 +250,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div className="flex h-dvh overflow-hidden">
       <Sidebar
         cafes={filteredCafes}
         filters={filters}
@@ -271,8 +273,11 @@ export default function MapView({ allCafes }: MapViewProps) {
         }}
         mobileOpen={mobileListOpen}
         onMobileClose={() => setMobileListOpen(false)}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
       />
 
+      <div className="relative flex-1 overflow-hidden">
       <KakaoMap
           cafes={filteredCafes}
           selectedCafe={visibleSelectedCafe}
@@ -473,32 +478,42 @@ export default function MapView({ allCafes }: MapViewProps) {
           </div>
         </div>
 
-        {filterPanelOpen && (
-          <div className="pointer-events-auto rounded-2xl border border-[#eee4d8] bg-white/95 p-3 shadow-[0_12px_28px_rgba(60,40,20,0.14)] backdrop-blur-sm">
-            <div className="mb-3 grid grid-cols-3 gap-1.5">
-              {MAP_QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor, activeShadow }) => {
-                const active = activeQuickCategory === value
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setActiveQuickCategory(value)}
-                    aria-pressed={active}
-                    className="flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all"
-                    style={active
-                      ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
-                      : { background: 'white', borderColor: '#eadfd3', color: '#5f4634' }
-                    }
-                  >
-                    <Icon size={16} />
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-            <FilterBar filters={filters} onChange={setFilters} />
-          </div>
-        )}
+        <AnimatePresence>
+          {filterPanelOpen && (
+            <motion.div
+              className="pointer-events-auto overflow-hidden rounded-2xl border border-[#eee4d8] bg-white/95 shadow-[0_12px_28px_rgba(60,40,20,0.14)] backdrop-blur-sm"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+            >
+              <div className="p-3">
+                <div className="mb-3 grid grid-cols-3 gap-1.5">
+                  {MAP_QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor, activeShadow }) => {
+                    const active = activeQuickCategory === value
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        onClick={() => setActiveQuickCategory(value)}
+                        aria-pressed={active}
+                        className="flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all"
+                        style={active
+                          ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
+                          : { background: 'white', borderColor: '#eadfd3', color: '#5f4634' }
+                        }
+                      >
+                        <Icon size={16} />
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <FilterBar filters={filters} onChange={setFilters} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-[84px] z-20 flex justify-center px-4">
@@ -646,6 +661,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }
