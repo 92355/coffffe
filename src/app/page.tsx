@@ -223,7 +223,8 @@ export default function AppHomePage() {
         <motion.div {...fadeUp(0.05)}>
           <Link
             href="/map"
-            className="group relative block min-h-[220px] overflow-hidden rounded-[2rem] border border-white/18 bg-[linear-gradient(135deg,var(--primary),var(--brown))] no-underline shadow-[0_28px_70px_rgba(107,67,42,0.25)]"
+            className="group relative block min-h-[220px] overflow-hidden rounded-[2rem] border border-white/18 no-underline shadow-[0_28px_70px_rgba(107,67,42,0.25)]"
+            style={{ background: 'linear-gradient(135deg, #151412, #6B432A)' }}
           >
             <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
               <div className="absolute left-[10%] top-[20%] h-px w-[85%] -rotate-[15deg] bg-[var(--sub)]" />
