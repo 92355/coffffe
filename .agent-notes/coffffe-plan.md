@@ -1,17 +1,15 @@
-# 작업 계획 — /map UI 전면 개선 + Framer Motion + 커피향 파티클
+# 작업 계획 — 어드민 레이아웃 리팩터링 + 원두 관리 (Supabase)
 
-> 마지막 갱신: 2026-05-21
+> 마지막 갱신: 2026-05-22
 
 ---
 
 ## 1. 요구사항 요약
 
-- 데스크톱 좌측 사이드바 복원 (접기/펼치기 360px ↔ 60px)
-- 새 디자인 시스템 적용 (사용자 정의 CSS 변수 + 글래스모피즘)
-- 사이드바 헤더 구조 변경 (로고+검색 1행, Map/CBTI 탭 제거)
-- Framer Motion: 카드 stagger + 필터 패널 height + BottomSheet 슬라이드
-- 커피향 파티클 강화 (S자 곡선 연기)
-- 다크모드는 이번 범위 제외 — 라이트모드만
+- 어드민 페이지 레이아웃을 좌측 사이드바 + 라우트 기반으로 전면 리팩터링
+- 원두 데이터를 `beans.ts` 정적 파일 → Supabase `beans` 테이블로 이전
+- 원두 CRUD 관리 UI 추가 (`/admin/beans`)
+- 기존 beans.ts 데이터는 SQL migration으로 초기값 삽입
 
 ---
 
@@ -19,96 +17,128 @@
 
 | 항목 | 결정 |
 |---|---|
-| 레이아웃 | 좌측 고정 사이드바 (카카오/네이버/구글 동일 패턴) |
-| 사이드바 비주얼 | 글래스모피즘 배경 (기존 흰 카드에서 탈피) |
-| 사이드바 헤더 | 로고+검색 1행, 탭 제거, 카테고리→필터→리스트 |
-| 사이드바 너비 | 360px ↔ 60px 접기/펼치기 (Framer Motion width 애니메이션) |
-| 글래스 적용 범위 | 사이드바 + 모바일 탑바 + 필터 드롭다운 전부 |
-| Framer Motion | 카드 stagger + 필터 패널 AnimatePresence + BottomSheet spring |
-| 커피향 파티클 | S자 곡선 oscillation 강화 |
-| 다크모드 | 범위 제외 |
+| 원두 저장소 | Supabase `beans` 테이블 (기존 beans.ts 마이그레이션 포함) |
+| 관리자 기능 | CRUD 전부 (생성·수정·삭제) |
+| 어드민 네비 | 좌측 사이드바 (데스크톱) + 모바일 드롭다운 |
+| 라우트 구조 | 별도 URL — 아래 표 참조 |
+| 대시보드 | 숫자 카드 4개 (카페 수·원두 수·미처리 제보 수·회원 수) |
+| 기존 데이터 | SQL INSERT migration으로 초기값 포함 |
+
+### 라우트 구조
+
+| 경로 | 내용 |
+|---|---|
+| `/admin` | 대시보드 (숫자 카드) |
+| `/admin/cafes` | 카페 관리 (기존 `/admin` 카페 섹션 이동) |
+| `/admin/beans` | 원두 관리 (신규) |
+| `/admin/reports` | 제보 관리 (기존 `/admin` 제보 섹션 이동) |
+| `/admin/members` | 회원 관리 (1차: 목록만) |
+| `/admin/stats` | 통계 (1차: stub) |
 
 ---
 
-## 3. 새 CSS 변수 (사용자 정의)
+## 3. 수정·생성 예상 파일
 
-```css
-:root {
-  --bg: #F6F3EC;
-  --surface: #FFFFFF;
+| 파일 | 변경 |
+|---|---|
+| `supabase/migrations/20260522000000_create_beans_table.sql` | 신규 — beans 테이블 + 기존 데이터 INSERT |
+| `src/app/api/beans/route.ts` | 신규 — GET (public, Supabase beans 조회) |
+| `src/app/api/admin/beans/route.ts` | 신규 — POST·PUT·DELETE (인증 필요) |
+| `src/app/admin/layout.tsx` | 대규모 — 사이드바 nav + 모바일 드롭다운으로 교체 |
+| `src/app/admin/page.tsx` | 대규모 — 대시보드로 교체 (카운트 카드) |
+| `src/app/admin/cafes/page.tsx` | 신규 — 기존 admin/page.tsx 카페 섹션 이동 |
+| `src/app/admin/reports/page.tsx` | 신규 — 기존 admin/page.tsx 제보 섹션 이동 |
+| `src/app/admin/beans/page.tsx` | 신규 — 원두 CRUD UI |
+| `src/app/admin/members/page.tsx` | 신규 — 회원 목록 (users 테이블 조회) |
+| `src/app/admin/stats/page.tsx` | 신규 — stub 페이지 |
+| `src/app/beans/page.tsx` | 소규모 — static import 제거 → `/api/beans` fetch |
+| `src/app/api/admin/members/route.ts` | 신규 — GET (users 테이블 조회) |
 
-  --primary: #151412;
-  --brown: #6B432A;
-  --accent: #8FAE5A;
-  --sub: #C08A5A;
+---
 
-  --text: #1F1D1A;
-  --muted: #746A60;
-  --border: #E5DCCE;
+## 4. Supabase beans 테이블 스키마
 
-  --brown-soft: #F0E5DA;
-  --accent-soft: #EEF5DF;
-  --sub-soft: #F5E7D8;
-  --primary-soft: #E9E7E3;
-}
+```sql
+create table beans (
+  id          text primary key,         -- slug (예: 'panama-geisha')
+  name        text not null,
+  name_en     text not null,
+  origin      text not null,
+  region      text not null,
+  variety     text not null,
+  process     text not null,
+  roast       text not null,            -- 'light' | 'medium' | 'medium-dark' | 'dark'
+  notes       text[] not null default '{}',
+  body        text not null,
+  acidity     text not null,
+  description text not null,
+  flag        text not null,
+  special     text,
+  created_at  timestamptz default now()
+);
 ```
 
-글래스 유틸 클래스 2종:
-- `.glass-panel` — 사이드바 패널 (bg rgba(246,243,236,0.88) + blur(18px))
-- `.glass-bar` — 모바일 탑바 + 필터 드롭다운 (bg rgba(255,255,255,0.82) + blur(14px))
-
----
-
-## 4. 수정 예상 파일
-
-| 파일 | 변경 규모 |
-|---|---|
-| `src/app/globals.css` | CSS 변수 교체 + glass 유틸 추가 + aroma-puff 강화 |
-| `src/components/Sidebar.tsx` | 대규모 — 헤더 구조 + 글래스 + FM stagger + 접기 |
-| `src/components/MapView.tsx` | 중간 — sidebarCollapsed 상태 + 필터 패널 FM + 색상 |
-| `src/components/BottomSheet.tsx` | 소규모 — CSS transition → FM AnimatePresence + spring |
+`/api/beans/route.ts`에서 snake_case → camelCase 변환 (`toBean()` 함수).
 
 ---
 
 ## 5. 작업 순서
 
-### Step 1 — globals.css
-- [ ] `:root` 변수 교체
-- [ ] `.glass-panel`, `.glass-bar` 유틸 클래스 추가
-- [ ] `aroma-puff` S자 곡선 강화 (translateX oscillation 추가, 형태 elongated로)
-  - verify: /map 열어 마커 파티클 확인
+### Step 1 — Supabase migration
+- [ ] `20260522000000_create_beans_table.sql` 작성
+  - beans 테이블 생성
+  - 기존 beans.ts 데이터 전체 INSERT
+  - RLS: anon select 허용, authenticated insert/update/delete (또는 service role only)
 
-### Step 2 — BottomSheet.tsx
-- [ ] CSS `transition-transform` 제거
-- [ ] `AnimatePresence` + `motion.div` spring 슬라이드 (damping 28, stiffness 280)
-  - verify: 카페 마커 클릭 → spring 슬라이드
+### Step 2 — Public API
+- [ ] `src/app/api/beans/route.ts` — GET, Supabase 조회, toBean() 변환
+  - query param: `origin`, `roast`, `notes` 지원 (옵션)
+  - Supabase 실패 시 beans.ts fallback (cafes 패턴 동일)
 
-### Step 3 — MapView.tsx
-- [ ] `sidebarCollapsed` state 추가
-- [ ] Sidebar에 `collapsed` + `onCollapsedChange` prop 전달
-- [ ] 필터 패널 `AnimatePresence` + height 0→auto 애니메이션
-- [ ] 새 CSS 변수로 탑바·버튼 색상 업데이트
-  - verify: 필터 패널 height 애니메이션
+### Step 3 — Admin API
+- [ ] `src/app/api/admin/beans/route.ts` — POST·PUT·DELETE, isAuthorizedAdminRequest() 인증
+- [ ] `src/app/api/admin/members/route.ts` — GET, users 테이블 조회
 
-### Step 4 — Sidebar.tsx
-- [ ] `collapsed`, `onCollapsedChange` prop 추가
-- [ ] 데스크톱: `motion.div` width `360 ↔ 60` 애니메이션
-- [ ] 접힌 상태: 로고 아이콘 + 펼치기 버튼만
-- [ ] 헤더: 로고+검색 1행, Map/CBTI 탭 제거
-- [ ] `.glass-panel` 배경 적용
-- [ ] 카드 리스트 stagger (staggerChildren 0.04, hidden→show variants)
-  - key: `cafes.map(c=>c.id).join(',')` → 필터 변경 시 재애니메이션
-  - verify: 필터 바꿀 때 카드 순차 등장
+### Step 4 — Admin layout 리팩터링
+- [ ] `src/app/admin/layout.tsx` 교체
+  - 좌측 사이드바: 로고 + 네비 링크 6개 (아이콘 + 텍스트)
+  - 모바일: 상단 드롭다운 메뉴
+  - 인증 게이트 유지 (기존 AdminLayout 로직 이전)
+  - 현재 페이지 active 표시 (`usePathname`)
+
+### Step 5 — 대시보드
+- [ ] `src/app/admin/page.tsx` 교체
+  - 카운트 카드 4개: 카페·원두·미처리 제보·회원
+  - 각 카드 클릭 → 해당 관리 페이지 이동
+
+### Step 6 — 카페/제보 페이지 분리
+- [ ] `src/app/admin/cafes/page.tsx` — 기존 admin/page.tsx 카페 섹션 그대로 이동
+- [ ] `src/app/admin/reports/page.tsx` — 기존 admin/page.tsx 제보 섹션 그대로 이동
+- [ ] 기존 `src/app/admin/page.tsx` → 대시보드로 교체
+
+### Step 7 — 원두 관리 페이지
+- [ ] `src/app/admin/beans/page.tsx`
+  - 원두 목록 (테이블 형태)
+  - 추가/수정 폼 (id·name·nameEn·origin·region·variety·process·roast·notes·body·acidity·desc·flag·special)
+  - 삭제 확인 모달
+
+### Step 8 — 회원·통계 stub
+- [ ] `src/app/admin/members/page.tsx` — users 테이블 목록 (닉네임·동물·카카오 여부·가입일)
+- [ ] `src/app/admin/stats/page.tsx` — "준비 중" stub
+
+### Step 9 — /beans 페이지 연결
+- [ ] `src/app/beans/page.tsx` — `BEANS` static import 제거 → `/api/beans` fetch
+  - 로딩 상태 추가
+  - fallback: 빈 배열
 
 ---
 
 ## 6. 성공 기준
 
-- `/map` 데스크톱: 360px 글래스 사이드바, 접기 → 60px 축소
-- `/map` 모바일: 탑바 glass 효과, 목록 바텀시트 spring
-- 필터 패널: height 애니메이션
-- 카드 리스트: 필터 변경 시 stagger 진입
-- 마커 커피향: S자 흔들리며 올라감
+- `/admin/*` 모든 라우트가 사이드바 네비와 함께 렌더됨
+- `/admin` 대시보드에 카운트 카드 4개 표시
+- `/admin/beans` 에서 원두 추가·수정·삭제 가능
+- `/beans` 페이지가 Supabase 데이터 기반으로 렌더됨 (기존 UI 동일)
 - `npx tsc --noEmit` 통과
 - `npm run build` 통과
 
@@ -116,8 +146,8 @@
 
 ## 7. 수정하지 않을 범위
 
-- `CafeListItem.tsx` — 카드 내부 구조 없음 (Sidebar에서 motion.div로 감쌈)
-- `FilterBar.tsx` — 내부 변경 없음
-- `KakaoMap.tsx` — JS 변경 없음 (CSS만)
-- 다크모드 변수
-- `/home`, `/beans`, `/cbti` 등 다른 페이지
+- 기존 카페 관리 로직 — 그대로 이동만 함 (수정 없음)
+- 기존 제보 관리 로직 — 그대로 이동만 함 (수정 없음)
+- `/map`, `/cbti` 등 다른 페이지
+- Supabase cafes 테이블 스키마
+- `src/data/beans.ts` — fallback용으로 유지 (삭제 안 함)

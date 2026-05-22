@@ -250,10 +250,10 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   const profileDropdown = profileMenuOpen ? (
-    <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11]" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
-      <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
+    <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+      <div className="mb-2 rounded-lg bg-[#f8efe6] p-3 dark:bg-white/12">
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] dark:bg-white/12">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
           </span>
@@ -262,7 +262,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             <button
               type="button"
               onClick={regenerateNickname}
-              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed] dark:border-white/12 dark:bg-white/10 dark:text-white/78 dark:hover:bg-white/14"
               aria-label="닉네임 새로고침"
               title="닉네임 새로고침"
             >
@@ -272,7 +272,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             <button
               type="button"
               onClick={() => { void logout() }}
-              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed] dark:border-white/12 dark:bg-white/10 dark:text-white/78 dark:hover:bg-white/14"
               aria-label="로그아웃"
               title="로그아웃"
             >
@@ -280,7 +280,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             </button>
           )}
         </div>
-        <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
+        <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042] dark:text-white/68">
           {user?.type === 'authenticated'
             ? '함께 만들어가는 "원두로"에 오신걸 환영합니다'
             : <><br />회원가입 전 임시 닉네임이에요.<br />귀여운 친구로 얼른 데려가세요!</>}
@@ -291,14 +291,14 @@ export default function MapView({ allCafes }: MapViewProps) {
         <button
           type="button"
           onClick={openNewPlaceReport}
-          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22"
         >
           제보하기
         </button>
         <button
           type="button"
           onClick={openProfileEdit}
-          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22"
         >
           내 정보 수정
         </button>
@@ -314,13 +314,13 @@ export default function MapView({ allCafes }: MapViewProps) {
         </button>
       )}
 
-      <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2">
-        <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17]">
+      <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2 dark:border-white/18 dark:bg-white/12">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17] dark:text-white">
           <Heart size={13} fill="currentColor" />
           저장한 카페 {favoriteCafeIds.length}
         </div>
         {favoriteError && (
-          <p className="mb-2 rounded-md bg-[#fff4ed] px-2 py-1.5 text-[11px] font-bold leading-5 text-[#b94a12]">
+          <p className="mb-2 rounded-md bg-[#fff4ed] px-2 py-1.5 text-[11px] font-bold leading-5 text-[#b94a12] dark:bg-[rgba(214,102,18,0.14)] dark:text-[#ffb06c]">
             {favoriteError}
           </p>
         )}
@@ -333,13 +333,13 @@ export default function MapView({ allCafes }: MapViewProps) {
                 setSelectedCafe(cafe)
                 setProfileMenuOpen(false)
               }}
-              className="flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs font-bold text-[#5a2e11] hover:bg-[#f8efe6]"
+              className="flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs font-bold text-[#5a2e11] hover:bg-[#f8efe6] dark:text-white/90 dark:hover:bg-white/14"
             >
               <span className="min-w-0 truncate">{cafe.name}</span>
-              <span className="shrink-0 text-[#b45a15]">{cafe.qualityScore.toFixed(1)}</span>
+              <span className="shrink-0 text-[#b45a15] dark:text-[#ffb06c]">{cafe.qualityScore.toFixed(1)}</span>
             </button>
           )) : (
-            <p className="px-2 py-1 text-[11px] font-bold leading-4 text-[#8a6042]">
+            <p className="px-2 py-1 text-[11px] font-bold leading-4 text-[#8a6042] dark:text-white/68">
               카페 카드의 하트를 눌러 저장해보세요.
             </p>
           )}
@@ -401,13 +401,13 @@ export default function MapView({ allCafes }: MapViewProps) {
 
       {mapPickMode && (
         <div className="pointer-events-none absolute inset-x-4 top-[140px] z-30 flex justify-center">
-            <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-2xl border border-[#eadccb] bg-white px-4 py-3 text-sm font-black text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)]">
+            <div className="pointer-events-auto flex max-w-sm items-center gap-3 rounded-2xl border border-[#eadccb] bg-white px-4 py-3 text-sm font-black text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)] dark:border-white/18 dark:bg-white/16 dark:text-white dark:shadow-[0_18px_44px_rgba(0,0,0,0.34)]">
               <MapPin size={16} className="shrink-0 text-[#d66612]" />
               지도에서 제보할 카페 위치를 눌러주세요.
               <button
                 type="button"
                 onClick={() => setMapPickMode(false)}
-                className="ml-auto rounded-full px-2 py-1 text-xs text-[#80624a] hover:bg-[#f8efe6]"
+                className="ml-auto rounded-full px-2 py-1 text-xs text-[#80624a] hover:bg-[#f8efe6] dark:text-white/58 dark:hover:bg-white/10"
               >
                 취소
               </button>
@@ -417,27 +417,27 @@ export default function MapView({ allCafes }: MapViewProps) {
 
       {/* Floating top bar — mobile only */}
       <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2 md:hidden">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
+        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
           <Link href="/home" className="flex shrink-0 items-center no-underline">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6] dark:bg-white/10">
               <Image src="/image/logo/beenRoad.png" alt="원두로" width={32} height={32} className="h-full w-full object-cover" priority />
             </span>
           </Link>
-          <span className="mx-0.5 h-4 w-px shrink-0 bg-[#eee4d8]" />
+          <span className="mx-0.5 h-4 w-px shrink-0 bg-[#eee4d8] dark:bg-white/12" />
           <label className="flex min-w-0 flex-1 items-center gap-2">
-            <Search size={16} className="shrink-0 text-[#8b6f57]" />
+            <Search size={16} className="shrink-0 text-[#8b6f57] dark:text-white/72" />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="카페, 지역, 메뉴 검색"
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#b8aa9b]"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52"
               type="search"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f4eee7] text-[#8b6f57]"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f4eee7] text-[#8b6f57] dark:bg-white/16 dark:text-white/72"
                 aria-label="검색어 지우기"
               >
                 <X size={12} />
@@ -450,7 +450,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-colors ${
               filterPanelOpen || hasActiveFilters
                 ? 'border-[#d66612] bg-[#d66612] text-white'
-                : 'border-[#eadfd3] bg-white text-[#6f3b17] hover:bg-[#f8efe6]'
+                : 'border-[#eadfd3] bg-white text-[#6f3b17] hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22'
             }`}
             aria-label="필터"
             aria-pressed={filterPanelOpen}
@@ -461,12 +461,12 @@ export default function MapView({ allCafes }: MapViewProps) {
             <button
               type="button"
               onClick={() => setProfileMenuOpen((current) => !current)}
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white py-1 pl-1.5 pr-2.5 text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white py-1 pl-1.5 pr-2.5 text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22"
               aria-label="프로필 메뉴"
               aria-expanded={profileMenuOpen}
               title={profileLabel}
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
+              <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] dark:bg-white/12">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
               </span>
@@ -483,7 +483,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           {filterPanelOpen && (
             <motion.div
               className="pointer-events-auto overflow-hidden rounded-2xl"
-            style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}
+              style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -499,11 +499,13 @@ export default function MapView({ allCafes }: MapViewProps) {
                         type="button"
                         onClick={() => setActiveQuickCategory(value)}
                         aria-pressed={active}
-                        className="flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all"
                         style={active
                           ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
-                          : { background: 'white', borderColor: '#eadfd3', color: '#5f4634' }
+                          : undefined
                         }
+                        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all ${
+                          active ? '' : 'border-[#eadfd3] bg-white text-[#5f4634] dark:border-white/18 dark:bg-white/16 dark:text-white/88'
+                        }`}
                       >
                         <Icon size={16} />
                         {label}
@@ -524,13 +526,13 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={() => setProfileMenuOpen((current) => !current)}
-            className="flex h-9 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white py-1 pl-1.5 pr-2.5 text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white py-1 pl-1.5 pr-2.5 text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22"
             aria-label="프로필 메뉴"
             aria-expanded={profileMenuOpen}
             title={profileLabel}
             style={{ boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
+            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] dark:bg-white/12">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
             </span>
@@ -548,8 +550,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           type="button"
           onClick={handleSearchCurrentMap}
           disabled={!hasPendingBoundsSearch || !currentMapBounds}
-          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60"
-          style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
+          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/90"
+          style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
         >
           <Search size={15} />
           이 지역 검색
@@ -557,20 +559,20 @@ export default function MapView({ allCafes }: MapViewProps) {
       </div>
 
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2 flex flex-col gap-3">
-          <div className="pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}>
+          <div className="pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <button
               type="button"
               onClick={() => handleZoom('in')}
-              className="flex h-12 w-12 items-center justify-center text-[#6f3b17]"
+              className="flex h-12 w-12 items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
               aria-label="확대"
             >
               <Plus size={17} />
             </button>
-            <div className="mx-2 h-px bg-[#eee4d8]" />
+            <div className="mx-2 h-px bg-[#eee4d8] dark:bg-white/12" />
             <button
               type="button"
               onClick={() => handleZoom('out')}
-              className="flex h-12 w-12 items-center justify-center text-[#6f3b17]"
+              className="flex h-12 w-12 items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
               aria-label="축소"
             >
               <Minus size={17} />
@@ -586,8 +588,8 @@ export default function MapView({ allCafes }: MapViewProps) {
                 setLocationPermissionModalOpen(true)
               }
             }}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17]"
-            style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="현재 위치"
           >
             <LocateFixed size={18} />
@@ -595,8 +597,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={handleMapTypeToggle}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17]"
-            style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="지도 레이어"
           >
             <Layers size={18} />
@@ -661,27 +663,27 @@ export default function MapView({ allCafes }: MapViewProps) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="location-permission-title"
-            className="relative w-full max-w-sm rounded-2xl border border-[#eadccb] bg-white p-5 text-center text-[#5a2e11] shadow-[0_24px_70px_rgba(34,20,10,0.28)]"
+            className="relative w-full max-w-sm rounded-2xl border border-[#eadccb] bg-white p-5 text-center text-[#5a2e11] shadow-[0_24px_70px_rgba(34,20,10,0.28)] dark:border-white/12 dark:bg-[#171514] dark:text-white dark:shadow-[0_24px_70px_rgba(0,0,0,0.48)]"
           >
             <button
               type="button"
               onClick={() => setLocationPermissionModalOpen(false)}
               aria-label="닫기"
-              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#80624a] hover:bg-[#f8efe6]"
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-[#80624a] hover:bg-[#f8efe6] dark:text-white/58 dark:hover:bg-white/10"
             >
               <X size={18} />
             </button>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8efe6] text-[#d66612]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f8efe6] text-[#d66612] dark:bg-[rgba(214,102,18,0.16)] dark:text-[#ffb06c]">
               <LocateFixed size={22} />
             </div>
             <h2 id="location-permission-title" className="mt-4 text-lg font-black">
               위치접근 권한을 허용해주세요
             </h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#80624a]">
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#80624a] dark:text-white/62">
               내 현 위치를 기준으로 가까운 카페 거리와 지도를 더 정확하게 보여드릴게요.
             </p>
             {locationPermissionError && (
-              <p className="mt-3 rounded-xl bg-[#fff4ed] px-3 py-2 text-xs font-bold leading-5 text-[#b94a12]">
+              <p className="mt-3 rounded-xl bg-[#fff4ed] px-3 py-2 text-xs font-bold leading-5 text-[#b94a12] dark:bg-[rgba(214,102,18,0.14)] dark:text-[#ffb06c]">
                 {locationPermissionError}
               </p>
             )}
@@ -728,28 +730,20 @@ function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePre
   return user.kakaoProfileImageUrl
 }
 
-function CoffeeDot() {
-  return (
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5a2e11] text-white">
-      <span className="h-2.5 w-3.5 rounded-b-full rounded-t-sm border border-current" />
-    </span>
-  )
-}
-
 function BreadBadge({ count, small }: { count: number; small?: boolean }) {
   return (
     <div
-      className={`pointer-events-auto flex items-center font-black text-[#5a2e11] whitespace-nowrap ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
+      className={`pointer-events-auto flex items-center whitespace-nowrap font-black text-[#5a2e11] dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
       style={{
         borderRadius: '16px',
-        background: 'rgba(143, 174, 90, 0.40)',
+        background: 'color-mix(in srgb, var(--accent) 42%, transparent)',
         backdropFilter: 'blur(28px) saturate(180%)',
         WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-        border: '1.5px solid rgba(180, 210, 100, 0.55)',
-        boxShadow: '0 8px 32px rgba(80, 110, 20, 0.28), inset 0 1.5px 0 rgba(220, 250, 150, 0.40)',
+        border: '1.5px solid color-mix(in srgb, var(--accent) 55%, transparent)',
+        boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 26%, transparent), inset 0 1.5px 0 rgba(255, 255, 255, 0.22)',
       }}
     >
-      <span className={`font-black text-[#3b2008] tabular-nums mr-0.5 ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
+      <span className={`mr-0.5 font-black tabular-nums text-[#3b2008] dark:text-white ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
       개의 카페 발견
     </div>
   )

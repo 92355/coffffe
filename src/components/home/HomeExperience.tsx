@@ -104,7 +104,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
                   priority
                 />
               </span>
-              <span className="text-base font-black text-white">원두로</span>
+              <span className="text-base font-black text-white">원<span className="text-[#8FAE5A]">두</span>로</span>
             </Link>
             <div className="flex items-center gap-1">
               <Link

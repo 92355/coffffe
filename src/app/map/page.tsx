@@ -58,12 +58,12 @@ export default function MapPage() {
   }
 
   return (
-    <main className="relative h-dvh overflow-hidden bg-neutral-950">
+    <main className="relative h-dvh overflow-hidden bg-[#EDE0CF] dark:bg-[#11100f]">
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
       {cafesLoaded ? (
         <MapView allCafes={cafes} />
       ) : (
-        <div className="h-full bg-[#EDE0CF]" />
+        <div className="h-full bg-[#EDE0CF] dark:bg-[#11100f]" />
       )}
     </main>
   )

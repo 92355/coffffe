@@ -105,7 +105,7 @@ export default function Sidebar({
       <div className="shrink-0 px-4 pb-3 pt-4">
         <div className="flex items-center gap-2">
           <Link href="/home" className="flex shrink-0 items-center no-underline">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_4px_12px_rgba(90,46,17,0.12)]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_4px_12px_rgba(90,46,17,0.12)] dark:bg-white/12 dark:shadow-[0_4px_12px_rgba(0,0,0,0.28)]">
               <Image
                 src="/image/logo/beenRoad.png"
                 alt="원두로 로고"
@@ -116,23 +116,23 @@ export default function Sidebar({
               />
             </span>
           </Link>
-          <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white/70 px-3 py-2">
-            <Search size={14} className="shrink-0 text-[#8b6f57]" />
+          <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white/70 px-3 py-2 dark:border-white/18 dark:bg-white/16">
+            <Search size={14} className="shrink-0 text-[#8b6f57] dark:text-white/72" />
             <input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="카페 검색"
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#2c2118] outline-none placeholder:text-[#b8aa9b]"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52"
               type="search"
             />
           </label>
-          <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/60 px-1 py-1">
+          <div className="flex shrink-0 items-center gap-1 rounded-full bg-white/60 px-1 py-1 dark:bg-white/16 [&>button]:text-[#7d6149] dark:[&>button]:text-white/88">
             <ThemeToggle />
             {onMobileClose && (
               <button
                 type="button"
                 onClick={onMobileClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d6149]"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[#7d6149] hover:bg-white/70 dark:text-white/80 dark:hover:bg-white/12 md:hidden"
                 aria-label="목록 닫기"
               >
                 <X size={17} />
@@ -141,7 +141,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => onCollapsedChange?.(true)}
-              className="hidden md:flex h-8 w-8 items-center justify-center rounded-full text-[#7d6149] hover:bg-white/80"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-[#7d6149] hover:bg-white/80 dark:text-white/80 dark:hover:bg-white/12 md:flex"
               aria-label="사이드바 접기"
             >
               <ChevronLeft size={17} />
@@ -150,7 +150,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="shrink-0 border-y border-[#eee4d8] px-4 py-3">
+      <div className="shrink-0 border-y border-[#eee4d8] px-4 py-3 dark:border-white/10">
         <div className="grid grid-cols-3 gap-2">
           {QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor, activeShadow }) => {
             const active = activeQuickCategory === value
@@ -160,11 +160,13 @@ export default function Sidebar({
                 type="button"
                 onClick={() => onQuickCategoryChange(value)}
                 aria-pressed={active}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all"
                 style={active
                   ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
-                  : { background: 'white', borderColor: '#eadfd3', color: '#5f4634' }
+                  : undefined
                 }
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all ${
+                  active ? '' : 'border-[#eadfd3] bg-white text-[#5f4634] hover:bg-[#fff8ef] dark:border-white/18 dark:bg-white/16 dark:text-white/88 dark:hover:bg-white/22'
+                }`}
               >
                 <Icon size={16} />
                 {label}
@@ -179,11 +181,11 @@ export default function Sidebar({
 
       <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-sm font-black text-[#2c2118]">추천 카페</h2>
+          <h2 className="text-sm font-black text-[#2c2118] dark:text-white">추천 카페</h2>
           <button
             type="button"
             onClick={onClearSelection}
-            className="flex h-8 items-center gap-1.5 rounded-full border border-[#eadfd3] bg-white px-3 text-xs font-black text-[#755b45]"
+            className="flex h-8 items-center gap-1.5 rounded-full border border-[#eadfd3] bg-white px-3 text-xs font-black text-[#755b45] dark:border-white/18 dark:bg-white/16 dark:text-white/88"
           >
             <SlidersHorizontal size={13} />
             추천순
@@ -211,7 +213,7 @@ export default function Sidebar({
               </motion.div>
             ))}
             {cafes.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-[#dacdbf] bg-white p-6 text-center text-sm font-semibold text-[#8b7a68]">
+              <div className="rounded-2xl border border-dashed border-[#dacdbf] bg-white p-6 text-center text-sm font-semibold text-[#8b7a68] dark:border-white/18 dark:bg-white/12 dark:text-white/72">
                 <p>조건에 맞는 카페가 없습니다.</p>
                 <button
                   type="button"
@@ -226,13 +228,13 @@ export default function Sidebar({
         </AnimatePresence>
       </div>
 
-      <div className="shrink-0 border-t border-[#eee4d8] bg-white/80 px-4 py-3">
+      <div className="shrink-0 border-t border-[#eee4d8] bg-white/80 px-4 py-3 dark:border-white/14 dark:bg-white/8">
         <Link
           href="/home"
-          className="flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#eadfd3] bg-white text-sm font-black text-[#5a2e11] no-underline transition-colors hover:bg-[#fff8ef]"
+          className="flex h-10 items-center justify-center gap-2 rounded-2xl border border-[#eadfd3] bg-white text-sm font-black text-[#5a2e11] no-underline transition-colors hover:bg-[#fff8ef] dark:border-white/18 dark:bg-white/16 dark:text-white dark:hover:bg-white/22"
         >
           <Coffee size={16} />
-          원두로 홈
+          원<span className="text-[#8FAE5A]">두</span>로 홈
         </Link>
       </div>
     </>
@@ -244,11 +246,11 @@ export default function Sidebar({
       <motion.aside
         className="absolute left-0 top-0 z-10 hidden md:flex h-full flex-col overflow-hidden"
         style={{
-          background: 'rgba(246, 243, 236, 0.62)',
+          background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
           backdropFilter: 'blur(28px) saturate(160%)',
           WebkitBackdropFilter: 'blur(28px) saturate(160%)',
-          borderRight: '1px solid rgba(229, 220, 206, 0.45)',
-          boxShadow: '4px 0 24px rgba(90, 46, 17, 0.08)',
+          borderRight: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
+          boxShadow: '4px 0 30px rgba(0, 0, 0, 0.22), inset -1px 0 0 rgba(255,255,255,0.06)',
         }}
         animate={{ width: collapsed ? 60 : 360 }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
@@ -256,7 +258,7 @@ export default function Sidebar({
         {collapsed ? (
           <div className="flex h-full flex-col items-center gap-3 py-4">
             <Link href="/home" className="no-underline">
-              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/80 shadow-sm">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/80 shadow-sm dark:bg-white/12">
                 <Image
                   src="/image/logo/beenRoad.png"
                   alt="원두로"
@@ -269,7 +271,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => onCollapsedChange?.(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfd3] bg-white/60 text-[#6b432a] hover:bg-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfd3] bg-white/60 text-[#6b432a] hover:bg-white dark:border-white/18 dark:bg-white/16 dark:text-white dark:hover:bg-white/22"
               aria-label="사이드바 펼치기"
             >
               <ChevronRight size={16} />
@@ -316,11 +318,11 @@ export default function Sidebar({
         <aside
           className="flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
           style={{
-            background: 'rgba(246, 243, 236, 0.62)',
+            background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
             backdropFilter: 'blur(28px) saturate(160%)',
             WebkitBackdropFilter: 'blur(28px) saturate(160%)',
-            borderTop: '1px solid rgba(229, 220, 206, 0.45)',
-            boxShadow: '0 -8px 32px rgba(58, 38, 18, 0.12)',
+            borderTop: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
+            boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06)',
           }}
         >
           {/* Handle — tap to toggle */}
@@ -334,7 +336,7 @@ export default function Sidebar({
             }}
             aria-label={mobileExpanded ? '목록 접기' : '목록 펼치기'}
           >
-            <div className="h-1 w-10 rounded-full bg-[#c4b5a5]" />
+            <div className="h-1 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/38" />
           </button>
 
           {/* Collapsed: horizontal icon-only category chips */}
@@ -348,11 +350,13 @@ export default function Sidebar({
                     type="button"
                     onClick={() => onQuickCategoryChange(value)}
                     aria-pressed={active}
-                    className="flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-black transition-all"
+                    className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-black transition-all ${
+                      active ? '' : 'border border-[#eadfd3]/80 bg-white/65 text-[#5f4634] dark:border-white/18 dark:bg-white/16 dark:text-white/88'
+                    }`}
                     style={
                       active
                         ? { background: activeColor, color: 'white' }
-                        : { background: 'rgba(255,255,255,0.65)', color: '#5f4634', border: '1px solid rgba(234,223,211,0.8)' }
+                        : undefined
                     }
                   >
                     <Icon size={15} />

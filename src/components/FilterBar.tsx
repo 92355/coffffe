@@ -27,7 +27,7 @@ function FilterSelect<T extends string>({
       <select
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value ? (event.target.value as T) : null)}
-        className="h-9 w-full appearance-none rounded-full border border-[#eadfd3] bg-white py-0 pl-3.5 pr-8 text-xs font-black text-[#5f4634] outline-none shadow-sm transition-all hover:border-[#c9a87e] hover:shadow-md focus:border-[#b56a2a] focus:shadow-[0_0_0_3px_rgba(181,106,42,0.12)]"
+        className="h-9 w-full appearance-none rounded-full border border-[#eadfd3] bg-white py-0 pl-3.5 pr-8 text-xs font-black text-[#5f4634] outline-none shadow-sm transition-all hover:border-[#c9a87e] hover:shadow-md focus:border-[#b56a2a] focus:shadow-[0_0_0_3px_rgba(181,106,42,0.12)] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:shadow-none dark:hover:border-white/26 dark:focus:border-[#d66612]"
       >
         <option value="">{label}</option>
         {Object.entries(options).map(([key, optionLabel]) => (
@@ -38,7 +38,7 @@ function FilterSelect<T extends string>({
       </select>
       <ChevronDown
         size={13}
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9a806a]"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#9a806a] dark:text-white/64"
       />
     </label>
   )
@@ -74,7 +74,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
       <button
         type="button"
         onClick={resetFilters}
-        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full border border-[#eadfd3] bg-white text-xs font-bold text-[#8b6f57] transition-all hover:border-[#c9a87e] hover:shadow-sm"
+        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full border border-[#eadfd3] bg-white text-xs font-bold text-[#8b6f57] transition-all hover:border-[#c9a87e] hover:shadow-sm dark:border-white/18 dark:bg-white/16 dark:text-white/78 dark:hover:border-white/26"
       >
         <RotateCcw size={13} />
         필터 초기화

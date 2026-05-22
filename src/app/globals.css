@@ -236,6 +236,18 @@ body {
   transition: transform 0.1s ease;
 }
 
+@media (max-width: 639px) {
+  .bean-card.bean-card--visible[data-mobile-active="false"] {
+    opacity: 0.42;
+    filter: blur(0.4px) saturate(0.82);
+  }
+
+  .bean-card.bean-card--visible[data-mobile-active="true"] {
+    opacity: 1;
+    filter: none;
+  }
+}
+
 /* ── Hero scroll indicator ── */
 @keyframes scrollBounce {
   0%, 100% { transform: rotate(45deg) translateY(0);   opacity: 0.25; }

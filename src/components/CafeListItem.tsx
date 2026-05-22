@@ -65,10 +65,10 @@ export default function CafeListItem({
 
   return (
     <article
-      className={`group w-full rounded-2xl border bg-white p-2 text-left transition-all duration-200 ${
+      className={`group w-full rounded-2xl border bg-white p-2 text-left transition-all duration-200 dark:bg-white/14 ${
         selected
-          ? 'border-[#d66612] shadow-[0_12px_32px_rgba(214,102,18,0.18)] ring-2 ring-[#f08a24]/20'
-          : 'border-[#eee4d8] shadow-[0_8px_22px_rgba(80,54,28,0.06)] hover:-translate-y-0.5 hover:border-[#e09a5c] hover:shadow-[0_16px_40px_rgba(80,54,28,0.12)]'
+          ? 'border-[#d66612] shadow-[0_12px_32px_rgba(214,102,18,0.18)] ring-2 ring-[#f08a24]/20 dark:bg-[rgba(214,102,18,0.18)] dark:shadow-[0_12px_32px_rgba(0,0,0,0.32)]'
+          : 'border-[#eee4d8] shadow-[0_8px_22px_rgba(80,54,28,0.06)] hover:-translate-y-0.5 hover:border-[#e09a5c] hover:shadow-[0_16px_40px_rgba(80,54,28,0.12)] dark:border-white/16 dark:shadow-[0_8px_22px_rgba(0,0,0,0.22)] dark:hover:border-white/24 dark:hover:bg-white/18'
       }`}
     >
       <div className="flex gap-3">
@@ -91,7 +91,7 @@ export default function CafeListItem({
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-start justify-between gap-2">
             <button type="button" onClick={() => onSelect(cafe)} className="min-w-0 flex-1 text-left">
-              <h3 className="truncate text-sm font-black text-[#2c2118]">{cafe.name}</h3>
+              <h3 className="truncate text-sm font-black text-[#2c2118] dark:text-white">{cafe.name}</h3>
             </button>
             <div className="flex shrink-0 items-center gap-1.5">
               <span className="flex items-center gap-1 text-xs font-black text-[#b45a15]">
@@ -103,8 +103,8 @@ export default function CafeListItem({
                 onClick={() => onFavoriteToggle(cafe.id)}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
                   favorite
-                    ? 'border-[#d66612] bg-[#fff1e7] text-[#d66612]'
-                    : 'border-[#eadfd3] bg-white text-[#9c8b7c] hover:text-[#d66612]'
+                    ? 'border-[#d66612] bg-[#fff1e7] text-[#d66612] dark:bg-[rgba(214,102,18,0.20)] dark:text-[#ffb06c]'
+                    : 'border-[#eadfd3] bg-white text-[#9c8b7c] hover:text-[#d66612] dark:border-white/12 dark:bg-white/8 dark:text-white/48 dark:hover:text-[#ffb06c]'
                 }`}
                 aria-label={favorite ? `${cafe.name} 저장 해제` : `${cafe.name} 저장`}
                 aria-pressed={favorite}
@@ -114,17 +114,17 @@ export default function CafeListItem({
             </div>
           </div>
           <button type="button" onClick={() => onSelect(cafe)} className="block w-full text-left">
-            <p className="mt-1 truncate text-xs font-semibold text-[#8b7a68]">{cafe.shortDescription}</p>
-            <p className="mt-1 truncate text-xs text-[#9c8b7c]">{cafe.address}</p>
+            <p className="mt-1 truncate text-xs font-semibold text-[#8b7a68] dark:text-white/76">{cafe.shortDescription}</p>
+            <p className="mt-1 truncate text-xs text-[#9c8b7c] dark:text-white/56">{cafe.address}</p>
           </button>
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-[#8f7b68]">
+          <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-[#8f7b68] dark:text-white/64">
             <Clock size={11} />
             <span>{cafe.openHours}</span>
             <MapPin size={11} />
             <span>{distance}</span>
           </div>
           {cafe.updatedAt && (
-            <p className="mt-0.5 text-[10px] text-[#b0916d]">
+            <p className="mt-0.5 text-[10px] text-[#b0916d] dark:text-white/50">
               마지막 확인일: {formatUpdatedAt(cafe.updatedAt)}
             </p>
           )}

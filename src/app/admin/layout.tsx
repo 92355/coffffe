@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ADMIN_SESSION_COOKIE, getAdminSecret, isAdminSessionValue } from '@/lib/admin-auth'
+import AdminShell from '@/components/AdminShell'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -74,5 +75,5 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  return children
+  return <AdminShell>{children}</AdminShell>
 }
