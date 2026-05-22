@@ -308,7 +308,7 @@ export default function MapView({ allCafes }: MapViewProps) {
 
       {/* Floating top bar — mobile only */}
       <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2 md:hidden">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[#eee4d8] bg-white/95 px-3 py-2 shadow-[0_12px_28px_rgba(60,40,20,0.14)] backdrop-blur-sm">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
           <Link href="/home" className="flex shrink-0 items-center no-underline">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6]">
               <Image src="/image/logo/beenRoad.png" alt="원두로" width={32} height={32} className="h-full w-full object-cover" priority />
@@ -368,7 +368,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             </button>
 
             {profileMenuOpen && (
-              <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl border border-[#eadccb] bg-white p-3 text-[#5a2e11] shadow-[0_18px_44px_rgba(60,40,20,0.16)]">
+              <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11]" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
                 <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
                   <div className="flex items-center gap-2">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
@@ -481,7 +481,8 @@ export default function MapView({ allCafes }: MapViewProps) {
         <AnimatePresence>
           {filterPanelOpen && (
             <motion.div
-              className="pointer-events-auto overflow-hidden rounded-2xl border border-[#eee4d8] bg-white/95 shadow-[0_12px_28px_rgba(60,40,20,0.14)] backdrop-blur-sm"
+              className="pointer-events-auto overflow-hidden rounded-2xl"
+            style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -521,7 +522,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           type="button"
           onClick={handleSearchCurrentMap}
           disabled={!hasPendingBoundsSearch || !currentMapBounds}
-          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full border border-[#eee4d8] bg-white px-4 text-sm font-black text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60"
+          style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
         >
           <Search size={15} />
           이 지역 검색
@@ -529,7 +531,7 @@ export default function MapView({ allCafes }: MapViewProps) {
       </div>
 
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2 flex flex-col gap-3">
-          <div className="pointer-events-auto overflow-hidden rounded-2xl border border-[#eee4d8] bg-white shadow-[0_12px_28px_rgba(60,40,20,0.12)]">
+          <div className="pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}>
             <button
               type="button"
               onClick={() => handleZoom('in')}
@@ -558,7 +560,8 @@ export default function MapView({ allCafes }: MapViewProps) {
                 setLocationPermissionModalOpen(true)
               }
             }}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17]"
+            style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
             aria-label="현재 위치"
           >
             <LocateFixed size={18} />
@@ -566,7 +569,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={handleMapTypeToggle}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#eee4d8] bg-white text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]"
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17]"
+            style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
             aria-label="지도 레이어"
           >
             <Layers size={18} />
@@ -574,7 +578,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         </div>
 
       <div className="pointer-events-none absolute inset-x-4 bottom-5 z-20 flex items-center justify-between gap-3">
-          <div className="pointer-events-auto flex h-12 items-center gap-2 rounded-full border border-[#eee4d8] bg-white px-5 text-sm font-black text-[#6f3b17] shadow-[0_12px_28px_rgba(60,40,20,0.12)]">
+          <div className="pointer-events-auto flex h-12 items-center gap-2 rounded-full px-5 text-sm font-black text-[#6f3b17]" style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}>
             <CoffeeDot />
             {filteredCafes.length}곳의 카페 발견
           </div>

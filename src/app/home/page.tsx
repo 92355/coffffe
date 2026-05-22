@@ -237,20 +237,20 @@ export default function AppHomePage() {
             className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide"
           >
             {FEATURED_BEANS.map((bean) => (
-              <motion.div key={bean.id} variants={beanItem}>
+              <motion.div key={bean.id} variants={beanItem} className="h-[6.4rem] w-32 shrink-0">
                 <Link
                   href="/beans"
-                  className="block w-32 shrink-0 rounded-2xl border border-white/70 bg-white/56 p-3.5 no-underline shadow-[0_12px_30px_rgba(107,67,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(107,67,42,0.15)]"
+                  className="flex h-full w-full flex-col rounded-2xl border border-white/70 bg-white/56 p-3.5 no-underline shadow-[0_12px_30px_rgba(107,67,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(107,67,42,0.15)]"
                 >
-                  <span className="text-2xl">{bean.flag}</span>
+                  <span className="text-2xl leading-none">{bean.flag}</span>
                   <p
-                    className="mt-2 text-[11px] font-black leading-tight"
+                    className="mt-2 truncate whitespace-nowrap text-[11px] font-black leading-tight"
                     style={{ color: 'var(--foreground)' }}
                   >
                     {bean.name}
                   </p>
                   <p
-                    className="mt-1 text-[10px] leading-snug"
+                    className="mt-1 truncate whitespace-nowrap text-[10px] leading-snug"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {bean.notes.slice(0, 2).join(' · ')}

@@ -19,10 +19,11 @@ export default function FeaturedCafesSection({ cafes }: Props) {
           <h2 className="mt-2 text-3xl font-black text-[#2a1d14]">지금 추천하는 카페</h2>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cafes.map((cafe, i) => (
             <motion.div
               key={cafe.id}
+              className="flex"
               initial={{ opacity: 0, y: 36 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: i * 0.13, ease: [0.34, 1.2, 0.64, 1] }}
@@ -30,7 +31,7 @@ export default function FeaturedCafesSection({ cafes }: Props) {
             >
               <Link
                 href={`/cafes/${cafe.id}`}
-                className="group block overflow-hidden rounded-3xl border border-[#e5d5c0] bg-white no-underline shadow-[0_8px_24px_rgba(90,46,17,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(90,46,17,0.16)]"
+                className="group flex w-full flex-col overflow-hidden rounded-3xl border border-[#e5d5c0] bg-white no-underline shadow-[0_8px_24px_rgba(90,46,17,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(90,46,17,0.16)]"
               >
                 {/* Thumbnail */}
                 <div className="relative h-48 overflow-hidden bg-[#eddfc9]">
@@ -64,7 +65,7 @@ export default function FeaturedCafesSection({ cafes }: Props) {
                 </div>
 
                 {/* Body */}
-                <div className="p-5">
+                <div className="flex flex-1 flex-col p-5">
                   <h3 className="text-base font-black text-[#2a1d14]">{cafe.name}</h3>
                   <p className="mt-1.5 line-clamp-2 text-xs font-medium leading-5 text-[#7d6149]">
                     {cafe.shortDescription}
@@ -79,7 +80,7 @@ export default function FeaturedCafesSection({ cafes }: Props) {
         <div className="mt-10 text-center">
           <Link
             href="/map"
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#d9c4ab] bg-transparent px-7 text-sm font-black text-[#5a2e11] no-underline transition-all hover:bg-[#5a2e11] hover:text-white"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#8fae5a] bg-[#8fae5a] px-7 text-sm font-black text-white no-underline transition-all hover:border-[#5a2e11] hover:bg-[#5a2e11]"
           >
             전체 카페 보기 →
           </Link>
