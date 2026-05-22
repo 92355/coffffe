@@ -57,6 +57,7 @@ const EMPTY_FORM: CafeForm = {
   phone: '',
   instagramHandle: '',
   kakaoPlaceId: '',
+  showAroma: true,
 }
 
 function slugify(value: string, fallback: string): string {
@@ -99,6 +100,7 @@ function toCafePayload(form: CafeForm): Cafe {
     phone: form.phone || undefined,
     instagramHandle: form.instagramHandle || undefined,
     kakaoPlaceId: form.kakaoPlaceId || undefined,
+    showAroma: form.showAroma ?? true,
   }
 }
 
@@ -275,6 +277,7 @@ export default function AdminPage() {
       phone: cafe.phone ?? '',
       instagramHandle: cafe.instagramHandle ?? '',
       kakaoPlaceId: cafe.kakaoPlaceId ?? '',
+      showAroma: cafe.showAroma ?? true,
     })
   }
 
@@ -578,6 +581,21 @@ function CafeFormPanel({ form, editingId, onFormChange, onSubmit, onCancel }: Ca
 
       <TextArea label="짧은 설명" value={form.shortDescription} onChange={(shortDescription) => onFormChange({ ...form, shortDescription })} />
       <TextArea label="상세 설명" value={form.fullDescription} onChange={(fullDescription) => onFormChange({ ...form, fullDescription })} />
+
+      <label className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-[#eadfd3] bg-[#fffaf5] px-3 py-3 text-sm font-bold text-[#5f4634]">
+        <span>
+          <span className="block font-black">지도 마커 김 모션</span>
+          <span className="mt-0.5 block text-xs font-semibold text-[#8b7a68]">
+            이 카페 마커 위에 커피 김을 표시합니다.
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={form.showAroma ?? true}
+          onChange={(event) => onFormChange({ ...form, showAroma: event.target.checked })}
+          className="h-5 w-5 accent-[#d66612]"
+        />
+      </label>
 
       <fieldset className="mt-4 min-w-0 rounded-lg border border-[#eadfd3] bg-[#fffaf5] p-3">
         <legend className="px-1 text-sm font-black text-[#5f4634]">대표 이미지</legend>

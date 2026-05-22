@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, ChevronDown, Coffee, CupSoda, Heart, Layers, List, LocateFixed, LogOut, MapPin, Minus, PawPrint, Plus, RefreshCw, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
+import { BookOpen, ChevronDown, Coffee, CupSoda, Heart, Layers, LocateFixed, LogOut, MapPin, Minus, PawPrint, Plus, RefreshCw, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import BottomSheet from '@/components/BottomSheet'
 import FilterBar from '@/components/FilterBar'
@@ -53,11 +53,12 @@ export default function MapView({ allCafes }: MapViewProps) {
   } = useUser()
   const { favoriteCafeIds, favoriteCafeIdSet, toggleFavoriteCafe, favoriteError } = useSavedCafes(user)
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
+  const profileMenuRefDesktop = useRef<HTMLDivElement | null>(null)
+  const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
-  const [mobileListOpen, setMobileListOpen] = useState(false)
   const [locationRequestId, setLocationRequestId] = useState(0)
   const [mapType, setMapType] = useState<MapType>('normal')
   const [zoomRequest, setZoomRequest] = useState<ZoomRequest | null>(null)
@@ -141,7 +142,6 @@ export default function MapView({ allCafes }: MapViewProps) {
     setReportInitialLocation(null)
     setReportSheetOpen(true)
     setProfileMenuOpen(false)
-    setMobileListOpen(false)
   }, [])
 
   const openProfileEdit = useCallback(() => {
@@ -221,7 +221,7 @@ export default function MapView({ allCafes }: MapViewProps) {
     const handlePointerDown = (event: PointerEvent): void => {
       const target = event.target
 
-      if (!(target instanceof Node) || profileMenuRef.current?.contains(target)) return
+      if (!(target instanceof Node) || profileMenuRef.current?.contains(target) || profileMenuRefDesktop.current?.contains(target)) return
 
       setProfileMenuOpen(false)
     }
@@ -249,6 +249,115 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileAvatar = getProfileAvatar(user)
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
+  const profileDropdown = profileMenuOpen ? (
+    <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11]" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
+      <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+          </span>
+          <span className="min-w-0 truncate text-sm font-black">{profileLabel}</span>
+          {user?.type === 'anonymous' ? (
+            <button
+              type="button"
+              onClick={regenerateNickname}
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+              aria-label="닉네임 새로고침"
+              title="닉네임 새로고침"
+            >
+              <RefreshCw size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { void logout() }}
+              className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
+              aria-label="로그아웃"
+              title="로그아웃"
+            >
+              <LogOut size={14} />
+            </button>
+          )}
+        </div>
+        <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
+          {user?.type === 'authenticated'
+            ? '함께 만들어가는 "원두로"에 오신걸 환영합니다'
+            : <><br />회원가입 전 임시 닉네임이에요.<br />귀여운 친구로 얼른 데려가세요!</>}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={openNewPlaceReport}
+          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+        >
+          제보하기
+        </button>
+        <button
+          type="button"
+          onClick={openProfileEdit}
+          className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+        >
+          내 정보 수정
+        </button>
+      </div>
+
+      {user?.type === 'authenticated' && user.isAdmin && (
+        <button
+          type="button"
+          onClick={() => { window.location.href = '/admin' }}
+          className="mt-2 h-10 w-full rounded-lg border border-[#5a2e11] bg-[#5a2e11] px-4 text-sm font-black text-white transition-colors hover:bg-[#43210c]"
+        >
+          관리자 페이지
+        </button>
+      )}
+
+      <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17]">
+          <Heart size={13} fill="currentColor" />
+          저장한 카페 {favoriteCafeIds.length}
+        </div>
+        {favoriteError && (
+          <p className="mb-2 rounded-md bg-[#fff4ed] px-2 py-1.5 text-[11px] font-bold leading-5 text-[#b94a12]">
+            {favoriteError}
+          </p>
+        )}
+        <div className="max-h-28 space-y-1 overflow-y-auto">
+          {favoriteCafes.length > 0 ? favoriteCafes.map((cafe) => (
+            <button
+              key={cafe.id}
+              type="button"
+              onClick={() => {
+                setSelectedCafe(cafe)
+                setProfileMenuOpen(false)
+              }}
+              className="flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs font-bold text-[#5a2e11] hover:bg-[#f8efe6]"
+            >
+              <span className="min-w-0 truncate">{cafe.name}</span>
+              <span className="shrink-0 text-[#b45a15]">{cafe.qualityScore.toFixed(1)}</span>
+            </button>
+          )) : (
+            <p className="px-2 py-1 text-[11px] font-bold leading-4 text-[#8a6042]">
+              카페 카드의 하트를 눌러 저장해보세요.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {user?.type !== 'authenticated' && (
+        <button
+          type="button"
+          onClick={loginWithKakao}
+          className="mt-2 h-10 w-full rounded-lg bg-[#fee500] px-4 text-sm font-black text-[#381e1f] transition-colors hover:bg-[#f7dc00]"
+        >
+          카카오 로그인하기
+        </button>
+      )}
+    </div>
+  ) : null
+
   return (
     <div className="relative h-dvh overflow-hidden">
       <Sidebar
@@ -261,7 +370,6 @@ export default function MapView({ allCafes }: MapViewProps) {
         distanceOrigin={userLocation}
         onCafeSelect={(cafe) => {
           setSelectedCafe(cafe)
-          setMobileListOpen(false)
         }}
         activeQuickCategory={activeQuickCategory}
         onQuickCategoryChange={setActiveQuickCategory}
@@ -271,8 +379,9 @@ export default function MapView({ allCafes }: MapViewProps) {
         onFavoriteToggle={(cafeId) => {
           void toggleFavoriteCafe(cafeId)
         }}
-        mobileOpen={mobileListOpen}
-        onMobileClose={() => setMobileListOpen(false)}
+        mobileOpen={false}
+        onMobileClose={() => {}}
+        onMobileExpandedChange={setMobileSheetExpanded}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
       />
@@ -366,115 +475,7 @@ export default function MapView({ allCafes }: MapViewProps) {
                 className={`transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`}
               />
             </button>
-
-            {profileMenuOpen && (
-              <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11]" style={{ background: 'rgba(246, 243, 236, 0.68)', backdropFilter: 'blur(20px) saturate(150%)', WebkitBackdropFilter: 'blur(20px) saturate(150%)', border: '1px solid rgba(229, 220, 206, 0.42)', boxShadow: '0 8px 24px rgba(60, 40, 20, 0.10)' }}>
-                <div className="mb-2 rounded-lg bg-[#f8efe6] p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-black">{profileLabel}</span>
-                    {user?.type === 'anonymous' ? (
-                      <button
-                        type="button"
-                        onClick={regenerateNickname}
-                        className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
-                        aria-label="닉네임 새로고침"
-                        title="닉네임 새로고침"
-                      >
-                        <RefreshCw size={14} />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => { void logout() }}
-                        className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[#eadccb] bg-white text-[#6f3b17] transition-colors hover:bg-[#fff7ed]"
-                        aria-label="로그아웃"
-                        title="로그아웃"
-                      >
-                        <LogOut size={14} />
-                      </button>
-                    )}
-                  </div>
-                  <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042]">
-                    {user?.type === 'authenticated'
-                      ? '함께 만들어가는 "원두로"에 오신걸 환영합니다'
-                      : '회원가입 전 임시 닉네임이에요. .'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={openNewPlaceReport}
-                    className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
-                  >
-                    제보하기
-                  </button>
-                  <button
-                    type="button"
-                    onClick={openProfileEdit}
-                    className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
-                  >
-                    내 정보 수정
-                  </button>
-                </div>
-
-                {user?.type === 'authenticated' && user.isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => { window.location.href = '/admin' }}
-                    className="mt-2 h-10 w-full rounded-lg border border-[#5a2e11] bg-[#5a2e11] px-4 text-sm font-black text-white transition-colors hover:bg-[#43210c]"
-                  >
-                    관리자 페이지
-                  </button>
-                )}
-
-                <div className="mt-2 rounded-lg border border-[#eadccb] bg-white p-2">
-                  <div className="mb-2 flex items-center gap-1.5 text-xs font-black text-[#6f3b17]">
-                    <Heart size={13} fill="currentColor" />
-                    저장한 카페 {favoriteCafeIds.length}
-                  </div>
-                  {favoriteError && (
-                    <p className="mb-2 rounded-md bg-[#fff4ed] px-2 py-1.5 text-[11px] font-bold leading-5 text-[#b94a12]">
-                      {favoriteError}
-                    </p>
-                  )}
-                  <div className="max-h-28 space-y-1 overflow-y-auto">
-                    {favoriteCafes.length > 0 ? favoriteCafes.map((cafe) => (
-                      <button
-                        key={cafe.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCafe(cafe)
-                          setProfileMenuOpen(false)
-                        }}
-                        className="flex h-8 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs font-bold text-[#5a2e11] hover:bg-[#f8efe6]"
-                      >
-                        <span className="min-w-0 truncate">{cafe.name}</span>
-                        <span className="shrink-0 text-[#b45a15]">{cafe.qualityScore.toFixed(1)}</span>
-                      </button>
-                    )) : (
-                      <p className="px-2 py-1 text-[11px] font-bold leading-4 text-[#8a6042]">
-                        카페 카드의 하트를 눌러 저장해보세요.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {user?.type !== 'authenticated' && (
-                  <button
-                    type="button"
-                    onClick={loginWithKakao}
-                    className="mt-2 h-10 w-full rounded-lg bg-[#fee500] px-4 text-sm font-black text-[#381e1f] transition-colors hover:bg-[#f7dc00]"
-                  >
-                    카카오 로그인하기
-                  </button>
-                )}
-              </div>
-            )}
+            {profileDropdown}
           </div>
         </div>
 
@@ -515,6 +516,31 @@ export default function MapView({ allCafes }: MapViewProps) {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Desktop-only profile button */}
+      <div ref={profileMenuRefDesktop} className="pointer-events-none absolute right-4 top-4 z-30 hidden md:block">
+        <div className="pointer-events-auto relative">
+          <button
+            type="button"
+            onClick={() => setProfileMenuOpen((current) => !current)}
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white py-1 pl-1.5 pr-2.5 text-[#6f3b17] transition-colors hover:bg-[#f8efe6]"
+            aria-label="프로필 메뉴"
+            aria-expanded={profileMenuOpen}
+            title={profileLabel}
+            style={{ boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f2d8c1] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={profileImageUrl ?? profileAvatar} alt="" className="h-full w-full rounded-full object-cover" />
+            </span>
+            <ChevronDown
+              size={13}
+              className={`transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {profileDropdown}
+        </div>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 top-[84px] z-20 flex justify-center px-4 md:top-4">
@@ -577,20 +603,25 @@ export default function MapView({ allCafes }: MapViewProps) {
           </button>
         </div>
 
-      <div className="pointer-events-none absolute inset-x-4 bottom-5 z-20 flex items-center justify-between gap-3">
-          <div className="pointer-events-auto flex h-12 items-center gap-2 rounded-full px-5 text-sm font-black text-[#6f3b17]" style={{ background: 'rgba(255, 252, 248, 0.60)', backdropFilter: 'blur(16px) saturate(140%)', WebkitBackdropFilter: 'blur(16px) saturate(140%)', border: '1px solid rgba(229, 220, 206, 0.40)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08)' }}>
-            <CoffeeDot />
-            {filteredCafes.length}곳의 카페 발견
-          </div>
-          <button
-            type="button"
-            onClick={() => setMobileListOpen(true)}
-            className="pointer-events-auto ml-auto flex h-12 items-center gap-2 rounded-full bg-[#8FAE5A] px-5 text-sm font-black text-white shadow-[0_12px_28px_rgba(143,174,90,0.35)] md:hidden"
+      {/* 카페 발견 배지 — 데스크탑: 하단 가운데 / 모바일: 바텀시트 위 */}
+      <div className="pointer-events-none absolute bottom-5 left-1/2 z-20 -translate-x-1/2 hidden md:block">
+        <BreadBadge count={filteredCafes.length} />
+      </div>
+      <AnimatePresence>
+        {!mobileSheetExpanded && (
+          <motion.div
+            className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 md:hidden"
+            style={{ bottom: 'calc(92px + 12px)' }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            <List size={18} />
-            목록 보기
-          </button>
-        </div>
+            <BreadBadge count={filteredCafes.length} small />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       <BottomSheet
         cafe={visibleSelectedCafe}
@@ -702,5 +733,24 @@ function CoffeeDot() {
     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5a2e11] text-white">
       <span className="h-2.5 w-3.5 rounded-b-full rounded-t-sm border border-current" />
     </span>
+  )
+}
+
+function BreadBadge({ count, small }: { count: number; small?: boolean }) {
+  return (
+    <div
+      className={`pointer-events-auto flex items-center font-black text-[#5a2e11] whitespace-nowrap ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
+      style={{
+        borderRadius: '16px',
+        background: 'rgba(143, 174, 90, 0.40)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        border: '1.5px solid rgba(180, 210, 100, 0.55)',
+        boxShadow: '0 8px 32px rgba(80, 110, 20, 0.28), inset 0 1.5px 0 rgba(220, 250, 150, 0.40)',
+      }}
+    >
+      <span className={`font-black text-[#3b2008] tabular-nums mr-0.5 ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
+      개의 카페 발견
+    </div>
   )
 }

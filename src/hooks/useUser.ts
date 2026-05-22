@@ -101,6 +101,7 @@ export function useUser(): UserState {
       params.set('nickname', currentUser.nickname)
       params.set('animal', currentUser.animal)
     }
+    params.set('returnTo', `${window.location.pathname}${window.location.search}${window.location.hash}`)
     window.location.href = `/api/auth/kakao/start?${params.toString()}`
   }, [])
   const logout = useCallback(async () => {

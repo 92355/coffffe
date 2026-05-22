@@ -1,6 +1,11 @@
 import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import { KAKAO_OAUTH_STATE_COOKIE, KAKAO_PENDING_SIGNUP_COOKIE, getKakaoRestApiKey } from '@/lib/user-auth'
+import {
+  KAKAO_OAUTH_STATE_COOKIE,
+  KAKAO_PENDING_SIGNUP_COOKIE,
+  KAKAO_RETURN_TO_COOKIE,
+  getKakaoRestApiKey,
+} from '@/lib/user-auth'
 import { isNicknameAnimal } from '@/lib/nickname'
 
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize'
@@ -37,9 +42,21 @@ export function GET(request: NextRequest) {
     )
   }
 
+  const returnTo = sanitizeReturnTo(request.nextUrl.searchParams.get('returnTo'))
+  if (returnTo) {
+    response.cookies.set(KAKAO_RETURN_TO_COOKIE, returnTo, cookieOptions)
+  }
+
   return response
 }
 
 function getRedirectUri(request: NextRequest): string {
   return process.env.KAKAO_REDIRECT_URI ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
+}
+
+function sanitizeReturnTo(value: string | null): string | null {
+  if (!value?.startsWith('/')) return null
+  if (value.startsWith('//')) return null
+
+  return value
 }

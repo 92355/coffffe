@@ -22,12 +22,12 @@ function FilterSelect<T extends string>({
   onChange: (value: T | null) => void
 }) {
   return (
-    <label className="relative">
+    <label className="relative flex-1">
       <span className="sr-only">{label}</span>
       <select
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value ? (event.target.value as T) : null)}
-        className="h-9 min-w-[78px] appearance-none rounded-full border border-[#eadfd3] bg-white py-0 pl-3.5 pr-8 text-xs font-black text-[#5f4634] outline-none shadow-sm transition-all hover:border-[#c9a87e] hover:shadow-md focus:border-[#b56a2a] focus:shadow-[0_0_0_3px_rgba(181,106,42,0.12)]"
+        className="h-9 w-full appearance-none rounded-full border border-[#eadfd3] bg-white py-0 pl-3.5 pr-8 text-xs font-black text-[#5f4634] outline-none shadow-sm transition-all hover:border-[#c9a87e] hover:shadow-md focus:border-[#b56a2a] focus:shadow-[0_0_0_3px_rgba(181,106,42,0.12)]"
       >
         <option value="">{label}</option>
         {Object.entries(options).map(([key, optionLabel]) => (
@@ -50,29 +50,31 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-      <FilterSelect<RoastLevel>
-        label="로스팅"
-        value={filters.roastLevel}
-        options={ROAST_LABELS}
-        onChange={(roastLevel) => onChange({ ...filters, roastLevel })}
-      />
-      <FilterSelect<BeanOrigin>
-        label="원두"
-        value={filters.beanOrigin}
-        options={ORIGIN_LABELS}
-        onChange={(beanOrigin) => onChange({ ...filters, beanOrigin })}
-      />
-      <FilterSelect<BrewMethod>
-        label="추출"
-        value={filters.brewMethod}
-        options={BREW_LABELS}
-        onChange={(brewMethod) => onChange({ ...filters, brewMethod })}
-      />
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <FilterSelect<RoastLevel>
+          label="로스팅"
+          value={filters.roastLevel}
+          options={ROAST_LABELS}
+          onChange={(roastLevel) => onChange({ ...filters, roastLevel })}
+        />
+        <FilterSelect<BeanOrigin>
+          label="원두"
+          value={filters.beanOrigin}
+          options={ORIGIN_LABELS}
+          onChange={(beanOrigin) => onChange({ ...filters, beanOrigin })}
+        />
+        <FilterSelect<BrewMethod>
+          label="추출"
+          value={filters.brewMethod}
+          options={BREW_LABELS}
+          onChange={(brewMethod) => onChange({ ...filters, brewMethod })}
+        />
+      </div>
       <button
         type="button"
         onClick={resetFilters}
-        className="ml-auto flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-2.5 text-xs font-bold text-[#8b6f57] transition-all hover:border-[#eadfd3] hover:bg-white hover:shadow-sm"
+        className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full border border-[#eadfd3] bg-white text-xs font-bold text-[#8b6f57] transition-all hover:border-[#c9a87e] hover:shadow-sm"
       >
         <RotateCcw size={13} />
         필터 초기화

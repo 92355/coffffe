@@ -85,6 +85,36 @@ body {
   display: none;
 }
 
+.map-sidebar-scroll {
+  scrollbar-color: rgba(107, 67, 42, 0.38) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.map-sidebar-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.map-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.map-sidebar-scroll::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: rgba(107, 67, 42, 0.30);
+}
+
+.map-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 67, 42, 0.48);
+}
+
+.map-sidebar-scroll::-webkit-scrollbar-thumb:active {
+  background-color: rgba(90, 46, 17, 0.62);
+}
+
 .map-shell {
   height: 100dvh;
   overflow: hidden;
@@ -238,27 +268,37 @@ body {
 
 /* ── Kakao map marker coffee aroma (S자 곡선 증기) ── */
 @keyframes coffeeAromaS {
-  0%   { transform: translateY(0px)   translateX(0px)  scaleY(0.6) scaleX(1);   opacity: 0; }
-  15%  { opacity: 0.65; }
-  30%  { transform: translateY(-8px)  translateX(2px)  scaleY(1.0) scaleX(0.8); opacity: 0.55; }
-  55%  { transform: translateY(-16px) translateX(-2px) scaleY(1.2) scaleX(0.7); opacity: 0.35; }
-  80%  { transform: translateY(-24px) translateX(1px)  scaleY(1.4) scaleX(0.6); opacity: 0.15; }
-  100% { transform: translateY(-32px) translateX(0px)  scaleY(1.6) scaleX(0.5); opacity: 0; }
+  0%   { transform: translateY(2px)    translateX(0px)  rotate(-2deg) scaleY(0.7) scaleX(1.05); opacity: 0; }
+  12%  { opacity: 0.95; }
+  30%  { transform: translateY(-10px)  translateX(4px)  rotate(5deg)  scaleY(1.05) scaleX(0.88); opacity: 0.85; }
+  55%  { transform: translateY(-22px)  translateX(-4px) rotate(-6deg) scaleY(1.3)  scaleX(0.72); opacity: 0.58; }
+  80%  { transform: translateY(-34px)  translateX(3px)  rotate(4deg)  scaleY(1.55) scaleX(0.6);  opacity: 0.28; }
+  100% { transform: translateY(-46px)  translateX(0px)  rotate(0deg)  scaleY(1.85) scaleX(0.5);  opacity: 0; }
 }
 
 .aroma-puff {
   display: inline-block;
-  width: 3px;
-  height: 9px;
+  width: 5px;
+  height: 16px;
   border-radius: 40% 40% 50% 50%;
-  background: rgba(255, 210, 130, 0.70);
-  animation: coffeeAromaS 2.8s ease-out infinite;
+  background: rgba(255, 226, 166, 0.95);
+  box-shadow:
+    0 0 10px rgba(255, 226, 166, 0.85),
+    0 0 18px rgba(214, 102, 18, 0.38);
+  filter: drop-shadow(0 0 4px rgba(90, 46, 17, 0.35));
+  transform-origin: center bottom;
+  animation: coffeeAromaS 2.25s ease-out infinite;
   will-change: transform, opacity;
 }
-.aroma-puff--1 { animation-delay: 0s;    width: 3px; }
-.aroma-puff--2 { animation-delay: 0.95s; width: 2px; height: 7px; }
-.aroma-puff--3 { animation-delay: 1.9s;  width: 3px; }
+.aroma-puff--1 { animation-delay: 0s;     animation-duration: 2.35s; width: 5px; height: 16px; }
+.aroma-puff--2 { animation-delay: 0.38s;  animation-duration: 2.05s; width: 4px; height: 14px; }
+.aroma-puff--3 { animation-delay: 0.82s;  animation-duration: 2.45s; width: 6px; height: 18px; }
+.aroma-puff--4 { animation-delay: 1.18s;  animation-duration: 2.18s; width: 4px; height: 15px; }
+.aroma-puff--5 { animation-delay: 1.56s;  animation-duration: 2.62s; width: 5px; height: 17px; }
 .aroma-puff--selected {
-  animation-duration: 1.8s;
-  background: rgba(143, 174, 90, 0.90);
+  animation-duration: 1.65s;
+  background: rgba(178, 222, 104, 1);
+  box-shadow:
+    0 0 12px rgba(178, 222, 104, 0.95),
+    0 0 24px rgba(143, 174, 90, 0.58);
 }

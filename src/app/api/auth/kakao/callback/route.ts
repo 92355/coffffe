@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase'
 import {
   KAKAO_OAUTH_STATE_COOKIE,
   KAKAO_PENDING_SIGNUP_COOKIE,
+  KAKAO_RETURN_TO_COOKIE,
   USER_SESSION_COOKIE,
   createSessionToken,
   getKakaoClientSecret,
@@ -14,7 +15,7 @@ import { generateNickname, isNicknameAnimal, type NicknameAnimal } from '@/lib/n
 
 const KAKAO_TOKEN_URL = 'https://kauth.kakao.com/oauth/token'
 const KAKAO_USER_URL = 'https://kapi.kakao.com/v2/user/me'
-const FALLBACK_REDIRECT_PATH = '/map'
+const FALLBACK_REDIRECT_PATH = '/'
 
 interface KakaoTokenResponse {
   access_token?: string
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get('state')
   const code = request.nextUrl.searchParams.get('code')
   const storedState = request.cookies.get(KAKAO_OAUTH_STATE_COOKIE)?.value
-  const redirectTarget = new URL(FALLBACK_REDIRECT_PATH, request.nextUrl.origin)
+  const redirectTarget = getRedirectTarget(request)
 
   if (!code || !state || !storedState || state !== storedState) {
     redirectTarget.searchParams.set('auth', 'failed')
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
 
     response.cookies.delete(KAKAO_OAUTH_STATE_COOKIE)
     response.cookies.delete(KAKAO_PENDING_SIGNUP_COOKIE)
+    response.cookies.delete(KAKAO_RETURN_TO_COOKIE)
     response.cookies.set(USER_SESSION_COOKIE, createSessionToken(session), {
       httpOnly: true,
       sameSite: 'lax',
@@ -84,6 +86,19 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(redirectTarget)
   }
+}
+
+function getRedirectTarget(request: NextRequest): URL {
+  const returnTo = sanitizeReturnTo(request.cookies.get(KAKAO_RETURN_TO_COOKIE)?.value)
+
+  return new URL(returnTo ?? FALLBACK_REDIRECT_PATH, request.nextUrl.origin)
+}
+
+function sanitizeReturnTo(value: string | undefined): string | null {
+  if (!value?.startsWith('/')) return null
+  if (value.startsWith('//')) return null
+
+  return value
 }
 
 async function requestKakaoAccessToken(code: string, redirectUri: string): Promise<string> {

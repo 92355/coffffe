@@ -7,6 +7,7 @@ interface CafePayload extends Cafe {
   phone?: string
   instagramHandle?: string
   kakaoPlaceId?: string
+  showAroma?: boolean
 }
 
 interface DatabaseCafePayload {
@@ -28,6 +29,7 @@ interface DatabaseCafePayload {
   phone: string | null
   instagram_handle: string | null
   kakao_place_id: string | null
+  show_aroma?: boolean | null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -94,6 +96,15 @@ function readOptionalStringArray(record: Record<string, unknown>, key: string): 
   return value
 }
 
+function readOptionalBoolean(record: Record<string, unknown>, key: string, fallback: boolean): boolean {
+  const value = record[key]
+
+  if (value === undefined || value === null) return fallback
+  if (typeof value !== 'boolean') throw new Error(`"${key}" must be a boolean`)
+
+  return value
+}
+
 function readCafePayload(value: unknown): CafePayload {
   if (!isRecord(value)) {
     throw new Error('Request body must be an object')
@@ -118,6 +129,7 @@ function readCafePayload(value: unknown): CafePayload {
     phone: readOptionalString(value, 'phone'),
     instagramHandle: readOptionalString(value, 'instagramHandle'),
     kakaoPlaceId: readOptionalString(value, 'kakaoPlaceId'),
+    showAroma: readOptionalBoolean(value, 'showAroma', true),
   }
 }
 
@@ -141,6 +153,7 @@ function toDatabasePayload(cafe: CafePayload): DatabaseCafePayload {
     phone: cafe.phone ?? null,
     instagram_handle: cafe.instagramHandle ?? null,
     kakao_place_id: cafe.kakaoPlaceId ?? null,
+    show_aroma: cafe.showAroma ?? true,
   }
 }
 
@@ -164,6 +177,7 @@ function toCafePayload(databaseCafe: DatabaseCafePayload): CafePayload {
     phone: databaseCafe.phone ?? undefined,
     instagramHandle: databaseCafe.instagram_handle ?? undefined,
     kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,
+    showAroma: databaseCafe.show_aroma ?? true,
   }
 }
 

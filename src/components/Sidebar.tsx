@@ -39,6 +39,7 @@ interface SidebarProps {
   onFavoriteToggle: (cafeId: string) => void
   mobileOpen?: boolean
   onMobileClose?: () => void
+  onMobileExpandedChange?: (expanded: boolean) => void
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
 }
@@ -79,6 +80,7 @@ export default function Sidebar({
   onFavoriteToggle,
   mobileOpen = false,
   onMobileClose,
+  onMobileExpandedChange,
   collapsed = false,
   onCollapsedChange,
 }: SidebarProps) {
@@ -93,6 +95,10 @@ export default function Sidebar({
 
     return () => window.cancelAnimationFrame(animationFrame)
   }, [mobileOpen])
+
+  useEffect(() => {
+    onMobileExpandedChange?.(mobileExpanded)
+  }, [mobileExpanded, onMobileExpandedChange])
 
   const expandedContent = (
     <>
@@ -171,7 +177,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-sm font-black text-[#2c2118]">추천 카페</h2>
           <button

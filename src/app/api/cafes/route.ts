@@ -21,6 +21,7 @@ interface DatabaseCafe {
   phone: string | null
   instagram_handle: string | null
   kakao_place_id: string | null
+  show_aroma?: boolean | null
   updated_at: string
 }
 
@@ -44,6 +45,7 @@ function toCafe(databaseCafe: DatabaseCafe): Cafe {
     phone: databaseCafe.phone ?? undefined,
     instagramHandle: databaseCafe.instagram_handle ?? undefined,
     kakaoPlaceId: databaseCafe.kakao_place_id ?? undefined,
+    showAroma: databaseCafe.show_aroma ?? true,
     updatedAt: databaseCafe.updated_at,
   }
 }

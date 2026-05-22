@@ -120,10 +120,10 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
                 <Coffee size={14} /> CBTI
               </Link>
               <Link
-                href="/map"
+                href="/"
                 className="flex h-10 items-center gap-1.5 rounded-full bg-[#c87030] px-4 text-sm font-black text-white no-underline shadow-[0_10px_30px_rgba(200,112,48,0.38)] transition-all hover:scale-[1.02] hover:bg-[#b8612a] active:scale-95"
               >
-                지도 열기 <ArrowRight size={14} />
+                홈으로 가기 <ArrowRight size={14} />
               </Link>
             </div>
           </nav>
@@ -147,7 +147,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
 
             <motion.h1
               variants={riseItem}
-              className="mt-7 bg-gradient-to-br from-[#1a0a04] via-[#7a3a14] to-[#c87030] bg-clip-text text-5xl font-black leading-[1.04] text-transparent sm:text-6xl lg:text-[5.2rem]"
+              className="mt-7 bg-gradient-to-br from-[#f3eee7] via-[#e8d5b0] to-[#c87030] bg-clip-text text-5xl font-black leading-[1.04] text-transparent sm:text-6xl lg:text-[5.2rem]"
             >
               좋은 커피를
               <br />
@@ -156,7 +156,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
 
             <motion.p
               variants={riseItem}
-              className="mx-auto mt-6 max-w-xl text-base font-bold leading-8 text-[#5a2e11] sm:text-lg lg:mx-0"
+              className="mx-auto mt-6 max-w-xl text-base font-bold leading-8 text-[#f3eee7]/85 sm:text-lg lg:mx-0"
             >
               안산의 스페셜티 카페와 원두를 취향 필터로 탐색합니다.
               <br className="hidden sm:block" />
@@ -184,12 +184,12 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
             {/* Stats */}
             <motion.div
               variants={riseItem}
-              className="mt-10 grid grid-cols-3 overflow-hidden rounded-3xl border border-white/18 bg-white/10 text-center shadow-[0_18px_55px_rgba(0,0,0,0.18)] backdrop-blur-2xl"
+              className="mt-10 grid grid-cols-3 overflow-hidden rounded-3xl border border-white/24 bg-white/[0.13] text-center shadow-[0_22px_70px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-2xl"
             >
               {STATS.map(({ value, label }) => (
-                <div key={label} className="border-r border-white/15 px-3 py-4 last:border-r-0">
-                  <p className="text-3xl font-black text-[var(--accent)]">{value}</p>
-                  <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-black">{label}</p>
+                <div key={label} className="border-r border-white/18 bg-white/[0.04] px-3 py-4 last:border-r-0">
+                  <p className="text-3xl font-black text-[var(--accent)] drop-shadow-[0_8px_18px_rgba(143,174,90,0.28)]">{value}</p>
+                  <p className="mt-1 text-[10px] font-black uppercase tracking-wide text-white/72">{label}</p>
                 </div>
               ))}
             </motion.div>
@@ -461,27 +461,73 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
       </section>
 
       {/* ── CTA ── */}
-      <section className="bg-[linear-gradient(135deg,var(--primary),var(--brown))] px-5 py-20 sm:px-8">
+      <section className="relative overflow-hidden px-5 py-24 sm:px-8" style={{ background: '#120804' }}>
+        {/* 배경 글로우 */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #8fae5a 0%, transparent 70%)' }} />
+          <div className="absolute -left-24 bottom-0 h-64 w-64 rounded-full opacity-15 blur-3xl" style={{ background: '#c87030' }} />
+          <div className="absolute -right-20 top-0 h-64 w-64 rounded-full opacity-10 blur-3xl" style={{ background: '#8fae5a' }} />
+        </div>
+
+        {/* CBTI 유형 플로팅 태그 */}
+        {[
+          { label: 'LSEH · 라이트 에스프레소', x: '4%', y: '18%', delay: 0 },
+          { label: 'DBFC · 다크 바디 콜드', x: '72%', y: '10%', delay: 0.5 },
+          { label: 'LSFC · 산미 푸어오버', x: '78%', y: '75%', delay: 1 },
+          { label: 'DBEH · 진한 에스프레소', x: '2%', y: '72%', delay: 0.7 },
+        ].map(({ label, x, y, delay }) => (
+          <motion.div
+            key={label}
+            className="absolute hidden rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-[10px] font-bold text-white/40 backdrop-blur-sm lg:flex"
+            style={{ left: x, top: y }}
+            animate={{ y: [0, -8, 0], opacity: [0.4, 0.7, 0.4] }}
+            transition={{ duration: 4, delay, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {label}
+          </motion.div>
+        ))}
+
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           viewport={{ once: true, margin: '-80px' }}
-          className="mx-auto flex max-w-2xl flex-col items-center rounded-[2rem] border border-white/18 bg-white/10 p-8 text-center shadow-[0_26px_80px_rgba(0,0,0,0.22)] backdrop-blur-2xl sm:p-12"
+          className="relative mx-auto flex max-w-xl flex-col items-center text-center"
         >
-          <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-white">
-            <Sparkles size={28} />
-          </span>
-          <h2 className="text-3xl font-black text-white sm:text-4xl">
-            내 커피 취향,<br />아직 모르겠어?
+          <motion.span
+            className="mb-6 flex h-16 w-16 items-center justify-center rounded-3xl border border-white/15 bg-white/8 text-[#8fae5a]"
+            animate={{ rotate: [0, 8, -8, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Sparkles size={30} />
+          </motion.span>
+
+          <h2 className="text-4xl font-black leading-[1.08] text-white sm:text-5xl">
+            내 커피 취향,
+            <br />
+            <span className="bg-gradient-to-r from-[#8fae5a] to-[#c87030] bg-clip-text text-transparent">
+              아직 모르겠어?
+            </span>
           </h2>
-          <p className="mt-5 max-w-sm text-base font-medium leading-7 text-white/78">
+
+          <p className="mt-6 max-w-sm text-base font-medium leading-7 text-white/60">
             라이트·다크, 에스프레소·푸어오버, 산미·바디감까지.
+            <br />
             10개의 질문으로 16가지 유형 중 내 스타일을 찾아드립니다.
           </p>
+
+          {/* 유형 수 배지 */}
+          <div className="mt-6 flex items-center gap-3">
+            {['16가지 유형', '10개 질문', '3분 소요'].map((tag) => (
+              <span key={tag} className="rounded-full border border-white/12 bg-white/6 px-3 py-1 text-xs font-bold text-white/55">
+                {tag}
+              </span>
+            ))}
+          </div>
+
           <Link
             href="/cbti"
-            className="mt-9 flex h-[52px] items-center gap-2 rounded-2xl bg-white px-9 text-base font-black text-[var(--brown)] no-underline shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[var(--accent-soft)] active:scale-[0.98]"
+            className="mt-9 flex h-[54px] items-center gap-2.5 rounded-2xl bg-[#8fae5a] px-10 text-base font-black text-white no-underline shadow-[0_16px_40px_rgba(143,174,90,0.35)] transition-all hover:-translate-y-0.5 hover:bg-[#7a9a4a] hover:shadow-[0_22px_50px_rgba(143,174,90,0.45)] active:scale-[0.98]"
           >
             <Star size={18} /> CBTI 시작하기
           </Link>
