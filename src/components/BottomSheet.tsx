@@ -1,9 +1,12 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { X } from 'lucide-react'
+import Image from 'next/image'
+import { AtSign, Heart, Phone, X } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
-import CafePreviewCard from '@/components/CafePreviewCard'
+import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
+import { googleMapUrl, kakaoMapUrl, naverMapUrl } from '@/lib/mapNavigation'
+import { cafeNameToHue } from '@/lib/cafeThumb'
 
 interface BottomSheetProps {
   cafe: Cafe | null
@@ -11,6 +14,14 @@ interface BottomSheetProps {
   favorite?: boolean
   onFavoriteToggle?: (cafeId: string) => void
 }
+
+const glassStyle = {
+  background: 'color-mix(in srgb, var(--background) 72%, rgba(255,255,255,0.22))',
+  backdropFilter: 'blur(28px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+  border: '1px solid color-mix(in srgb, var(--foreground) 18%, transparent)',
+  boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
+} as const
 
 export default function BottomSheet({
   cafe,
@@ -23,31 +34,167 @@ export default function BottomSheet({
       {cafe && (
         <motion.div
           key={cafe.id}
-          className="pointer-events-auto fixed inset-x-0 bottom-0 z-30"
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
-          transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+          className="pointer-events-auto fixed inset-x-0 bottom-0 z-[60] px-3"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
+          transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         >
-          <div className="rounded-t-3xl border-t border-white/20 bg-white shadow-[0_-20px_60px_rgba(0,0,0,0.22)] dark:border-neutral-800 dark:bg-neutral-950">
-            <div className="flex justify-center pt-3">
-              <div className="h-1 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700" />
+          <div className="overflow-hidden rounded-3xl" style={{ ...glassStyle, maxHeight: '70dvh' }}>
+            <div className="flex justify-center pt-2.5">
+              <div className="h-1 w-8 rounded-full bg-[#c4b5a5] dark:bg-white/30" />
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-300"
-              aria-label="닫기"
-            >
-              <X size={16} />
-            </button>
-            <div className="px-5 pb-6 pt-3" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
-              <CafePreviewCard
-                cafe={cafe}
-                compact
-                favorite={favorite}
-                onFavoriteToggle={onFavoriteToggle}
-              />
+
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(70dvh - 1.5rem)' }}>
+              {/* 썸네일 */}
+              {(() => {
+                const hue = cafeNameToHue(cafe.name)
+                const placeholderBg = [
+                  `radial-gradient(circle at 25% 35%, transparent 22%, rgba(255,255,255,0.10) 22.5%, rgba(255,255,255,0.10) 26%, transparent 26.5%)`,
+                  `radial-gradient(circle at 68% 58%, transparent 17%, rgba(255,255,255,0.07) 17.5%, rgba(255,255,255,0.07) 21%, transparent 21.5%)`,
+                  `hsl(${hue}, 42%, 38%)`,
+                ].join(', ')
+                return (
+                  <div className="relative mx-3 mt-2 h-[120px] overflow-hidden rounded-2xl">
+                    {cafe.images?.[0] ? (
+                      <Image src={cafe.images[0]} alt={cafe.name} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="absolute inset-0" style={{ background: placeholderBg }}>
+                        <span className="absolute inset-0 flex select-none items-center justify-center text-4xl font-black text-white/80">
+                          {cafe.name[0]}
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
+                      aria-label="닫기"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )
+              })()}
+
+              {/* 이름 + 찜 */}
+              <div className="flex items-start justify-between gap-2 px-4 pt-3">
+                <h2 className="text-lg font-black text-[#2c2118] dark:text-white">{cafe.name}</h2>
+                {onFavoriteToggle && (
+                  <button
+                    type="button"
+                    onClick={() => onFavoriteToggle(cafe.id)}
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                      favorite
+                        ? 'border-[#d66612] bg-[#d66612] text-white'
+                        : 'border-[#eadfd3] bg-white/70 text-[#7d6149] hover:text-[#d66612] dark:border-white/18 dark:bg-white/12 dark:text-white/72'
+                    }`}
+                    aria-label={favorite ? `${cafe.name} 저장 해제` : `${cafe.name} 저장`}
+                    aria-pressed={favorite}
+                  >
+                    <Heart size={15} fill={favorite ? 'currentColor' : 'none'} />
+                  </button>
+                )}
+              </div>
+
+              <p className="px-4 pt-1 text-sm leading-relaxed text-[#7d6149] dark:text-white/65">
+                {cafe.shortDescription}
+              </p>
+
+              {/* 태그 */}
+              <div className="flex flex-wrap gap-1.5 px-4 pt-3">
+                {cafe.roastLevels.map(r => (
+                  <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                    {ROAST_LABELS[r]}
+                  </span>
+                ))}
+                {cafe.beanOrigins.map(o => (
+                  <span key={o} className="rounded-full bg-[#f5ede5] px-2.5 py-1 text-xs font-semibold text-[#7d6149] dark:bg-white/12 dark:text-white/72">
+                    {ORIGIN_LABELS[o]}
+                  </span>
+                ))}
+                {cafe.brewMethods.map(m => (
+                  <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    {BREW_LABELS[m]}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mx-4 mt-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+              {/* 영업정보 */}
+              <div className="space-y-1.5 px-4 pt-3 text-xs text-[#7d6149] dark:text-white/65">
+                <p className="truncate">{cafe.address}</p>
+                <p>영업 {cafe.openHours}</p>
+                <p>휴무 {cafe.closedDays.length > 0 ? cafe.closedDays.join(', ') : '정보 없음'}</p>
+              </div>
+
+              {/* 연락처 */}
+              {(cafe.phone || cafe.instagramHandle) && (
+                <div className="flex items-center gap-2 px-4 pt-3">
+                  {cafe.phone && (
+                    <a
+                      href={`tel:${cafe.phone}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfd3] bg-white/70 text-[#6b432a] dark:border-white/18 dark:bg-white/12 dark:text-white/80"
+                      aria-label={`${cafe.name} 전화`}
+                    >
+                      <Phone size={14} />
+                    </a>
+                  )}
+                  {cafe.instagramHandle && (
+                    <a
+                      href={`https://instagram.com/${cafe.instagramHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eadfd3] bg-white/70 text-[#6b432a] transition-colors hover:text-[#E1306C] dark:border-white/18 dark:bg-white/12 dark:text-white/80"
+                      aria-label={`${cafe.name} 인스타그램`}
+                    >
+                      <AtSign size={14} />
+                    </a>
+                  )}
+                </div>
+              )}
+
+              <div className="mx-4 mt-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+              {/* 지도 검색 가로 3등분 */}
+              <div className="grid grid-cols-3 gap-2 px-4 pt-3">
+                <a
+                  href={naverMapUrl(cafe.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-white transition-opacity hover:opacity-90"
+                  style={{ background: '#03C75A' }}
+                  aria-label="네이버 지도에서 검색"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-black">N</span>
+                  네이버
+                </a>
+                <a
+                  href={kakaoMapUrl(cafe.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-[#381e1f] transition-opacity hover:opacity-90"
+                  style={{ background: '#FEE500' }}
+                  aria-label="카카오 지도에서 검색"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black/10 text-[9px] font-black">K</span>
+                  카카오
+                </a>
+                <a
+                  href={googleMapUrl(cafe.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-white transition-opacity hover:opacity-90"
+                  style={{ background: '#4285F4' }}
+                  aria-label="구글 지도에서 검색"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-black">G</span>
+                  구글
+                </a>
+              </div>
+
             </div>
           </div>
         </motion.div>

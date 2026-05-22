@@ -55,6 +55,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileMenuRef = useRef<HTMLDivElement | null>(null)
   const profileMenuRefDesktop = useRef<HTMLDivElement | null>(null)
   const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false)
+  const [selectedFrom, setSelectedFrom] = useState<'sidebar' | 'map' | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -370,10 +371,14 @@ export default function MapView({ allCafes }: MapViewProps) {
         distanceOrigin={userLocation}
         onCafeSelect={(cafe) => {
           setSelectedCafe(cafe)
+          setSelectedFrom('sidebar')
         }}
         activeQuickCategory={activeQuickCategory}
         onQuickCategoryChange={setActiveQuickCategory}
-        onClearSelection={() => setSelectedCafe(null)}
+        onClearSelection={() => {
+          setSelectedCafe(null)
+          setSelectedFrom(null)
+        }}
         onReportNewPlace={openNewPlaceReport}
         favoriteCafeIds={favoriteCafeIdSet}
         onFavoriteToggle={(cafeId) => {
@@ -384,13 +389,18 @@ export default function MapView({ allCafes }: MapViewProps) {
         onMobileExpandedChange={setMobileSheetExpanded}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
+        mobileShowDetail={selectedFrom === 'sidebar'}
+        mobileBottomBarHidden={selectedFrom === 'map' && Boolean(visibleSelectedCafe)}
       />
 
       <div className="absolute inset-0">
       <KakaoMap
           cafes={filteredCafes}
           selectedCafe={visibleSelectedCafe}
-          onCafeSelect={setSelectedCafe}
+          onCafeSelect={(cafe) => {
+            setSelectedCafe(cafe)
+            setSelectedFrom('map')
+          }}
           onMapBoundsChange={handleMapBoundsChange}
           mapType={mapType}
           zoomRequest={zoomRequest}
@@ -625,14 +635,16 @@ export default function MapView({ allCafes }: MapViewProps) {
       </AnimatePresence>
 
 
-      <BottomSheet
-        cafe={visibleSelectedCafe}
-        onClose={() => setSelectedCafe(null)}
-        favorite={visibleSelectedCafe ? favoriteCafeIdSet.has(visibleSelectedCafe.id) : false}
-        onFavoriteToggle={(cafeId) => {
-          void toggleFavoriteCafe(cafeId)
-        }}
-      />
+      <div className="md:hidden">
+        <BottomSheet
+          cafe={selectedFrom === 'map' ? visibleSelectedCafe : null}
+          onClose={() => setSelectedCafe(null)}
+          favorite={visibleSelectedCafe ? favoriteCafeIdSet.has(visibleSelectedCafe.id) : false}
+          onFavoriteToggle={(cafeId) => {
+            void toggleFavoriteCafe(cafeId)
+          }}
+        />
+      </div>
       {reportSheetOpen && (
         <ReportSheet
           cafes={allCafes}

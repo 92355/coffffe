@@ -29,9 +29,8 @@ export default function FeaturedCafesSection({ cafes }: Props) {
               transition={{ duration: 0.55, delay: i * 0.13, ease: [0.34, 1.2, 0.64, 1] }}
               viewport={{ once: true, margin: '-40px' }}
             >
-              <Link
-                href={`/cafes/${cafe.id}`}
-                className="group flex w-full flex-col overflow-hidden rounded-3xl border border-[#e5d5c0] bg-white no-underline shadow-[0_8px_24px_rgba(90,46,17,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_rgba(90,46,17,0.16)]"
+              <div
+                className="group flex w-full flex-col overflow-hidden rounded-3xl border border-[#e5d5c0] bg-white shadow-[0_8px_24px_rgba(90,46,17,0.08)]"
               >
                 {/* Thumbnail */}
                 <div className="relative h-48 overflow-hidden bg-[#eddfc9]">
@@ -72,7 +71,7 @@ export default function FeaturedCafesSection({ cafes }: Props) {
                   </p>
                   <p className="mt-3 text-[10px] font-bold text-[#b0916d]">{cafe.openHours}</p>
                 </div>
-              </Link>
+              </div>
             </motion.div>
           ))}
         </div>

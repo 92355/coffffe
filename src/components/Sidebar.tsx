@@ -5,22 +5,32 @@ import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
+  ArrowLeft,
+  AtSign,
   BookOpen,
+  CalendarX,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Coffee,
   CupSoda,
+  Heart,
+  MapPin,
   PawPrint,
+  Phone,
   Search,
   SlidersHorizontal,
   Sparkles,
   X,
 } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
+import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
 import CafeListItem from '@/components/CafeListItem'
 import FilterBar from '@/components/FilterBar'
 import ThemeToggle from '@/components/ThemeToggle'
+import { kakaoMapUrl, googleMapUrl, naverMapUrl } from '@/lib/mapNavigation'
+import { cafeNameToHue } from '@/lib/cafeThumb'
 
 interface SidebarProps {
   cafes: Cafe[]
@@ -42,6 +52,8 @@ interface SidebarProps {
   onMobileExpandedChange?: (expanded: boolean) => void
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  mobileShowDetail?: boolean
+  mobileBottomBarHidden?: boolean
 }
 
 const QUICK_CATEGORIES = [
@@ -83,6 +95,8 @@ export default function Sidebar({
   onMobileExpandedChange,
   collapsed = false,
   onCollapsedChange,
+  mobileShowDetail = false,
+  mobileBottomBarHidden = false,
 }: SidebarProps) {
   const [mobileExpanded, setMobileExpanded] = useState(mobileOpen)
 
@@ -99,6 +113,358 @@ export default function Sidebar({
   useEffect(() => {
     onMobileExpandedChange?.(mobileExpanded)
   }, [mobileExpanded, onMobileExpandedChange])
+
+  const cafeHue = selectedCafe ? cafeNameToHue(selectedCafe.name) : 0
+  const cafePlaceholderBg = [
+    `radial-gradient(circle at 25% 35%, transparent 22%, rgba(255,255,255,0.10) 22.5%, rgba(255,255,255,0.10) 26%, transparent 26.5%)`,
+    `radial-gradient(circle at 68% 58%, transparent 17%, rgba(255,255,255,0.07) 17.5%, rgba(255,255,255,0.07) 21%, transparent 21.5%)`,
+    `radial-gradient(circle at 52% 18%, transparent 13%, rgba(255,255,255,0.08) 13.5%, rgba(255,255,255,0.08) 16%, transparent 16.5%)`,
+    `hsl(${cafeHue}, 42%, 38%)`,
+  ].join(', ')
+  const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
+
+  const desktopDetailPanel = selectedCafe ? (
+    <>
+      {/* 헤더: 뒤로가기만 */}
+      <div className="shrink-0 px-4 py-3">
+        <button
+          type="button"
+          onClick={onClearSelection}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfd3] bg-white/60 text-[#6b432a] hover:bg-white dark:border-white/18 dark:bg-white/16 dark:text-white dark:hover:bg-white/22"
+          aria-label="목록으로 돌아가기"
+        >
+          <ArrowLeft size={16} />
+        </button>
+      </div>
+
+      {/* 썸네일 16:9 */}
+      <div className="relative w-full shrink-0" style={{ paddingTop: '56.25%' }}>
+        {selectedCafe.images?.[0] ? (
+          <Image
+            src={selectedCafe.images[0]}
+            alt={selectedCafe.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ background: cafePlaceholderBg }}>
+            <span className="absolute inset-0 flex select-none items-center justify-center text-5xl font-black text-white/80">
+              {selectedCafe.name[0]}
+            </span>
+          </div>
+        )}
+        {/* 하단 오버레이: 카페 이름 + 찜 버튼 */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/72 to-transparent px-4 pb-3.5 pt-12">
+          <h2 className="text-[17px] font-black leading-tight text-white drop-shadow">{selectedCafe.name}</h2>
+          <button
+            type="button"
+            onClick={() => onFavoriteToggle(selectedCafe.id)}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              isFavorite
+                ? 'border-[#d66612] bg-[#d66612] text-white'
+                : 'border-white/30 bg-black/28 text-white backdrop-blur-sm hover:bg-black/45'
+            }`}
+            aria-label={isFavorite ? `${selectedCafe.name} 저장 해제` : `${selectedCafe.name} 저장`}
+            aria-pressed={isFavorite}
+          >
+            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+      </div>
+
+      {/* 스크롤 영역 */}
+      <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
+        {/* 설명 */}
+        <div className="px-4 py-4">
+          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
+          {selectedCafe.fullDescription && (
+            <p className="mt-2 text-sm leading-relaxed text-[#5f4634] dark:text-white/60">{selectedCafe.fullDescription}</p>
+          )}
+        </div>
+
+        <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+        {/* 태그 */}
+        <div className="flex flex-wrap gap-1.5 px-4 py-4">
+          {selectedCafe.roastLevels.map(r => (
+            <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              {ROAST_LABELS[r]}
+            </span>
+          ))}
+          {selectedCafe.beanOrigins.map(o => (
+            <span key={o} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+              {ORIGIN_LABELS[o]}
+            </span>
+          ))}
+          {selectedCafe.brewMethods.map(m => (
+            <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              {BREW_LABELS[m]}
+            </span>
+          ))}
+        </div>
+
+        <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+        {/* 영업정보 카드 */}
+        <div className="px-4 py-4">
+          <div className="space-y-2.5 rounded-2xl border border-[#eadfd3] bg-white/55 px-3.5 py-3 dark:border-white/12 dark:bg-white/8">
+            <div className="flex items-start gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+              <MapPin size={13} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+              <span className="leading-relaxed">{selectedCafe.address}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+              <Clock size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+              <span>{selectedCafe.openHours}</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+              <CalendarX size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+              <span>휴무 {selectedCafe.closedDays.length > 0 ? selectedCafe.closedDays.join(', ') : '정보 없음'}</span>
+            </div>
+          </div>
+        </div>
+
+        {(selectedCafe.phone || selectedCafe.instagramHandle) && (
+          <>
+            <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+            <div className="flex items-center gap-2 px-4 py-4">
+              {selectedCafe.phone && (
+                <a
+                  href={`tel:${selectedCafe.phone}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadfd3] bg-white text-[#6b432a] transition-colors hover:text-[#2c2118] dark:border-white/18 dark:bg-white/16 dark:text-white/80 dark:hover:text-white"
+                  aria-label={`${selectedCafe.name} 전화`}
+                >
+                  <Phone size={15} />
+                </a>
+              )}
+              {selectedCafe.instagramHandle && (
+                <a
+                  href={`https://instagram.com/${selectedCafe.instagramHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadfd3] bg-white text-[#6b432a] transition-colors hover:text-[#E1306C] dark:border-white/18 dark:bg-white/16 dark:text-white/80 dark:hover:text-[#E1306C]"
+                  aria-label={`${selectedCafe.name} 인스타그램`}
+                >
+                  <AtSign size={15} />
+                </a>
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+        {/* 지도 검색 카드 */}
+        <div className="px-4 py-4">
+          <div className="overflow-hidden rounded-2xl border border-[#eadfd3] dark:border-white/12">
+            <p className="border-b border-[#eadfd3] bg-white/55 px-3.5 py-2 text-[10px] font-black uppercase tracking-widest text-[#b8aa9b] dark:border-white/12 dark:bg-white/8 dark:text-white/38">
+              지도에서 검색
+            </p>
+            <div className="flex flex-col divide-y divide-[#eadfd3] dark:divide-white/12">
+              <a
+                href={naverMapUrl(selectedCafe.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-11 items-center gap-3 bg-white/55 px-3.5 transition-colors hover:bg-[#f0faf5] dark:bg-white/8 dark:hover:bg-white/12"
+                aria-label="네이버 지도에서 검색"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white" style={{ background: '#03C75A' }}>N</span>
+                <span className="text-sm font-black text-[#5f4634] dark:text-white/88">네이버</span>
+              </a>
+              <a
+                href={kakaoMapUrl(selectedCafe.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-11 items-center gap-3 bg-white/55 px-3.5 transition-colors hover:bg-[#fffce0] dark:bg-white/8 dark:hover:bg-white/12"
+                aria-label="카카오 지도에서 검색"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-[#381e1f]" style={{ background: '#FEE500' }}>K</span>
+                <span className="text-sm font-black text-[#5f4634] dark:text-white/88">카카오</span>
+              </a>
+              <a
+                href={googleMapUrl(selectedCafe.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-11 items-center gap-3 bg-white/55 px-3.5 transition-colors hover:bg-[#eff4ff] dark:bg-white/8 dark:hover:bg-white/12"
+                aria-label="구글 지도에서 검색"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white" style={{ background: '#4285F4' }}>G</span>
+                <span className="text-sm font-black text-[#5f4634] dark:text-white/88">구글</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </>
+  ) : null
+
+  const mobileDetailPanel = selectedCafe ? (
+    <>
+      {/* Hero 썸네일 */}
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '220px' }}>
+        {selectedCafe.images?.[0] ? (
+          <Image
+            src={selectedCafe.images[0]}
+            alt={selectedCafe.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ background: cafePlaceholderBg }}>
+            <span className="absolute inset-0 flex select-none items-center justify-center text-6xl font-black text-white/80">
+              {selectedCafe.name[0]}
+            </span>
+          </div>
+        )}
+        {/* 뒤로가기 */}
+        <div className="absolute left-3 top-3">
+          <button
+            type="button"
+            onClick={onClearSelection}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
+            aria-label="목록으로 돌아가기"
+          >
+            <ArrowLeft size={16} />
+          </button>
+        </div>
+        {/* 이름 + 찜 오버레이 */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/75 to-transparent px-4 pb-4 pt-16">
+          <h2 className="text-xl font-black leading-tight text-white drop-shadow">{selectedCafe.name}</h2>
+          <button
+            type="button"
+            onClick={() => onFavoriteToggle(selectedCafe.id)}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              isFavorite
+                ? 'border-[#d66612] bg-[#d66612] text-white'
+                : 'border-white/30 bg-black/28 text-white backdrop-blur-sm'
+            }`}
+            aria-label={isFavorite ? `${selectedCafe.name} 저장 해제` : `${selectedCafe.name} 저장`}
+            aria-pressed={isFavorite}
+          >
+            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+      </div>
+
+      {/* 스크롤 영역 */}
+      <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
+        {/* 설명 */}
+        <div className="px-4 pb-3 pt-4">
+          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
+          {selectedCafe.fullDescription && (
+            <p className="mt-1.5 text-sm leading-relaxed text-[#5f4634] dark:text-white/60">{selectedCafe.fullDescription}</p>
+          )}
+        </div>
+
+        {/* 태그 */}
+        <div className="flex flex-wrap gap-1.5 px-4 pb-3">
+          {selectedCafe.roastLevels.map(r => (
+            <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              {ROAST_LABELS[r]}
+            </span>
+          ))}
+          {selectedCafe.beanOrigins.map(o => (
+            <span key={o} className="rounded-full bg-[#f5ede5] px-2.5 py-1 text-xs font-semibold text-[#7d6149] dark:bg-white/12 dark:text-white/72">
+              {ORIGIN_LABELS[o]}
+            </span>
+          ))}
+          {selectedCafe.brewMethods.map(m => (
+            <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              {BREW_LABELS[m]}
+            </span>
+          ))}
+        </div>
+
+        <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+        {/* 영업 정보 */}
+        <div className="space-y-2 px-4 py-3">
+          <div className="flex items-start gap-2 text-xs text-[#7d6149] dark:text-white/65">
+            <MapPin size={13} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+            <span className="leading-relaxed">{selectedCafe.address}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/65">
+            <Clock size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+            <span>{selectedCafe.openHours}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/65">
+            <CalendarX size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+            <span>휴무 {selectedCafe.closedDays.length > 0 ? selectedCafe.closedDays.join(', ') : '정보 없음'}</span>
+          </div>
+        </div>
+
+        {(selectedCafe.phone || selectedCafe.instagramHandle) && (
+          <>
+            <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+            <div className="flex items-center gap-2 px-4 py-3">
+              {selectedCafe.phone && (
+                <a
+                  href={`tel:${selectedCafe.phone}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadfd3] bg-white/70 text-[#6b432a] dark:border-white/18 dark:bg-white/12 dark:text-white/80"
+                  aria-label={`${selectedCafe.name} 전화`}
+                >
+                  <Phone size={14} />
+                </a>
+              )}
+              {selectedCafe.instagramHandle && (
+                <a
+                  href={`https://instagram.com/${selectedCafe.instagramHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eadfd3] bg-white/70 text-[#6b432a] transition-colors hover:text-[#E1306C] dark:border-white/18 dark:bg-white/12 dark:text-white/80"
+                  aria-label={`${selectedCafe.name} 인스타그램`}
+                >
+                  <AtSign size={14} />
+                </a>
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
+
+        {/* 지도 검색 3등분 */}
+        <div className="grid grid-cols-3 gap-2 px-4 pb-4 pt-3">
+          <a
+            href={naverMapUrl(selectedCafe.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-white transition-opacity hover:opacity-90"
+            style={{ background: '#03C75A' }}
+            aria-label="네이버 지도에서 검색"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-black">N</span>
+            네이버
+          </a>
+          <a
+            href={kakaoMapUrl(selectedCafe.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-[#381e1f] transition-opacity hover:opacity-90"
+            style={{ background: '#FEE500' }}
+            aria-label="카카오 지도에서 검색"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black/10 text-[9px] font-black">K</span>
+            카카오
+          </a>
+          <a
+            href={googleMapUrl(selectedCafe.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-10 items-center justify-center gap-1.5 rounded-xl text-xs font-black text-white transition-opacity hover:opacity-90"
+            style={{ background: '#4285F4' }}
+            aria-label="구글 지도에서 검색"
+          >
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-black">G</span>
+            구글
+          </a>
+        </div>
+      </div>
+
+    </>
+  ) : null
 
   const expandedContent = (
     <>
@@ -277,6 +643,8 @@ export default function Sidebar({
               <ChevronRight size={16} />
             </button>
           </div>
+        ) : selectedCafe ? (
+          desktopDetailPanel
         ) : (
           expandedContent
         )}
@@ -301,7 +669,7 @@ export default function Sidebar({
       {/* Mobile: drag bottom sheet — always visible */}
       <motion.div
         className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
-        animate={{ height: mobileExpanded ? '86dvh' : '92px' }}
+        animate={{ height: mobileExpanded ? '86dvh' : (mobileBottomBarHidden ? 0 : '92px') }}
         transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
@@ -370,7 +738,7 @@ export default function Sidebar({
           {/* Expanded: full sidebar content */}
           {mobileExpanded && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {expandedContent}
+              {mobileShowDetail && selectedCafe ? mobileDetailPanel : expandedContent}
             </div>
           )}
         </aside>

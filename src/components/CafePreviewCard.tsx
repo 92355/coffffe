@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { AtSign, Heart, Phone } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import { ROAST_LABELS, ORIGIN_LABELS, BREW_LABELS } from '@/types/cafe'
@@ -96,23 +95,15 @@ export default function CafePreviewCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5">
-          <div className="flex gap-0.5">
-            {[1, 2, 3, 4, 5].map(i => (
-              <span key={i} className={`h-2 w-2 rounded-full ${
-                i <= Math.round(cafe.qualityScore) ? 'bg-amber-500' : 'bg-neutral-200 dark:bg-neutral-700'
-              }`} />
-            ))}
-          </div>
-          <span className="text-sm font-bold text-neutral-700 dark:text-neutral-200">{cafe.qualityScore.toFixed(1)}</span>
+      <div className="flex items-center gap-1.5">
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map(i => (
+            <span key={i} className={`h-2 w-2 rounded-full ${
+              i <= Math.round(cafe.qualityScore) ? 'bg-amber-500' : 'bg-neutral-200 dark:bg-neutral-700'
+            }`} />
+          ))}
         </div>
-        <Link
-          href={`/cafes/${cafe.id}`}
-          className="shrink-0 rounded-full bg-neutral-950 px-4 py-2 text-sm font-bold text-white no-underline transition-opacity active:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
-        >
-          자세히 보기
-        </Link>
+        <span className="text-sm font-bold text-neutral-700 dark:text-neutral-200">{cafe.qualityScore.toFixed(1)}</span>
       </div>
     </article>
   )
