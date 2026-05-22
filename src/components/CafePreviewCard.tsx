@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import { AtSign, Heart, Phone } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import { ROAST_LABELS, ORIGIN_LABELS, BREW_LABELS } from '@/types/cafe'
 
@@ -70,6 +70,31 @@ export default function CafePreviewCard({
         <p>영업: {cafe.openHours}</p>
         <p>휴무: {cafe.closedDays.length > 0 ? cafe.closedDays.join(', ') : '정보 없음'}</p>
       </div>
+
+      {(cafe.phone || cafe.instagramHandle) && (
+        <div className="mb-3 flex items-center gap-2">
+          {cafe.phone && (
+            <a
+              href={`tel:${cafe.phone}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition-colors hover:text-neutral-800 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:text-white"
+              aria-label={`${cafe.name} 전화`}
+            >
+              <Phone size={15} />
+            </a>
+          )}
+          {cafe.instagramHandle && (
+            <a
+              href={`https://instagram.com/${cafe.instagramHandle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-500 transition-colors hover:text-[#E1306C] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:text-[#E1306C]"
+              aria-label={`${cafe.name} 인스타그램`}
+            >
+              <AtSign size={15} />
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-1.5">

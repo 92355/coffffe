@@ -21,6 +21,12 @@ type EditForm = {
   cbti_type: string
 }
 
+const NICKNAME_ANIMALS = [
+  '고양이', '강아지', '여우', '곰', '팬더', '수달', '펭귄', '사슴',
+  '고슴도치', '햄스터', '부엉이', '토끼', '카피바라', '알파카', '미어캣',
+  '비버', '다람쥐', '코알라', '나무늘보', '라마',
+] as const
+
 const CBTI_TYPES = [
   'LSEH', 'LSEC', 'LSFH', 'LSFC',
   'LBEH', 'LBEC', 'LBFH', 'LBFC',
@@ -219,12 +225,14 @@ export default function MembersAdminPage() {
                         </label>
                         <label className="block text-xs font-black text-[#5f4634]">
                           동물
-                          <input
+                          <select
                             value={editForm.site_animal}
                             onChange={e => f('site_animal', e.target.value)}
-                            placeholder="고양이"
-                            className="mt-1 h-9 w-full rounded-md border border-[#d8c8b8] px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
-                          />
+                            className="mt-1 h-9 w-full rounded-md border border-[#d8c8b8] px-3 text-sm font-semibold outline-none focus:border-[#d66612] bg-white"
+                          >
+                            <option value="">선택</option>
+                            {NICKNAME_ANIMALS.map(a => <option key={a} value={a}>{a}</option>)}
+                          </select>
                         </label>
                         <label className="block text-xs font-black text-[#5f4634]">
                           CBTI 유형
