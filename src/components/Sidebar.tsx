@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -81,6 +82,18 @@ export default function Sidebar({
   collapsed = false,
   onCollapsedChange,
 }: SidebarProps) {
+  const [mobileExpanded, setMobileExpanded] = useState(mobileOpen)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      setMobileExpanded(true)
+    })
+
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [mobileOpen])
+
   const expandedContent = (
     <>
       <div className="shrink-0 px-4 pb-3 pt-4">
@@ -223,8 +236,14 @@ export default function Sidebar({
     <>
       {/* Desktop: inline flex panel */}
       <motion.aside
-        className="hidden shrink-0 md:flex h-full flex-col overflow-hidden border-r border-[rgba(229,220,206,0.70)] backdrop-blur-[18px]"
-        style={{ background: 'rgba(246, 243, 236, 0.88)', WebkitBackdropFilter: 'blur(18px)' }}
+        className="absolute left-0 top-0 z-10 hidden md:flex h-full flex-col overflow-hidden"
+        style={{
+          background: 'rgba(246, 243, 236, 0.62)',
+          backdropFilter: 'blur(28px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+          borderRight: '1px solid rgba(229, 220, 206, 0.45)',
+          boxShadow: '4px 0 24px rgba(90, 46, 17, 0.08)',
+        }}
         animate={{ width: collapsed ? 60 : 360 }}
         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
       >
@@ -255,23 +274,97 @@ export default function Sidebar({
         )}
       </motion.aside>
 
-      {/* Mobile: backdrop */}
-      <div
-        className={`md:hidden fixed inset-0 z-40 bg-black/35 transition-opacity ${
-          mobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
-        onClick={onMobileClose}
-      />
-      {/* Mobile: bottom sheet */}
-      <div
-        className={`md:hidden fixed inset-x-0 bottom-0 z-50 h-[86dvh] transition-transform duration-300 ${
-          mobileOpen ? 'translate-y-0' : 'translate-y-full'
-        }`}
+      {/* Mobile: backdrop (expanded only) */}
+      <AnimatePresence>
+        {mobileExpanded && (
+          <motion.div
+            className="md:hidden fixed inset-0 z-40 bg-black/30"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              setMobileExpanded(false)
+              onMobileClose?.()
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile: drag bottom sheet — always visible */}
+      <motion.div
+        className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
+        animate={{ height: mobileExpanded ? '86dvh' : '92px' }}
+        transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.06, bottom: 0.3 }}
+        onDragEnd={(_, info) => {
+          if (!mobileExpanded && info.offset.y < -48) {
+            setMobileExpanded(true)
+          } else if (mobileExpanded && (info.offset.y > 72 || info.velocity.y > 400)) {
+            setMobileExpanded(false)
+            onMobileClose?.()
+          }
+        }}
       >
-        <aside className="flex h-full w-full flex-col overflow-hidden rounded-t-[22px] border-t border-[#eee4d8] bg-[#fbf8f3] shadow-[0_-12px_40px_rgba(58,38,18,0.14)]">
-          {expandedContent}
+        <aside
+          className="flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
+          style={{
+            background: 'rgba(246, 243, 236, 0.62)',
+            backdropFilter: 'blur(28px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+            borderTop: '1px solid rgba(229, 220, 206, 0.45)',
+            boxShadow: '0 -8px 32px rgba(58, 38, 18, 0.12)',
+          }}
+        >
+          {/* Handle — tap to toggle */}
+          <button
+            type="button"
+            className="flex w-full shrink-0 cursor-grab items-center justify-center pb-2 pt-3 active:cursor-grabbing"
+            onClick={() => {
+              const next = !mobileExpanded
+              setMobileExpanded(next)
+              if (!next) onMobileClose?.()
+            }}
+            aria-label={mobileExpanded ? '목록 접기' : '목록 펼치기'}
+          >
+            <div className="h-1 w-10 rounded-full bg-[#c4b5a5]" />
+          </button>
+
+          {/* Collapsed: horizontal icon-only category chips */}
+          {!mobileExpanded && (
+            <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
+              {QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor }) => {
+                const active = activeQuickCategory === value
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => onQuickCategoryChange(value)}
+                    aria-pressed={active}
+                    className="flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-black transition-all"
+                    style={
+                      active
+                        ? { background: activeColor, color: 'white' }
+                        : { background: 'rgba(255,255,255,0.65)', color: '#5f4634', border: '1px solid rgba(234,223,211,0.8)' }
+                    }
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Expanded: full sidebar content */}
+          {mobileExpanded && (
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {expandedContent}
+            </div>
+          )}
         </aside>
-      </div>
+      </motion.div>
     </>
   )
 }

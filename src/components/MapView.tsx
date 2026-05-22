@@ -250,7 +250,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="relative h-dvh overflow-hidden">
       <Sidebar
         cafes={filteredCafes}
         filters={filters}
@@ -277,7 +277,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         onCollapsedChange={setSidebarCollapsed}
       />
 
-      <div className="relative flex-1 overflow-hidden">
+      <div className="absolute inset-0">
       <KakaoMap
           cafes={filteredCafes}
           selectedCafe={visibleSelectedCafe}

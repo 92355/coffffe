@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { ArrowRight, MapPin } from 'lucide-react'
+import { motion, type Variants } from 'framer-motion'
+import { ArrowRight, Bean, Coffee, Compass, MapPin, ShoppingBag } from 'lucide-react'
 import { BEANS } from '@/data/beans'
 import { useUser } from '@/hooks/useUser'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
@@ -13,10 +13,47 @@ const FEATURED_BEANS = BEANS.slice(0, 4)
 
 function fadeUp(delay = 0) {
   return {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.45, delay, ease: [0.34, 1.2, 0.64, 1] as const },
+    initial: { opacity: 0, y: 24, filter: 'blur(10px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    transition: { duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] as const },
   }
+}
+
+const serviceCards = [
+  {
+    href: '/cbti',
+    title: '커피 CBTI',
+    description: '내 취향 타입 찾기',
+    icon: Coffee,
+    tint: 'var(--accent-soft)',
+  },
+  {
+    href: '/beans',
+    title: '원두 정보',
+    description: '산지별 원두 탐색',
+    icon: Bean,
+    tint: 'var(--sub-soft)',
+  },
+]
+
+const beanContainer: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.055,
+      delayChildren: 0.15,
+    },
+  },
+}
+
+const beanItem: Variants = {
+  hidden: { opacity: 0, y: 18, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+  },
 }
 
 export default function AppHomePage() {
@@ -30,144 +67,150 @@ export default function AppHomePage() {
     : siteAnimal ? getAnimalAvatarPath(siteAnimal) : null
 
   return (
-    <main className="flex min-h-dvh flex-col" style={{ background: 'var(--background)' }}>
+    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(143,174,90,0.22),transparent_28%),radial-gradient(circle_at_90%_12%,rgba(192,138,90,0.26),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.76),rgba(240,229,218,0.68))]"
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -left-24 top-28 h-64 w-64 rounded-full bg-[var(--accent)]/18 blur-3xl"
+        animate={{ x: [0, 22, 0], y: [0, -16, 0], scale: [1, 1.08, 1] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 top-72 h-72 w-72 rounded-full bg-[var(--sub)]/20 blur-3xl"
+        animate={{ x: [0, -20, 0], y: [0, 20, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+      />
 
       {/* App bar */}
       <header
-        className="sticky top-0 z-20 flex h-14 items-center justify-between px-4 backdrop-blur-sm"
+        className="sticky top-0 z-20 px-4 pt-3"
         style={{
-          borderBottom: '1px solid var(--card-border)',
-          background: 'color-mix(in srgb, var(--background) 88%, transparent)',
+          background: 'linear-gradient(180deg, color-mix(in srgb, var(--background) 86%, transparent), transparent)',
         }}
       >
-        <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#5a2e11]">
-            <Image
-              src="/image/logo/beenRoad.png"
-              alt="원두로"
-              width={32}
-              height={32}
-              className="h-full w-full object-cover"
-              priority
-            />
-          </span>
-          <span className="text-sm font-black tracking-tight" style={{ color: 'var(--foreground)' }}>
-            원두로
-          </span>
-        </Link>
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
+        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between rounded-2xl border border-white/70 bg-white/58 px-3.5 shadow-[0_18px_50px_rgba(107,67,42,0.12)] backdrop-blur-2xl">
+          <Link href="/" className="flex items-center gap-2.5 no-underline">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--brown)]">
+              <Image
+                src="/image/logo/beenRoad.png"
+                alt="원두로"
+                width={36}
+                height={36}
+                className="h-full w-full object-cover"
+                priority
+              />
+            </span>
+            <span className="text-sm font-black tracking-tight text-[var(--foreground)]">
+              원두로
+            </span>
+          </Link>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-5">
+      <div className="relative z-10 mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-5">
 
         {/* Greeting */}
-        <motion.div {...fadeUp(0)} className="flex items-center gap-3">
+        <motion.div {...fadeUp(0)} className="rounded-3xl border border-white/70 bg-white/52 p-4 shadow-[0_18px_44px_rgba(107,67,42,0.10)] backdrop-blur-2xl">
+          <div className="flex items-center gap-3">
           {avatarSrc && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={avatarSrc}
               alt={siteAnimal ?? '프로필'}
+              width={44}
+              height={44}
+              unoptimized={useKakaoAvatar}
               className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm"
               style={{ border: '2px solid var(--card-border)' }}
             />
           )}
-          <p className="text-xl font-black leading-snug" style={{ color: 'var(--foreground)' }}>
-            {displayName ? `${displayName}님, ` : ''}오늘 어떤 커피 마실까요? ☕
-          </p>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase text-[var(--brown)]/70">
+                Today coffee
+              </p>
+              <p className="mt-1 text-xl font-black leading-snug text-[var(--foreground)]">
+                {displayName ? `${displayName}님, ` : ''}오늘 어떤 커피 마실까요?
+              </p>
+            </div>
+          </div>
         </motion.div>
 
         {/* Map hero card */}
         <motion.div {...fadeUp(0.05)}>
           <Link
             href="/map"
-            className="group relative block overflow-hidden rounded-3xl no-underline"
-            style={{ background: '#0e0600', minHeight: 180 }}
+            className="group relative block min-h-[220px] overflow-hidden rounded-[2rem] border border-white/18 bg-[linear-gradient(135deg,var(--primary),var(--brown))] no-underline shadow-[0_28px_70px_rgba(107,67,42,0.25)]"
           >
             {/* Decorative grid lines */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.08]">
-              <div className="absolute left-[10%] top-[20%] h-px w-[85%] -rotate-[15deg] bg-[#c4a070]" />
-              <div className="absolute left-0 top-[58%] h-px w-full rotate-[8deg] bg-[#c4a070]" />
-              <div className="absolute left-[45%] top-0 h-full w-px rotate-[12deg] bg-[#c4a070]" />
-              <div className="absolute left-[72%] top-0 h-full w-px -rotate-[8deg] bg-[#c4a070]" />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
+              <div className="absolute left-[10%] top-[20%] h-px w-[85%] -rotate-[15deg] bg-[var(--sub)]" />
+              <div className="absolute left-0 top-[58%] h-px w-full rotate-[8deg] bg-[var(--sub)]" />
+              <div className="absolute left-[45%] top-0 h-full w-px rotate-[12deg] bg-[var(--sub)]" />
+              <div className="absolute left-[72%] top-0 h-full w-px -rotate-[8deg] bg-[var(--sub)]" />
             </div>
             {/* Amber glow */}
-            <div className="pointer-events-none absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-[#e8720a] opacity-10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-16 -right-12 h-52 w-52 rounded-full bg-[var(--accent)]/20 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-4 top-4 rounded-3xl border border-white/14 bg-white/10 p-3 backdrop-blur-xl">
+              <div className="flex items-center gap-2 text-xs font-black text-white/60">
+                <Compass size={14} /> 근처 스페셜티 카페 탐색 중
+              </div>
+            </div>
 
-            <div className="relative z-10 p-6">
+            <div className="relative z-10 p-6 pt-20">
               <span
                 className="text-[10px] font-black uppercase tracking-widest"
-                style={{ color: '#e8720a' }}
+                style={{ color: 'var(--accent)' }}
               >
                 원두로 지도
               </span>
               <h2 className="mt-2 text-2xl font-black leading-tight text-white">
                 안산 스페셜티<br />카페를 탐색하세요
               </h2>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#e8720a] px-4 py-2.5 text-sm font-black text-white shadow-[0_8px_24px_rgba(232,114,10,0.35)] transition-all group-hover:bg-[#d66612] group-hover:shadow-[0_12px_32px_rgba(232,114,10,0.45)] active:scale-[0.98]">
+              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--primary)] shadow-[0_12px_28px_rgba(143,174,90,0.28)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_36px_rgba(143,174,90,0.38)] active:scale-[0.98]">
                 <MapPin size={14} /> 지도 열기
               </div>
             </div>
 
             {/* Decorative marker */}
-            <div className="pointer-events-none absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-2xl bg-[#5a2e11] text-white opacity-60 shadow-lg">
+            <motion.div
+              className="pointer-events-none absolute right-5 top-[92px] flex h-12 w-12 items-center justify-center rounded-2xl border border-white/18 bg-white/12 text-white shadow-lg backdrop-blur-xl"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+            >
               <MapPin size={18} />
-            </div>
+            </motion.div>
           </Link>
         </motion.div>
 
         {/* Service grid */}
         <div className="grid grid-cols-2 gap-3">
-          <motion.div {...fadeUp(0.1)}>
-            <Link
-              href="/cbti"
-              className="block rounded-2xl p-5 no-underline transition-all hover:-translate-y-0.5"
-              style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
-                boxShadow: 'var(--card-shadow)',
-              }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                style={{ background: 'var(--card-icon-bg)' }}
+          {serviceCards.map(({ href, title, description, icon: Icon, tint }, index) => (
+            <motion.div key={title} {...fadeUp(0.1 + index * 0.03)}>
+              <Link
+                href={href}
+                className="group block rounded-2xl border border-white/70 bg-white/58 p-5 no-underline shadow-[0_16px_40px_rgba(107,67,42,0.10)] backdrop-blur-2xl transition-all hover:-translate-y-1 hover:shadow-[0_24px_54px_rgba(107,67,42,0.16)]"
               >
-                ☕
-              </div>
-              <h3 className="mt-3 text-sm font-black" style={{ color: 'var(--foreground)' }}>
-                커피 CBTI
-              </h3>
-              <p className="mt-0.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                내 취향 타입 찾기
-              </p>
-            </Link>
-          </motion.div>
-
-          <motion.div {...fadeUp(0.13)}>
-            <Link
-              href="/beans"
-              className="block rounded-2xl p-5 no-underline transition-all hover:-translate-y-0.5"
-              style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
-                boxShadow: 'var(--card-shadow)',
-              }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-lg"
-                style={{ background: 'var(--card-icon-bg)' }}
-              >
-                🫘
-              </div>
-              <h3 className="mt-3 text-sm font-black" style={{ color: 'var(--foreground)' }}>
-                원두 정보
-              </h3>
-              <p className="mt-0.5 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-                산지별 원두 탐색
-              </p>
-            </Link>
-          </motion.div>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-[var(--primary)] transition-transform group-hover:scale-110"
+                  style={{ background: tint }}
+                >
+                  <Icon size={19} />
+                </div>
+                <h3 className="mt-3 text-sm font-black text-[var(--foreground)]">
+                  {title}
+                </h3>
+                <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">
+                  {description}
+                </p>
+              </Link>
+            </motion.div>
+          ))}
         </div>
 
         {/* Featured beans */}
@@ -187,16 +230,17 @@ export default function AppHomePage() {
               전체 보기 <ArrowRight size={11} />
             </Link>
           </div>
-          <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide">
-            {FEATURED_BEANS.map((bean, i) => (
-              <motion.div key={bean.id} {...fadeUp(0.18 + i * 0.04)}>
+          <motion.div
+            variants={beanContainer}
+            initial="hidden"
+            animate="show"
+            className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide"
+          >
+            {FEATURED_BEANS.map((bean) => (
+              <motion.div key={bean.id} variants={beanItem}>
                 <Link
                   href="/beans"
-                  className="block w-32 shrink-0 rounded-2xl p-3.5 no-underline transition-all hover:-translate-y-0.5"
-                  style={{
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--card-border)',
-                  }}
+                  className="block w-32 shrink-0 rounded-2xl border border-white/70 bg-white/56 p-3.5 no-underline shadow-[0_12px_30px_rgba(107,67,42,0.08)] backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(107,67,42,0.15)]"
                 >
                   <span className="text-2xl">{bean.flag}</span>
                   <p
@@ -214,23 +258,19 @@ export default function AppHomePage() {
                 </Link>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
 
         {/* Marketplace teaser */}
         <motion.div {...fadeUp(0.3)}>
           <div
-            className="flex items-center gap-4 rounded-2xl px-5 py-4"
-            style={{
-              background: 'var(--card-bg)',
-              border: '1px solid var(--card-border)',
-            }}
+            className="flex items-center gap-4 rounded-2xl border border-white/70 bg-white/58 px-5 py-4 shadow-[0_16px_40px_rgba(107,67,42,0.10)] backdrop-blur-2xl"
           >
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[var(--primary)]"
               style={{ background: 'var(--card-icon-bg)' }}
             >
-              🛒
+              <ShoppingBag size={18} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-black" style={{ color: 'var(--foreground)' }}>
@@ -241,8 +281,7 @@ export default function AppHomePage() {
               </p>
             </div>
             <span
-              className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black"
-              style={{ background: 'var(--card-icon-bg)', color: 'var(--accent)' }}
+              className="shrink-0 rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-black text-[var(--primary)]"
             >
               SOON
             </span>
@@ -252,7 +291,7 @@ export default function AppHomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="px-4 py-6 text-center">
+      <footer className="relative z-10 px-4 py-6 text-center">
         <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
           © 2026 원두로
         </p>

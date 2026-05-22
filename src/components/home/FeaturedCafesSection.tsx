@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
@@ -34,9 +35,12 @@ export default function FeaturedCafesSection({ cafes }: Props) {
                 {/* Thumbnail */}
                 <div className="relative h-48 overflow-hidden bg-[#eddfc9]">
                   {cafe.images?.[0] ? (
-                    <img
+                    <Image
                       src={cafe.images[0]}
                       alt={cafe.name}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      unoptimized
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
