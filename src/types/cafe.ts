@@ -1,4 +1,6 @@
-export type RoastLevel = 'light' | 'medium-light' | 'medium' | 'medium-dark' | 'dark'
+import type { RoastLevel } from './shared'
+
+export type { RoastLevel } from './shared'
 export type BrewMethod = 'espresso' | 'pour-over' | 'cold-brew' | 'aeropress' | 'siphon'
 export type BeanOrigin =
   | 'ethiopia'

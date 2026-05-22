@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getRequiredEnv } from '@/lib/env'
+
 const KAKAO_REST_API_KEY = 'KAKAO_REST_API_KEY'
 const KAKAO_SEARCH_URL = 'https://dapi.kakao.com/v2/local/search/keyword.json'
 const KAKAO_CAFE_CATEGORY_CODE = 'CE7'
@@ -30,16 +32,6 @@ interface KakaoPlace {
   lng: number
   phone?: string
   placeUrl: string
-}
-
-function getRequiredEnv(key: string): string {
-  const value = process.env[key]
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`)
-  }
-
-  return value
 }
 
 function parseSize(value: string | null): number {

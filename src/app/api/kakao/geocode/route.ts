@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { getRequiredEnv } from '@/lib/env'
+
 const KAKAO_REST_API_KEY = 'KAKAO_REST_API_KEY'
 const KAKAO_COORD2ADDRESS_URL = 'https://dapi.kakao.com/v2/local/geo/coord2address.json'
 
@@ -10,16 +12,6 @@ interface KakaoAddressDocument {
 
 interface KakaoCoord2AddressResponse {
   documents: KakaoAddressDocument[]
-}
-
-function getRequiredEnv(key: string): string {
-  const value = process.env[key]
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`)
-  }
-
-  return value
 }
 
 function readCoordinate(value: string | null, key: string): number {

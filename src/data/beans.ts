@@ -1,4 +1,5 @@
-export type RoastLevel = 'light' | 'medium' | 'medium-dark' | 'dark'
+import type { RoastLevel } from '@/types/shared'
+
 export type ProcessMethod = '워시드' | '내추럴' | '허니' | '웻헐드' | '무산소'
 
 export interface Bean {
@@ -224,6 +225,7 @@ export const ORIGIN_MAP: Record<string, string> = {
 
 export const ROAST_LABEL: Record<RoastLevel, string> = {
   light: '라이트',
+  'medium-light': '미디엄 라이트',
   medium: '미디엄',
   'medium-dark': '미디엄 다크',
   dark: '다크',
@@ -231,6 +233,7 @@ export const ROAST_LABEL: Record<RoastLevel, string> = {
 
 export const ROAST_COLOR: Record<RoastLevel, string> = {
   light: '#D4A373',
+  'medium-light': '#C6955A',
   medium: '#B8834A',
   'medium-dark': '#8B5E3C',
   dark: '#5C3317',

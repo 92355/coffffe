@@ -2,19 +2,11 @@ import 'server-only'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
+import { getRequiredEnv } from './env'
+
 const SUPABASE_URL_KEY = 'SUPABASE_URL'
 const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY'
 const SUPABASE_SERVICE_ROLE_KEY = 'SUPABASE_SERVICE_ROLE_KEY'
-
-function getRequiredEnv(key: string): string {
-  const value = process.env[key]
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`)
-  }
-
-  return value
-}
 
 // Server-only read client. / 서버 전용 읽기 클라이언트.
 export function createSupabaseClient(): SupabaseClient {

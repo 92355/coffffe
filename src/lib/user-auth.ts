@@ -3,6 +3,8 @@ import 'server-only'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
+import { getRequiredEnv } from './env'
+
 export const USER_SESSION_COOKIE = 'coffffe_session'
 export const KAKAO_OAUTH_STATE_COOKIE = 'coffffe_kakao_oauth_state'
 export const KAKAO_PENDING_SIGNUP_COOKIE = 'coffffe_pending_signup'
@@ -108,14 +110,6 @@ function isEqualSignature(received: string, expected: string): boolean {
 
 function getSessionSecret(): string {
   return process.env[KAKAO_SESSION_SECRET] ?? getRequiredEnv(ADMIN_SECRET)
-}
-
-function getRequiredEnv(key: string): string {
-  const value = process.env[key]
-
-  if (!value) throw new Error(`Missing required environment variable: ${key}`)
-
-  return value
 }
 
 function encodeBase64Url(value: string): string {

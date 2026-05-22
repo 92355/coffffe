@@ -16,6 +16,10 @@ import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import { useUser } from '@/hooks/useUser'
 import { useSavedCafes } from '@/hooks/useSavedCafes'
+import { useLocationState } from '@/hooks/useLocationState'
+import { useMapState } from '@/hooks/useMapState'
+import { useMapViewUI } from '@/hooks/useMapViewUI'
+import { useReportState } from '@/hooks/useReportState'
 import type { LocationPoint } from '@/types/location'
 import type { ReportType } from '@/types/report'
 
@@ -30,9 +34,6 @@ const INITIAL_FILTERS: FilterState = {
   beanOrigin: null,
   brewMethod: null,
 }
-const GEOLOCATION_TIMEOUT_MS = 10000
-const GEOLOCATION_MAXIMUM_AGE_MS = 60000
-
 const MAP_QUICK_CATEGORIES = [
   { label: '전체', value: null, icon: Sparkles, activeColor: '#5a2e11', activeShadow: 'rgba(90,46,17,0.25)' },
   { label: '스페셜티', value: '스페셜티', icon: Coffee, activeColor: '#b45a12', activeShadow: 'rgba(180,90,18,0.28)' },
@@ -52,33 +53,61 @@ export default function MapView({ allCafes }: MapViewProps) {
     logout,
   } = useUser()
   const { favoriteCafeIds, favoriteCafeIdSet, toggleFavoriteCafe, favoriteError } = useSavedCafes(user)
-  const profileMenuRef = useRef<HTMLDivElement | null>(null)
-  const profileMenuRefDesktop = useRef<HTMLDivElement | null>(null)
-  const [mobileSheetExpanded, setMobileSheetExpanded] = useState(false)
   const [selectedFrom, setSelectedFrom] = useState<'sidebar' | 'map' | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
-  const [locationRequestId, setLocationRequestId] = useState(0)
-  const [mapType, setMapType] = useState<MapType>('normal')
-  const [zoomRequest, setZoomRequest] = useState<ZoomRequest | null>(null)
-  const [currentMapBounds, setCurrentMapBounds] = useState<MapBounds | null>(null)
-  const [activeMapBounds, setActiveMapBounds] = useState<MapBounds | null>(null)
-  const [hasPendingBoundsSearch, setHasPendingBoundsSearch] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [profileEditSheetOpen, setProfileEditSheetOpen] = useState(false)
-  const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
-  const [locationPermissionModalOpen, setLocationPermissionModalOpen] = useState(false)
-  const [isRequestingLocation, setIsRequestingLocation] = useState(false)
-  const [locationPermissionError, setLocationPermissionError] = useState<string | null>(null)
-  const [reportSheetOpen, setReportSheetOpen] = useState(false)
-  const [reportInitialType, setReportInitialType] = useState<ReportType>('new_place')
-  const [reportInitialCafe, setReportInitialCafe] = useState<Cafe | null>(null)
-  const [reportInitialLocation, setReportInitialLocation] = useState<LocationPoint | null>(null)
-  const [mapPickMode, setMapPickMode] = useState(false)
+  const {
+    profileMenuRef,
+    profileMenuRefDesktop,
+    mobileSheetExpanded,
+    setMobileSheetExpanded,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    filterPanelOpen,
+    setFilterPanelOpen,
+    profileMenuOpen,
+    setProfileMenuOpen,
+    profileEditSheetOpen,
+    setProfileEditSheetOpen,
+    openProfileEdit,
+  } = useMapViewUI()
+  const {
+    mapType,
+    zoomRequest,
+    currentMapBounds,
+    activeMapBounds,
+    hasPendingBoundsSearch,
+    mapPickMode,
+    setMapPickMode,
+    handleZoom,
+    handleMapTypeToggle,
+    handleMapBoundsChange,
+    handleSearchCurrentMap,
+  } = useMapState()
+  const {
+    reportSheetOpen,
+    reportInitialType,
+    reportInitialCafe,
+    reportInitialLocation,
+    setReportSheetOpen,
+    openNewPlaceReport,
+    handleStartMapPick,
+    handleMapPickComplete,
+  } = useReportState(setMapPickMode, mapPickMode)
+  const {
+    userLocation,
+    locationPermissionModalOpen,
+    isRequestingLocation,
+    locationPermissionError,
+    locationRequestId,
+    setUserLocation,
+    setLocationPermissionModalOpen,
+    setLocationPermissionError,
+    triggerLocationRefresh,
+    requestUserLocation,
+  } = useLocationState()
 
   const baseFilteredCafes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
@@ -109,138 +138,6 @@ export default function MapView({ allCafes }: MapViewProps) {
       .filter((cafe) => favoriteOrder.has(cafe.id))
       .sort((left, right) => (favoriteOrder.get(left.id) ?? 0) - (favoriteOrder.get(right.id) ?? 0))
   }, [allCafes, favoriteCafeIds])
-
-  const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
-    setCurrentMapBounds(bounds)
-    setHasPendingBoundsSearch(currentMapBounds !== null)
-  }, [currentMapBounds])
-
-  const handleSearchCurrentMap = useCallback(() => {
-    if (!currentMapBounds) return
-
-    setActiveMapBounds(currentMapBounds)
-    setHasPendingBoundsSearch(false)
-    setSelectedCafe((currentCafe) => {
-      if (!currentCafe || !isCafeInsideBounds(currentCafe, currentMapBounds)) return null
-      return currentCafe
-    })
-  }, [currentMapBounds])
-
-  const handleZoom = useCallback((direction: ZoomRequest['direction']) => {
-    setZoomRequest((currentRequest) => ({
-      id: (currentRequest?.id ?? 0) + 1,
-      direction,
-    }))
-  }, [])
-
-  const handleMapTypeToggle = useCallback(() => {
-    setMapType((currentType) => currentType === 'normal' ? 'skyview' : 'normal')
-  }, [])
-
-  const openNewPlaceReport = useCallback(() => {
-    setReportInitialType('new_place')
-    setReportInitialCafe(null)
-    setReportInitialLocation(null)
-    setReportSheetOpen(true)
-    setProfileMenuOpen(false)
-  }, [])
-
-  const openProfileEdit = useCallback(() => {
-    setProfileEditSheetOpen(true)
-    setProfileMenuOpen(false)
-  }, [])
-
-  const handleStartMapPick = useCallback(() => {
-    setReportSheetOpen(false)
-    setMapPickMode(true)
-  }, [])
-
-  const handleMapClick = useCallback((location: LocationPoint) => {
-    if (!mapPickMode) return
-
-    setReportInitialType('new_place')
-    setReportInitialCafe(null)
-    setReportInitialLocation(location)
-    setReportSheetOpen(true)
-    setMapPickMode(false)
-  }, [mapPickMode])
-
-  const requestUserLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setLocationPermissionError('이 기기에서는 위치 기능을 사용할 수 없어요.')
-      return
-    }
-
-    setIsRequestingLocation(true)
-    setLocationPermissionError(null)
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        })
-        setLocationPermissionModalOpen(false)
-        setIsRequestingLocation(false)
-        setLocationRequestId((current) => current + 1)
-      },
-      (error) => {
-        const message = error.code === error.PERMISSION_DENIED
-          ? '위치 권한이 거부됐어요. 브라우저 설정에서 위치 권한을 허용한 뒤 다시 눌러주세요.'
-          : '현재 위치를 확인하지 못했어요. 잠시 후 다시 시도해주세요.'
-
-        setLocationPermissionError(message)
-        setIsRequestingLocation(false)
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: GEOLOCATION_TIMEOUT_MS,
-        maximumAge: GEOLOCATION_MAXIMUM_AGE_MS,
-      },
-    )
-  }, [])
-
-  useEffect(() => {
-    if (!navigator.permissions) {
-      window.setTimeout(() => setLocationPermissionModalOpen(true), 0)
-      return
-    }
-
-    void navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-      if (result.state === 'granted') {
-        setLocationRequestId((current) => current + 1)
-      } else if (result.state === 'prompt') {
-        setLocationPermissionModalOpen(true)
-      }
-      // denied → 모달 안 띄움
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!profileMenuOpen) return
-
-    const handlePointerDown = (event: PointerEvent): void => {
-      const target = event.target
-
-      if (!(target instanceof Node) || profileMenuRef.current?.contains(target) || profileMenuRefDesktop.current?.contains(target)) return
-
-      setProfileMenuOpen(false)
-    }
-
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return
-
-      setProfileMenuOpen(false)
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-    document.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [profileMenuOpen])
 
   const visibleSelectedCafe = selectedCafe && filteredCafes.some(cafe => cafe.id === selectedCafe.id)
     ? selectedCafe
@@ -291,7 +188,7 @@ export default function MapView({ allCafes }: MapViewProps) {
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={openNewPlaceReport}
+          onClick={() => { openNewPlaceReport(); setProfileMenuOpen(false) }}
           className="h-9 rounded-lg border border-[#eadccb] bg-white px-3 text-xs font-black text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22"
         >
           제보하기
@@ -406,7 +303,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           zoomRequest={zoomRequest}
           locationRequestId={locationRequestId}
           onUserLocationChange={setUserLocation}
-          onMapClick={handleMapClick}
+          onMapClick={handleMapPickComplete}
         />
 
       {mapPickMode && (
@@ -558,7 +455,12 @@ export default function MapView({ allCafes }: MapViewProps) {
       <div className="pointer-events-none absolute inset-x-0 top-[84px] z-20 flex justify-center px-4 md:top-4">
         <button
           type="button"
-          onClick={handleSearchCurrentMap}
+          onClick={() => handleSearchCurrentMap((bounds) => {
+            setSelectedCafe((currentCafe) => {
+              if (!currentCafe || !isCafeInsideBounds(currentCafe, bounds)) return null
+              return currentCafe
+            })
+          })}
           disabled={!hasPendingBoundsSearch || !currentMapBounds}
           className="pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/90"
           style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
@@ -592,7 +494,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             type="button"
             onClick={() => {
               if (userLocation) {
-                setLocationRequestId((current) => current + 1)
+                triggerLocationRefresh()
               } else {
                 setLocationPermissionError(null)
                 setLocationPermissionModalOpen(true)
@@ -652,10 +554,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           initialType={reportInitialType}
           initialCafe={reportInitialCafe}
           initialLocation={reportInitialLocation}
-          onClose={() => {
-            setReportSheetOpen(false)
-            setReportInitialLocation(null)
-          }}
+          onClose={() => setReportSheetOpen(false)}
           onStartMapPick={handleStartMapPick}
         />
       )}
