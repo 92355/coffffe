@@ -161,7 +161,7 @@ export default function ProfileEditSheet({
           </div>
         </div>
 
-        <footer className="border-t border-[#eadccb] bg-white px-5 py-4">
+        <footer className="border-t border-[#eadccb] bg-white px-5 pt-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <button
             type="button"
             onClick={saveAndClose}
