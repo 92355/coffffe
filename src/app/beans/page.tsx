@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { ArrowLeft, ChevronDown, Search, Sparkles, X } from 'lucide-react'
@@ -299,90 +300,103 @@ export default function BeansPage() {
 
               {/* Roast hero strip / 로스팅 히어로 영역 */}
               <div
-                className="relative min-h-[6.25rem] overflow-hidden px-5 py-4"
-                style={{
-                  background: `linear-gradient(135deg, ${ROAST_COLOR[bean.roast]}60, ${ROAST_COLOR[bean.roast]}30 58%, rgba(255,255,255,0.18))`,
-                  borderBottom: `1px solid ${ROAST_COLOR[bean.roast]}45`,
-                }}
+                className="relative overflow-hidden"
+                style={{ borderBottom: `1px solid ${ROAST_COLOR[bean.roast]}55` }}
               >
+                {/* 이미지 슬롯 — bean.image 추가 시 자동 표시 */}
+                {bean.image && (
+                  <Image
+                    src={bean.image}
+                    alt={bean.name}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                )}
+                {/* 그라데이션 오버레이 — 이미지 유무 무관하게 항상 렌더 */}
                 <div
-                  aria-hidden
-                  className="absolute -bottom-12 -right-8 h-28 w-28 rounded-full border border-white/30 bg-white/18 backdrop-blur-md"
-                />
-                <div className="relative flex items-start justify-between gap-3">
-                  <div>
-                    <p className="max-w-[10rem] text-xl font-black leading-tight" style={{ color: 'var(--foreground)' }}>
-                      {bean.name}
-                    </p>
-                  </div>
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/70 bg-white/55 text-3xl leading-none shadow-[0_12px_28px_rgba(107,67,42,0.12)] backdrop-blur-xl">
-                    {bean.flag}
-                  </span>
-                </div>
-                <span
-                  className="relative mt-3 inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-black"
+                  className="absolute inset-0"
                   style={{
-                    background: ROAST_COLOR[bean.roast],
-                    color: '#fff',
-                    border: `1px solid ${ROAST_COLOR[bean.roast]}70`,
+                    background: bean.image
+                      ? `linear-gradient(145deg, ${ROAST_COLOR[bean.roast]}dd, ${ROAST_COLOR[bean.roast]}99 65%, ${ROAST_COLOR[bean.roast]}66)`
+                      : `linear-gradient(145deg, ${ROAST_COLOR[bean.roast]}88, ${ROAST_COLOR[bean.roast]}55 65%, ${ROAST_COLOR[bean.roast]}28)`,
                   }}
-                >
-                  {ROAST_LABEL[bean.roast]}
-                </span>
+                />
+                <div aria-hidden className="absolute -bottom-10 -right-10 h-36 w-36 rounded-full border border-white/20 bg-white/12 backdrop-blur-md" />
+                <div aria-hidden className="absolute -top-6 right-12 h-20 w-20 rounded-full bg-white/10 blur-xl" />
+                <div className="relative px-5 pb-5 pt-6">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white/70">
+                    {bean.origin}
+                  </p>
+                  <p className="mt-1.5 text-[1.6rem] font-black leading-tight text-white drop-shadow-sm">
+                    {bean.name}
+                  </p>
+                  <span
+                    className="mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black text-white"
+                    style={{
+                      background: 'rgba(0,0,0,0.32)',
+                      border: '1px solid rgba(255,255,255,0.32)',
+                    }}
+                  >
+                    {ROAST_LABEL[bean.roast]}
+                  </span>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    <div className="rounded-lg px-2 py-1.5" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
+                      <span className="block text-[9px] font-black text-white/80">바디</span>
+                      <span className="block text-[10px] font-black text-white">{bean.body}</span>
+                    </div>
+                    <div className="rounded-lg px-2 py-1.5" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
+                      <span className="block text-[9px] font-black text-white/80">산미</span>
+                      <span className="block text-[10px] font-black text-white">{bean.acidity}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Card body / 카드 본문 */}
               <div className="relative px-5 py-4">
-                {/* Meta list / 메타 정보 */}
-                <div className="mb-4 space-y-1.5">
-                  {[
-                    ['지역', bean.region],
-                    ['품종', bean.variety],
-                    ['가공', bean.process],
-                  ].map(([label, value]) => (
-                    <div
-                      key={label}
-                      className="flex min-w-0 items-start gap-3 rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
-                    >
-                      <span className="w-9 shrink-0 text-xs font-black leading-5" style={{ color: 'var(--accent)' }}>
-                        {label}
-                      </span>
-                      <span className="min-w-0 flex-1 break-keep text-sm font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
-                        {value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {/* 설명 — 상단 */}
+                <p className="mb-4 rounded-2xl border border-[rgba(107,67,42,0.14)] bg-[rgba(255,255,255,0.68)] px-4 py-3.5 text-[15px] font-medium leading-[1.75] tracking-[-0.01em] text-balance text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10" style={{ color: 'var(--foreground)' }}>
+                  {bean.desc}
+                </p>
 
                 <div className="mb-4 border-t border-[rgba(107,67,42,0.12)] pt-4 dark:border-white/10">
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>
-                    {bean.desc}
-                  </p>
+                  {/* Meta list / 메타 정보 */}
+                  <div className="space-y-1.5">
+                    {[
+                      ['지역', bean.region],
+                      ['품종', bean.variety],
+                      ['가공', bean.process],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex min-w-0 items-start gap-3 rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
+                      >
+                        <span className="w-9 shrink-0 text-xs font-black leading-5" style={{ color: 'var(--accent)' }}>
+                          {label}
+                        </span>
+                        <span className="min-w-0 flex-1 break-keep text-sm font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Body & acidity / 바디와 산미 */}
-                <div className="mb-4 grid grid-cols-2 gap-2">
-                  <div className="rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
-                    <span className="block text-xs font-black" style={{ color: 'var(--accent)' }}>바디</span>
-                    <span className="mt-1 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{bean.body}</span>
+                {/* Notes chips / 향미 태그 박스 */}
+                <div className="rounded-2xl border border-[rgba(107,67,42,0.16)] bg-[rgba(255,255,255,0.68)] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
+                  <span className="mb-2 block text-xs font-black" style={{ color: 'var(--accent)' }}>향미</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {bean.notes.map(note => (
+                      <span
+                        key={note}
+                        className="rounded-full border border-[rgba(107,67,42,0.16)] bg-white/80 px-2.5 py-1 text-xs font-bold dark:border-white/12 dark:bg-white/12"
+                        style={{ color: 'var(--foreground)' }}
+                      >
+                        {note}
+                      </span>
+                    ))}
                   </div>
-                  <div className="rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
-                    <span className="block text-xs font-black" style={{ color: 'var(--accent)' }}>산미</span>
-                    <span className="mt-1 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{bean.acidity}</span>
-                  </div>
-                </div>
-
-                {/* Notes chips / 향미 칩 */}
-                <div className="flex flex-wrap gap-1.5">
-                  {bean.notes.map(note => (
-                    <span
-                      key={note}
-                      className="rounded-full border border-[rgba(107,67,42,0.16)] bg-[rgba(255,255,255,0.76)] px-2.5 py-1 text-xs font-bold shadow-[0_4px_12px_rgba(107,67,42,0.07),inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
-                      style={{ color: 'var(--accent)' }}
-                    >
-                      {note}
-                    </span>
-                  ))}
                 </div>
 
                 {/* Special badge */}

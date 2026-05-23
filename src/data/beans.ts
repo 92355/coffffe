@@ -16,6 +16,7 @@ export interface Bean {
   acidity: string       // 산미
   desc: string          // 한 줄 설명
   flag: string          // 국기 이모지
+  image?: string        // 헤더 배경 이미지 URL (선택)
   special?: string      // 특이사항 (희귀, 고가 등)
 }
 
