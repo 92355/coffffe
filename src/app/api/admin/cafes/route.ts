@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import type { BeanOrigin, BrewMethod, Cafe, RoastLevel } from '@/types/cafe'
 import { isAuthorizedAdminRequest } from '@/lib/admin-auth'
 import { createSupabaseAdminClient } from '@/lib/supabase'
+import { CAFES_CACHE_TAG } from '@/app/api/cafes/route'
 
 interface CafePayload extends Cafe {
   phone?: string
@@ -262,6 +264,7 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    revalidateTag(CAFES_CACHE_TAG, 'max')
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
     return badRequest(error)
@@ -282,6 +285,7 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error
 
+    revalidateTag(CAFES_CACHE_TAG, 'max')
     return NextResponse.json(data)
   } catch (error) {
     return badRequest(error)
@@ -306,5 +310,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
+  revalidateTag(CAFES_CACHE_TAG, 'max')
   return NextResponse.json({ ok: true })
 }

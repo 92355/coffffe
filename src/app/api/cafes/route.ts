@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import type { Cafe, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
-import { createSupabaseAdminClient, createSupabaseClient } from '@/lib/supabase'
+import { createSupabaseAdminClient } from '@/lib/supabase'
 import { matchesFilters } from '@/lib/cafeFilters'
+
+export const CAFES_CACHE_TAG = 'cafes'
+const CAFES_CACHE_TTL_SECONDS = 300
 
 interface DatabaseCafe {
   id: string
@@ -52,39 +56,21 @@ function toCafe(databaseCafe: DatabaseCafe): Cafe {
 }
 
 
-async function getCafes(): Promise<Cafe[]> {
-  try {
-    return await getAdminCafes()
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown Supabase admin error'
-    console.error('Failed to fetch cafes with admin client:', message)
-  }
-
-  const { data, error } = await createSupabaseClient()
-    .from('cafes')
-    .select('*')
-    .order('quality_score', { ascending: false })
-
-  if (error) {
-    console.error('Failed to fetch cafes from Supabase:', error.message)
-    return []
-  }
-
-  return (data as DatabaseCafe[]).map(toCafe)
-}
-
-async function getAdminCafes(): Promise<Cafe[]> {
+async function fetchCafes(): Promise<Cafe[]> {
   const { data, error } = await createSupabaseAdminClient()
     .from('cafes')
     .select('*')
     .order('quality_score', { ascending: false })
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
 
   return (data as DatabaseCafe[]).map(toCafe)
 }
+
+const getCafes = unstable_cache(fetchCafes, [CAFES_CACHE_TAG], {
+  tags: [CAFES_CACHE_TAG],
+  revalidate: CAFES_CACHE_TTL_SECONDS,
+})
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
