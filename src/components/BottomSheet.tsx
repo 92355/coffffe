@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import { AtSign, Heart, Phone, X } from 'lucide-react'
@@ -15,8 +16,11 @@ interface BottomSheetProps {
   onFavoriteToggle?: (cafeId: string) => void
 }
 
+const MAX_HEIGHT_DVH = 82
+const MIN_HEIGHT_DVH = 35
+
 const glassStyle = {
-  background: 'color-mix(in srgb, var(--background) 72%, rgba(255,255,255,0.22))',
+  background: 'color-mix(in srgb, var(--background) 94%, transparent)',
   border: '1px solid color-mix(in srgb, var(--foreground) 18%, transparent)',
   boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
 } as const
@@ -27,6 +31,32 @@ export default function BottomSheet({
   favorite = false,
   onFavoriteToggle,
 }: BottomSheetProps) {
+  const [sheetHeight, setSheetHeight] = useState(MAX_HEIGHT_DVH)
+
+  useEffect(() => {
+    setSheetHeight(MAX_HEIGHT_DVH)
+  }, [cafe?.id])
+
+  function handleDragHandlePointerDown(e: React.PointerEvent) {
+    e.preventDefault()
+    const startY = e.clientY
+    const startHeight = sheetHeight
+
+    function onMove(moveEvent: PointerEvent) {
+      const deltaY = startY - moveEvent.clientY
+      const deltaPercent = (deltaY / window.innerHeight) * 100
+      setSheetHeight(Math.min(MAX_HEIGHT_DVH, Math.max(MIN_HEIGHT_DVH, startHeight + deltaPercent)))
+    }
+
+    function onUp() {
+      document.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerup', onUp)
+    }
+
+    document.addEventListener('pointermove', onMove)
+    document.addEventListener('pointerup', onUp)
+  }
+
   return (
     <AnimatePresence>
       {cafe && (
@@ -39,12 +69,19 @@ export default function BottomSheet({
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         >
-          <div className="glass-map-sheet overflow-hidden rounded-3xl" style={{ ...glassStyle, maxHeight: '70dvh' }}>
-            <div className="flex justify-center pt-2.5">
-              <div className="h-1 w-8 rounded-full bg-[#c4b5a5] dark:bg-white/30" />
+          <div
+            className="glass-map-sheet overflow-hidden rounded-3xl"
+            style={{ ...glassStyle, height: `${sheetHeight}dvh` }}
+          >
+            {/* 드래그 핸들 */}
+            <div
+              className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none select-none"
+              onPointerDown={handleDragHandlePointerDown}
+            >
+              <div className="h-1.5 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/30" />
             </div>
 
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(70dvh - 1.5rem)' }}>
+            <div className="overflow-y-auto" style={{ height: `calc(${sheetHeight}dvh - 2.75rem)` }}>
               {/* 썸네일 */}
               {(() => {
                 const hue = cafeHue(cafe.id)
@@ -157,7 +194,10 @@ export default function BottomSheet({
               <div className="mx-4 mt-4 border-t border-[#eee4d8] dark:border-white/10" />
 
               {/* 지도 검색 가로 3등분 */}
-              <div className="grid grid-cols-3 gap-2 px-4 pt-3">
+              <div
+                className="grid grid-cols-3 gap-2 px-4 pt-3"
+                style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
+              >
                 <a
                   href={naverMapUrl(cafe.name)}
                   target="_blank"
