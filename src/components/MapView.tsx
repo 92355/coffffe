@@ -329,7 +329,7 @@ export default function MapView({ allCafes }: MapViewProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="카페, 지역, 메뉴 검색"
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52 [&::-webkit-search-cancel-button]:hidden"
               type="search"
             />
             {searchQuery && (
@@ -389,7 +389,7 @@ export default function MapView({ allCafes }: MapViewProps) {
               transition={{ duration: 0.22, ease: 'easeInOut' }}
             >
               <div className="p-3">
-                <div className="mb-3 grid grid-cols-3 gap-1.5">
+                <div className="mb-3 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {MAP_QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor, activeShadow }) => {
                     const active = activeQuickCategory === value
                     return (
@@ -399,14 +399,14 @@ export default function MapView({ allCafes }: MapViewProps) {
                         onClick={() => setActiveQuickCategory(value)}
                         aria-pressed={active}
                         style={active
-                          ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
+                          ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 4px 10px ${activeShadow}` }
                           : undefined
                         }
-                        className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all ${
+                        className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-black whitespace-nowrap transition-all ${
                           active ? '' : 'border-[#eadfd3] bg-white text-[#5f4634] dark:border-white/18 dark:bg-white/16 dark:text-white/88'
                         }`}
                       >
-                        <Icon size={16} />
+                        <Icon size={13} />
                         {label}
                       </button>
                     )
@@ -467,21 +467,30 @@ export default function MapView({ allCafes }: MapViewProps) {
             <button
               type="button"
               onClick={() => handleZoom('in')}
-              className="flex h-12 w-12 items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
+              className="flex h-[38px] w-[38px] items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
               aria-label="확대"
             >
-              <Plus size={17} />
+              <Plus size={14} />
             </button>
             <div className="mx-2 h-px bg-[#eee4d8] dark:bg-white/12" />
             <button
               type="button"
               onClick={() => handleZoom('out')}
-              className="flex h-12 w-12 items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
+              className="flex h-[38px] w-[38px] items-center justify-center text-[#6f3b17] transition-colors hover:bg-white/45 dark:text-white/90 dark:hover:bg-white/16"
               aria-label="축소"
             >
-              <Minus size={17} />
+              <Minus size={14} />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleMapTypeToggle}
+            className="glass-map-btn pointer-events-auto flex h-[38px] w-[38px] items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+            aria-label="지도 레이어"
+          >
+            <Layers size={15} />
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -492,20 +501,11 @@ export default function MapView({ allCafes }: MapViewProps) {
                 setLocationPermissionModalOpen(true)
               }
             }}
-            className="glass-map-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            className="glass-map-btn pointer-events-auto flex h-[38px] w-[38px] items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
             style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="현재 위치"
           >
-            <LocateFixed size={18} />
-          </button>
-          <button
-            type="button"
-            onClick={handleMapTypeToggle}
-            className="glass-map-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
-            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
-            aria-label="지도 레이어"
-          >
-            <Layers size={18} />
+            <LocateFixed size={15} />
           </button>
         </div>
 

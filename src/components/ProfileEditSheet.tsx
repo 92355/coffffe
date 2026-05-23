@@ -50,7 +50,7 @@ export default function ProfileEditSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-edit-title"
-        className="max-h-[92dvh] w-full max-w-lg overflow-hidden rounded-t-3xl border border-[#eadccb] bg-[#fbf8f3] text-[#5a2e11] shadow-[0_24px_70px_rgba(34,20,10,0.28)] md:rounded-3xl"
+        className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-[#eadccb] bg-[#fbf8f3] text-[#5a2e11] shadow-[0_24px_70px_rgba(34,20,10,0.28)] md:rounded-3xl"
       >
         <header className="flex items-center justify-between gap-3 border-b border-[#eadccb] bg-white px-5 py-4">
           <div>
@@ -67,7 +67,7 @@ export default function ProfileEditSheet({
           </button>
         </header>
 
-        <div className="max-h-[calc(92dvh-8rem)] overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="rounded-2xl border border-[#eadccb] bg-white p-4 text-center">
             <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] text-4xl leading-none">
               {displayAvatarUsesKakao ? (
@@ -161,7 +161,7 @@ export default function ProfileEditSheet({
           </div>
         </div>
 
-        <footer className="border-t border-[#eadccb] bg-white px-5 pt-4" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        <footer className="border-t border-[#eadccb] bg-white px-5 pt-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           <button
             type="button"
             onClick={saveAndClose}

@@ -531,7 +531,7 @@ export default function Sidebar({
       </div>
 
       <div className="shrink-0 border-y border-[#eee4d8] px-4 py-3 dark:border-white/10">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor, activeShadow }) => {
             const active = activeQuickCategory === value
             return (
@@ -541,14 +541,14 @@ export default function Sidebar({
                 onClick={() => onQuickCategoryChange(value)}
                 aria-pressed={active}
                 style={active
-                  ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 6px 14px ${activeShadow}` }
+                  ? { background: activeColor, borderColor: activeColor, color: 'white', boxShadow: `0 4px 10px ${activeShadow}` }
                   : undefined
                 }
-                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border py-3 text-[11px] font-black transition-all ${
+                className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-black whitespace-nowrap transition-all ${
                   active ? '' : 'border-[#eadfd3] bg-white text-[#5f4634] hover:bg-[#fff8ef] dark:border-white/18 dark:bg-white/16 dark:text-white/88 dark:hover:bg-white/22'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={13} />
                 {label}
               </button>
             )
@@ -681,7 +681,7 @@ export default function Sidebar({
       {/* Mobile: drag bottom sheet — always visible */}
       <motion.div
         className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
-        animate={{ height: mobileExpanded ? '86dvh' : (mobileBottomBarHidden ? 0 : '92px') }}
+        animate={{ height: mobileExpanded ? '86dvh' : (mobileBottomBarHidden ? 0 : '36px') }}
         transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
@@ -717,33 +717,6 @@ export default function Sidebar({
             <div className="h-1 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/38" />
           </button>
 
-          {/* Collapsed: horizontal icon-only category chips */}
-          {!mobileExpanded && (
-            <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 scrollbar-hide">
-              {QUICK_CATEGORIES.map(({ label, value, icon: Icon, activeColor }) => {
-                const active = activeQuickCategory === value
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => onQuickCategoryChange(value)}
-                    aria-pressed={active}
-                    className={`flex shrink-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-[10px] font-black transition-all ${
-                      active ? '' : 'border border-[#eadfd3]/80 bg-white/65 text-[#5f4634] dark:border-white/18 dark:bg-white/16 dark:text-white/88'
-                    }`}
-                    style={
-                      active
-                        ? { background: activeColor, color: 'white' }
-                        : undefined
-                    }
-                  >
-                    <Icon size={15} />
-                    <span>{label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
 
           {/* Expanded: full sidebar content */}
           {mobileExpanded && (
