@@ -89,7 +89,6 @@ export default function ReportsAdminPage() {
       phone: '',
       instagramHandle: '',
       kakaoPlaceId: report.kakaoPlaceId ?? '',
-      showAroma: true,
     }
     sessionStorage.setItem(PREFILL_KEY, JSON.stringify({ reportId: report.id, formData }))
     router.push('/admin/cafes')

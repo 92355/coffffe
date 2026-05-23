@@ -286,7 +286,7 @@ export default function BeansPage() {
           {filtered.map((bean, i) => (
             <div
               key={bean.id}
-              className={`bean-card group relative min-w-[86%] snap-center overflow-hidden rounded-[1.65rem] border border-white/75 bg-white/[0.44] backdrop-blur-2xl shadow-[0_18px_48px_rgba(107,67,42,0.12),inset_0_1px_0_rgba(255,255,255,0.72)] transition-[filter,opacity,box-shadow] duration-300 dark:bg-gray-900/45 dark:border-white/10 sm:min-w-0${visibleSet.has(i) ? ' bean-card--visible' : ''}`}
+              className={`bean-card group relative min-w-[86%] snap-center overflow-hidden rounded-[1.65rem] border border-[rgba(107,67,42,0.18)] bg-white/[0.88] backdrop-blur-2xl shadow-[0_18px_48px_rgba(107,67,42,0.12),inset_0_1px_0_rgba(255,255,255,0.72)] transition-[filter,opacity,box-shadow] duration-300 dark:bg-gray-900/82 dark:border-white/12 sm:min-w-0${visibleSet.has(i) ? ' bean-card--visible' : ''}`}
               data-mobile-active={activeCardIndex === i ? 'true' : 'false'}
               data-idx={String(i)}
               ref={(el) => { cardRefs.current[i] = el }}
@@ -301,8 +301,8 @@ export default function BeansPage() {
               <div
                 className="relative min-h-[6.25rem] overflow-hidden px-5 py-4"
                 style={{
-                  background: `linear-gradient(135deg, ${ROAST_COLOR[bean.roast]}32, ${ROAST_COLOR[bean.roast]}12 58%, rgba(255,255,255,0.18))`,
-                  borderBottom: `1px solid ${ROAST_COLOR[bean.roast]}28`,
+                  background: `linear-gradient(135deg, ${ROAST_COLOR[bean.roast]}60, ${ROAST_COLOR[bean.roast]}30 58%, rgba(255,255,255,0.18))`,
+                  borderBottom: `1px solid ${ROAST_COLOR[bean.roast]}45`,
                 }}
               >
                 <div
@@ -311,13 +311,7 @@ export default function BeansPage() {
                 />
                 <div className="relative flex items-start justify-between gap-3">
                   <div>
-                    <span
-                      className="inline-flex items-center rounded-full border border-white/35 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white shadow-[0_8px_18px_rgba(0,0,0,0.16)] backdrop-blur-xl"
-                      style={{ background: ROAST_COLOR[bean.roast] }}
-                    >
-                      {bean.origin}
-                    </span>
-                    <p className="mt-2 max-w-[10rem] text-lg font-black leading-tight" style={{ color: 'var(--foreground)' }}>
+                    <p className="max-w-[10rem] text-xl font-black leading-tight" style={{ color: 'var(--foreground)' }}>
                       {bean.name}
                     </p>
                   </div>
@@ -339,12 +333,6 @@ export default function BeansPage() {
 
               {/* Card body / 카드 본문 */}
               <div className="relative px-5 py-4">
-                <div className="mb-3">
-                  <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                    {bean.nameEn}
-                  </p>
-                </div>
-
                 {/* Meta list / 메타 정보 */}
                 <div className="mb-4 space-y-1.5">
                   {[
@@ -356,29 +344,31 @@ export default function BeansPage() {
                       key={label}
                       className="flex min-w-0 items-start gap-3 rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
                     >
-                      <span className="w-9 shrink-0 text-[10px] font-black leading-5" style={{ color: 'var(--accent)' }}>
+                      <span className="w-9 shrink-0 text-xs font-black leading-5" style={{ color: 'var(--accent)' }}>
                         {label}
                       </span>
-                      <span className="min-w-0 flex-1 break-keep text-xs font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
+                      <span className="min-w-0 flex-1 break-keep text-sm font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
                         {value}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <p className="mb-4 text-sm leading-relaxed" style={{ color: 'var(--foreground)', opacity: 0.84 }}>
-                  {bean.desc}
-                </p>
+                <div className="mb-4 border-t border-[rgba(107,67,42,0.12)] pt-4 dark:border-white/10">
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)' }}>
+                    {bean.desc}
+                  </p>
+                </div>
 
                 {/* Body & acidity / 바디와 산미 */}
                 <div className="mb-4 grid grid-cols-2 gap-2">
                   <div className="rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
-                    <span className="block text-[10px] font-black" style={{ color: 'var(--accent)' }}>바디</span>
-                    <span className="mt-1 block text-xs font-semibold" style={{ color: 'var(--foreground)' }}>{bean.body}</span>
+                    <span className="block text-xs font-black" style={{ color: 'var(--accent)' }}>바디</span>
+                    <span className="mt-1 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{bean.body}</span>
                   </div>
                   <div className="rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
-                    <span className="block text-[10px] font-black" style={{ color: 'var(--accent)' }}>산미</span>
-                    <span className="mt-1 block text-xs font-semibold" style={{ color: 'var(--foreground)' }}>{bean.acidity}</span>
+                    <span className="block text-xs font-black" style={{ color: 'var(--accent)' }}>산미</span>
+                    <span className="mt-1 block text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{bean.acidity}</span>
                   </div>
                 </div>
 

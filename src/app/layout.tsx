@@ -1,11 +1,17 @@
 import type { Metadata } from 'next'
-import { Noto_Sans_KR } from 'next/font/google'
+import { Noto_Sans_KR, Josefin_Sans } from 'next/font/google'
 import './globals.css'
 
 const notoSansKR = Noto_Sans_KR({
   variable: '--font-noto-sans-kr',
   subsets: ['latin'],
   weight: ['400', '500', '700'],
+})
+
+const josefinSans = Josefin_Sans({
+  variable: '--font-josefin-sans',
+  subsets: ['latin'],
+  weight: ['300', '400', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -17,7 +23,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" className={notoSansKR.variable} suppressHydrationWarning>
+    <html lang="ko" className={`${notoSansKR.variable} ${josefinSans.variable}`} suppressHydrationWarning>
       <head>
         {/* Prevent dark mode flash */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme'),d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t===null&&d))document.documentElement.classList.add('dark');})();` }} />

@@ -140,7 +140,7 @@ export default function BottomSheet({
                 )}
               </div>
 
-              <p className="px-4 pt-1 text-sm leading-relaxed text-[#7d6149] dark:text-white/65">
+              <p className="px-4 pt-1 text-sm leading-relaxed text-[#7d6149] dark:text-white/80">
                 {cafe.shortDescription}
               </p>
 
@@ -171,7 +171,7 @@ export default function BottomSheet({
               <div className="mx-4 mt-4 border-t border-[#eee4d8] dark:border-white/10" />
 
               {/* 영업정보 */}
-              <div className="space-y-1.5 px-4 pt-3 text-xs text-[#7d6149] dark:text-white/65">
+              <div className="space-y-1.5 px-4 pt-3 text-xs text-[#7d6149] dark:text-white/80">
                 <p className="truncate">{cafe.address}</p>
                 <p>영업 {cafe.openHours}</p>
                 <p>휴무 {cafe.closedDays.length > 0 ? cafe.closedDays.join(', ') : '정보 없음'}</p>

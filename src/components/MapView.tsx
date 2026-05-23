@@ -140,7 +140,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   const profileDropdown = profileMenuOpen ? (
-    <div className="glass-map-bar absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+    <div className="glass-map-bar absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
       <div className="mb-2 rounded-lg bg-[#f8efe6] p-3 dark:bg-white/12">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] dark:bg-white/12">
@@ -170,7 +170,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             </button>
           )}
         </div>
-        <p className="mt-2 text-[11px] font-bold leading-4 text-[#8a6042] dark:text-white/68">
+        <p className="mt-2 text-[11px] font-bold leading-4 text-[#6b4c2a] dark:text-white/82">
           {user?.type === 'authenticated'
             ? '함께 만들어가는 "원두로"에 오신걸 환영합니다'
             : <><br />회원가입 전 임시 닉네임이에요.<br />귀여운 친구로 얼른 데려가세요!</>}
@@ -249,7 +249,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   ) : null
 
   return (
-    <div className="relative h-dvh overflow-hidden">
+    <div className="map-font relative h-dvh overflow-hidden">
       <Sidebar
         cafes={filteredCafes}
         filters={filters}
@@ -316,7 +316,7 @@ export default function MapView({ allCafes }: MapViewProps) {
 
       {/* Floating top bar — mobile only */}
       <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2 md:hidden">
-        <div className="glass-map-bar pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+        <div className="glass-map-bar pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
           <Link href="/home" className="flex shrink-0 items-center no-underline">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6] dark:bg-white/10">
               <Image src="/image/logo/beenRoad.png" alt="원두로" width={32} height={32} className="h-full w-full object-cover" priority />
@@ -329,7 +329,7 @@ export default function MapView({ allCafes }: MapViewProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="카페, 지역, 메뉴 검색"
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52 [&::-webkit-search-cancel-button]:hidden"
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[#2c2118] outline-none placeholder:text-[#8a7a6e] dark:text-white dark:placeholder:text-white/68 [&::-webkit-search-cancel-button]:hidden"
               type="search"
             />
             {searchQuery && (
@@ -382,7 +382,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           {filterPanelOpen && (
             <motion.div
               className="glass-map-bar pointer-events-auto overflow-hidden rounded-2xl"
-              style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+              style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -455,7 +455,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           })}
           disabled={!hasPendingBoundsSearch || !currentMapBounds}
           className="glass-map-btn pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/90"
-          style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+          style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
         >
           <Search size={15} />
           이 지역 검색
@@ -463,7 +463,7 @@ export default function MapView({ allCafes }: MapViewProps) {
       </div>
 
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2 flex flex-col gap-3">
-          <div className="glass-map-btn pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+          <div className="glass-map-btn pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <button
               type="button"
               onClick={() => handleZoom('in')}
@@ -486,7 +486,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             type="button"
             onClick={handleMapTypeToggle}
             className="glass-map-btn pointer-events-auto flex h-[38px] w-[38px] items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
-            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+            style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="지도 레이어"
           >
             <Layers size={15} />
@@ -502,7 +502,7 @@ export default function MapView({ allCafes }: MapViewProps) {
               }
             }}
             className="glass-map-btn pointer-events-auto flex h-[38px] w-[38px] items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
-            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+            style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="현재 위치"
           >
             <LocateFixed size={15} />
@@ -582,7 +582,7 @@ export default function MapView({ allCafes }: MapViewProps) {
             <h2 id="location-permission-title" className="mt-4 text-lg font-black">
               위치접근 권한을 허용해주세요
             </h2>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[#80624a] dark:text-white/62">
+            <p className="mt-2 text-sm font-semibold leading-6 text-[#6b4c2a] dark:text-white/78">
               내 현 위치를 기준으로 가까운 카페 거리와 지도를 더 정확하게 보여드릴게요.
             </p>
             {locationPermissionError && (
@@ -636,15 +636,15 @@ function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePre
 function BreadBadge({ count, small }: { count: number; small?: boolean }) {
   return (
     <div
-      className={`glass-map-sheet pointer-events-auto flex items-center whitespace-nowrap font-black text-[#5a2e11] dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
+      className={`glass-map-sheet pointer-events-auto flex items-center whitespace-nowrap font-black text-white dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
       style={{
         borderRadius: '16px',
-        background: 'color-mix(in srgb, var(--accent) 42%, transparent)',
-        border: '1.5px solid color-mix(in srgb, var(--accent) 55%, transparent)',
-        boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 26%, transparent), inset 0 1.5px 0 rgba(255, 255, 255, 0.22)',
+        background: 'color-mix(in srgb, var(--accent) 88%, var(--background))',
+        border: '1.5px solid color-mix(in srgb, var(--accent) 85%, transparent)',
+        boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1.5px 0 rgba(255, 255, 255, 0.28)',
       }}
     >
-      <span className={`mr-0.5 font-black tabular-nums text-[#3b2008] dark:text-white ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
+      <span className={`mr-0.5 font-black tabular-nums text-white dark:text-white ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
       개의 카페 발견
     </div>
   )

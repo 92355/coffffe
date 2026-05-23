@@ -181,9 +181,9 @@ export default function Sidebar({
       <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
         {/* 설명 */}
         <div className="px-4 py-4">
-          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
+          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/84">{selectedCafe.shortDescription}</p>
           {selectedCafe.fullDescription && (
-            <p className="mt-2 text-sm leading-relaxed text-[#5f4634] dark:text-white/60">{selectedCafe.fullDescription}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#5f4634] dark:text-white/78">{selectedCafe.fullDescription}</p>
           )}
         </div>
 
@@ -213,15 +213,15 @@ export default function Sidebar({
         {/* 영업정보 카드 */}
         <div className="px-4 py-4">
           <div className="space-y-2.5 rounded-2xl border border-[#eadfd3] bg-white/55 px-3.5 py-3 dark:border-white/12 dark:bg-white/8">
-            <div className="flex items-start gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+            <div className="flex items-start gap-2.5 text-xs text-[#7d6149] dark:text-white/80">
               <MapPin size={13} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
               <span className="leading-relaxed">{selectedCafe.address}</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/80">
               <Clock size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
               <span>{selectedCafe.openHours}</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/65">
+            <div className="flex items-center gap-2.5 text-xs text-[#7d6149] dark:text-white/80">
               <CalendarX size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
               <span>휴무 {selectedCafe.closedDays.length > 0 ? selectedCafe.closedDays.join(', ') : '정보 없음'}</span>
             </div>
@@ -261,7 +261,7 @@ export default function Sidebar({
         {/* 지도 검색 카드 */}
         <div className="px-4 py-4">
           <div className="overflow-hidden rounded-2xl border border-[#eadfd3] dark:border-white/12">
-            <p className="border-b border-[#eadfd3] bg-white/55 px-3.5 py-2 text-[10px] font-black uppercase tracking-widest text-[#b8aa9b] dark:border-white/12 dark:bg-white/8 dark:text-white/38">
+            <p className="border-b border-[#eadfd3] bg-white/55 px-3.5 py-2 text-[10px] font-black uppercase tracking-widest text-[#b8aa9b] dark:border-white/12 dark:bg-white/8 dark:text-white/55">
               지도에서 검색
             </p>
             <div className="flex flex-col divide-y divide-[#eadfd3] dark:divide-white/12">
@@ -361,9 +361,9 @@ export default function Sidebar({
       <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
         {/* 설명 */}
         <div className="px-4 pb-3 pt-4">
-          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
+          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/84">{selectedCafe.shortDescription}</p>
           {selectedCafe.fullDescription && (
-            <p className="mt-1.5 text-sm leading-relaxed text-[#5f4634] dark:text-white/60">{selectedCafe.fullDescription}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-[#5f4634] dark:text-white/78">{selectedCafe.fullDescription}</p>
           )}
         </div>
 
@@ -375,7 +375,7 @@ export default function Sidebar({
             </span>
           ))}
           {selectedCafe.beanOrigins.map(o => (
-            <span key={o} className="rounded-full bg-[#f5ede5] px-2.5 py-1 text-xs font-semibold text-[#7d6149] dark:bg-white/12 dark:text-white/72">
+            <span key={o} className="rounded-full bg-[#f5ede5] px-2.5 py-1 text-xs font-semibold text-[#7d6149] dark:bg-white/12 dark:text-white/84">
               {ORIGIN_LABELS[o]}
             </span>
           ))}
@@ -390,15 +390,15 @@ export default function Sidebar({
 
         {/* 영업 정보 */}
         <div className="space-y-2 px-4 py-3">
-          <div className="flex items-start gap-2 text-xs text-[#7d6149] dark:text-white/65">
+          <div className="flex items-start gap-2 text-xs text-[#7d6149] dark:text-white/80">
             <MapPin size={13} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
             <span className="leading-relaxed">{selectedCafe.address}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/65">
+          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/80">
             <Clock size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
             <span>{selectedCafe.openHours}</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/65">
+          <div className="flex items-center gap-2 text-xs text-[#7d6149] dark:text-white/80">
             <CalendarX size={13} className="shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
             <span>휴무 {selectedCafe.closedDays.length > 0 ? selectedCafe.closedDays.join(', ') : '정보 없음'}</span>
           </div>
@@ -497,12 +497,12 @@ export default function Sidebar({
             </span>
           </Link>
           <label className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-[#eadfd3] bg-white/70 px-3 py-2 dark:border-white/18 dark:bg-white/16">
-            <Search size={14} className="shrink-0 text-[#8b6f57] dark:text-white/72" />
+            <Search size={14} className="shrink-0 text-[#8b6f57] dark:text-white/84" />
             <input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="카페 검색"
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#2c2118] outline-none placeholder:text-[#b8aa9b] dark:text-white dark:placeholder:text-white/52"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#2c2118] outline-none placeholder:text-[#8a7a6e] dark:text-white dark:placeholder:text-white/68"
               type="search"
             />
           </label>
@@ -593,7 +593,7 @@ export default function Sidebar({
               </motion.div>
             ))}
             {cafes.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-[#dacdbf] bg-white p-6 text-center text-sm font-semibold text-[#8b7a68] dark:border-white/18 dark:bg-white/12 dark:text-white/72">
+              <div className="rounded-2xl border border-dashed border-[#dacdbf] bg-white p-6 text-center text-sm font-semibold text-[#8b7a68] dark:border-white/18 dark:bg-white/12 dark:text-white/84">
                 <p>조건에 맞는 카페가 없습니다.</p>
                 <button
                   type="button"
@@ -626,7 +626,7 @@ export default function Sidebar({
       <motion.aside
         className="glass-map-sheet absolute left-0 top-0 z-10 hidden md:flex h-full flex-col overflow-hidden"
         style={{
-          background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
+          background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))',
           borderRight: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
           boxShadow: '4px 0 30px rgba(0, 0, 0, 0.22), inset -1px 0 0 rgba(255,255,255,0.06)',
         }}
@@ -698,7 +698,7 @@ export default function Sidebar({
         <aside
           className="glass-map-sheet flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
           style={{
-            background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
+            background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))',
             borderTop: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
             boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06)',
           }}

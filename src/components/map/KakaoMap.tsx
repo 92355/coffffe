@@ -323,9 +323,6 @@ function createUserLocationContent(): HTMLElement {
 function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void): HTMLElement {
   const markerSize = selected ? SELECTED_MARKER_SIZE : DEFAULT_MARKER_SIZE
   const imageUrl = cafe.images?.[0]
-  // On mobile, show aroma animation only on the selected marker to reduce GPU cost
-  const isMobile = window.matchMedia('(max-width: 767px)').matches
-  const showAroma = (cafe.showAroma ?? true) && (!isMobile || selected)
 
   const root = document.createElement('button')
   root.type = 'button'
@@ -358,18 +355,6 @@ function createMarkerContent(cafe: Cafe, selected: boolean, onClick: () => void)
     const cup = document.createElement('span')
     cup.className = 'block h-[14px] w-[18px] rounded-b-full rounded-t-sm border-2 border-white text-white'
     pin.append(cup)
-  }
-
-  if (showAroma) {
-    const aromaWrap = document.createElement('div')
-    aromaWrap.className = 'flex items-end justify-center gap-1.5'
-    aromaWrap.style.height = selected ? '34px' : '30px'
-    for (let j = 0; j < 5; j++) {
-      const puff = document.createElement('span')
-      puff.className = `aroma-puff aroma-puff--${j + 1}${selected ? ' aroma-puff--selected' : ''}`
-      aromaWrap.append(puff)
-    }
-    root.append(aromaWrap)
   }
   root.append(pin)
 

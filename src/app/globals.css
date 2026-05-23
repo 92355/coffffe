@@ -265,17 +265,21 @@ body {
 
 /* ── 글래스모피즘 유틸 ── */
 .glass-panel {
-  background: rgba(246, 243, 236, 0.88);
+  background: rgba(246, 243, 236, 0.95);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-right: 1px solid rgba(229, 220, 206, 0.70);
 }
 
 .glass-bar {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(229, 220, 206, 0.60);
+}
+
+.map-font {
+  font-family: var(--font-josefin-sans), var(--font-noto-sans-kr), sans-serif;
 }
 
 /* Map overlay glass — desktop full blur, mobile halved for GPU cost */
@@ -304,41 +308,4 @@ body {
     backdrop-filter: blur(14px) saturate(145%);
     -webkit-backdrop-filter: blur(14px) saturate(145%);
   }
-}
-
-/* ── Kakao map marker coffee aroma (S자 곡선 증기) ── */
-@keyframes coffeeAromaS {
-  0%   { transform: translateY(2px)    translateX(0px)  rotate(-2deg) scaleY(0.7) scaleX(1.05); opacity: 0; }
-  12%  { opacity: 0.95; }
-  30%  { transform: translateY(-10px)  translateX(4px)  rotate(5deg)  scaleY(1.05) scaleX(0.88); opacity: 0.85; }
-  55%  { transform: translateY(-22px)  translateX(-4px) rotate(-6deg) scaleY(1.3)  scaleX(0.72); opacity: 0.58; }
-  80%  { transform: translateY(-34px)  translateX(3px)  rotate(4deg)  scaleY(1.55) scaleX(0.6);  opacity: 0.28; }
-  100% { transform: translateY(-46px)  translateX(0px)  rotate(0deg)  scaleY(1.85) scaleX(0.5);  opacity: 0; }
-}
-
-.aroma-puff {
-  display: inline-block;
-  width: 5px;
-  height: 16px;
-  border-radius: 40% 40% 50% 50%;
-  background: rgba(255, 226, 166, 0.95);
-  box-shadow:
-    0 0 10px rgba(255, 226, 166, 0.85),
-    0 0 18px rgba(214, 102, 18, 0.38);
-  filter: drop-shadow(0 0 4px rgba(90, 46, 17, 0.35));
-  transform-origin: center bottom;
-  animation: coffeeAromaS 2.25s ease-out infinite;
-  will-change: transform, opacity;
-}
-.aroma-puff--1 { animation-delay: 0s;     animation-duration: 2.35s; width: 5px; height: 16px; }
-.aroma-puff--2 { animation-delay: 0.38s;  animation-duration: 2.05s; width: 4px; height: 14px; }
-.aroma-puff--3 { animation-delay: 0.82s;  animation-duration: 2.45s; width: 6px; height: 18px; }
-.aroma-puff--4 { animation-delay: 1.18s;  animation-duration: 2.18s; width: 4px; height: 15px; }
-.aroma-puff--5 { animation-delay: 1.56s;  animation-duration: 2.62s; width: 5px; height: 17px; }
-.aroma-puff--selected {
-  animation-duration: 1.65s;
-  background: rgba(178, 222, 104, 1);
-  box-shadow:
-    0 0 12px rgba(178, 222, 104, 0.95),
-    0 0 24px rgba(143, 174, 90, 0.58);
 }
