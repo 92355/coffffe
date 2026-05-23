@@ -29,8 +29,10 @@ import type { LocationPoint } from '@/types/location'
 import CafeListItem from '@/components/CafeListItem'
 import FilterBar from '@/components/FilterBar'
 import ThemeToggle from '@/components/ThemeToggle'
+import CafeFootprintPanel from '@/components/CafeFootprintPanel'
 import { kakaoMapUrl, googleMapUrl, naverMapUrl } from '@/lib/mapNavigation'
 import { cafeHue } from '@/lib/cafeThumb'
+import { useViewTracker } from '@/hooks/useViewTracker'
 
 interface SidebarProps {
   cafes: Cafe[]
@@ -113,6 +115,8 @@ export default function Sidebar({
   useEffect(() => {
     onMobileExpandedChange?.(mobileExpanded)
   }, [mobileExpanded, onMobileExpandedChange])
+
+  useViewTracker(selectedCafe?.id ?? null)
 
   const selectedCafeHue = selectedCafe ? cafeHue(selectedCafe.id) : 0
   const cafePlaceholderBg = [
@@ -294,6 +298,11 @@ export default function Sidebar({
             </div>
           </div>
         </div>
+
+        {/* 발자취 전체 패널 */}
+        <div className="px-4 pb-6">
+          <CafeFootprintPanel cafeId={selectedCafe.id} />
+        </div>
       </div>
 
     </>
@@ -460,6 +469,11 @@ export default function Sidebar({
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/20 text-[9px] font-black">G</span>
             구글
           </a>
+        </div>
+
+        {/* 발자취 전체 패널 */}
+        <div className="px-4 pb-6">
+          <CafeFootprintPanel cafeId={selectedCafe.id} />
         </div>
       </div>
 

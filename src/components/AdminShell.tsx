@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart3, Bean, Coffee, LayoutDashboard, Menu, MessageSquare, Users, X } from 'lucide-react'
+import { BarChart3, Bean, Coffee, LayoutDashboard, Menu, MessageCircle, MessageSquare, Users, X } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/admin', label: '대시보드', icon: LayoutDashboard, exact: true },
   { href: '/admin/cafes', label: '카페 관리', icon: Coffee, exact: false },
   { href: '/admin/reports', label: '제보 관리', icon: MessageSquare, exact: false },
+  { href: '/admin/reviews', label: '한줄평 관리', icon: MessageCircle, exact: false },
   { href: '/admin/beans', label: '원두 관리', icon: Bean, exact: false },
   { href: '/admin/members', label: '회원 관리', icon: Users, exact: false },
   { href: '/admin/stats', label: '통계', icon: BarChart3, exact: false },

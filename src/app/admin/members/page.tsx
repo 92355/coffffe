@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useEffect, useRef, useState } from 'react'
+import { Fragment, startTransition, useEffect, useRef, useState } from 'react'
 import { Pencil, Trash2, Users, X, Check, Upload } from 'lucide-react'
 
 interface Member {
@@ -157,8 +157,8 @@ export default function MembersAdminPage() {
               </tr>
             )}
             {members.map(member => (
-              <>
-                <tr key={member.id} className="border-b border-[#eadfd3] last:border-0 hover:bg-[#faf7f3]">
+              <Fragment key={member.id}>
+                <tr className="border-b border-[#eadfd3] last:border-0 hover:bg-[#faf7f3]">
                   {/* Avatar */}
                   <td className="px-4 py-3">
                     {member.profile_image_url ? (
@@ -300,7 +300,7 @@ export default function MembersAdminPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

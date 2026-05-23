@@ -8,6 +8,8 @@ import type { Cafe } from '@/types/cafe'
 import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 import { googleMapUrl, kakaoMapUrl, naverMapUrl } from '@/lib/mapNavigation'
 import { cafeHue } from '@/lib/cafeThumb'
+import { useViewTracker } from '@/hooks/useViewTracker'
+import CafeFootprintPanel from './CafeFootprintPanel'
 
 interface BottomSheetProps {
   cafe: Cafe | null
@@ -32,8 +34,11 @@ export default function BottomSheet({
   onFavoriteToggle,
 }: BottomSheetProps) {
   const [sheetHeight, setSheetHeight] = useState(MAX_HEIGHT_DVH)
+  useViewTracker(cafe?.id ?? null)
 
   useEffect(() => {
+    // Reset sheet height when a new cafe is selected. / 새 카페 선택 시 시트 높이 초기화.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSheetHeight(MAX_HEIGHT_DVH)
   }, [cafe?.id])
 
@@ -115,7 +120,9 @@ export default function BottomSheet({
 
               {/* 이름 + 찜 */}
               <div className="flex items-start justify-between gap-2 px-4 pt-3">
-                <h2 className="text-lg font-black text-[#2c2118] dark:text-white">{cafe.name}</h2>
+                <span className="min-w-0 flex-1 text-lg font-black text-[#2c2118] dark:text-white">
+                  {cafe.name}
+                </span>
                 {onFavoriteToggle && (
                   <button
                     type="button"
@@ -154,6 +161,11 @@ export default function BottomSheet({
                     {BREW_LABELS[m]}
                   </span>
                 ))}
+              </div>
+
+              {/* 발자취 전체 패널 */}
+              <div className="px-3 pt-3">
+                <CafeFootprintPanel cafeId={cafe.id} />
               </div>
 
               <div className="mx-4 mt-4 border-t border-[#eee4d8] dark:border-white/10" />

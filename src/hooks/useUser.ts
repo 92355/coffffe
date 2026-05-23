@@ -181,6 +181,8 @@ function getUserSnapshot(): User | null {
   const storedUser = readStoredUser()
   if (storedUser) {
     cachedUser = storedUser
+    // 구 포맷(anonymousId 없음)으로 저장된 경우 새로 생성된 ID를 영속화한다.
+    saveUser(storedUser)
     return cachedUser
   }
 
