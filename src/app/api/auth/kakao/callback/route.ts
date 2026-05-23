@@ -65,6 +65,9 @@ export async function GET(request: NextRequest) {
       kakaoId: user.kakao_id,
       nickname: user.nickname,
       profileImageUrl: user.profile_image_url ?? undefined,
+      siteNickname: user.site_nickname,
+      siteAnimal: user.site_animal,
+      isAdmin: isAdminKakaoId(user.kakao_id),
     }
     const response = NextResponse.redirect(redirectTarget)
 
@@ -209,4 +212,10 @@ async function upsertKakaoUser(
 
 function getRedirectUri(request: NextRequest): string {
   return process.env.KAKAO_REDIRECT_URI ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
+}
+
+function isAdminKakaoId(kakaoId: string): boolean {
+  const adminKakaoIds = process.env['ADMIN_KAKAO_IDS']
+  if (!adminKakaoIds) return false
+  return adminKakaoIds.split(',').map((id) => id.trim()).filter(Boolean).includes(kakaoId)
 }

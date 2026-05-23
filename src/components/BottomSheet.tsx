@@ -6,7 +6,7 @@ import { AtSign, Heart, Phone, X } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 import { googleMapUrl, kakaoMapUrl, naverMapUrl } from '@/lib/mapNavigation'
-import { cafeNameToHue } from '@/lib/cafeThumb'
+import { cafeHue } from '@/lib/cafeThumb'
 
 interface BottomSheetProps {
   cafe: Cafe | null
@@ -17,8 +17,6 @@ interface BottomSheetProps {
 
 const glassStyle = {
   background: 'color-mix(in srgb, var(--background) 72%, rgba(255,255,255,0.22))',
-  backdropFilter: 'blur(28px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(28px) saturate(160%)',
   border: '1px solid color-mix(in srgb, var(--foreground) 18%, transparent)',
   boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.06)',
 } as const
@@ -41,7 +39,7 @@ export default function BottomSheet({
           exit={{ y: '100%', opacity: 0 }}
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         >
-          <div className="overflow-hidden rounded-3xl" style={{ ...glassStyle, maxHeight: '70dvh' }}>
+          <div className="glass-map-sheet overflow-hidden rounded-3xl" style={{ ...glassStyle, maxHeight: '70dvh' }}>
             <div className="flex justify-center pt-2.5">
               <div className="h-1 w-8 rounded-full bg-[#c4b5a5] dark:bg-white/30" />
             </div>
@@ -49,7 +47,7 @@ export default function BottomSheet({
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(70dvh - 1.5rem)' }}>
               {/* 썸네일 */}
               {(() => {
-                const hue = cafeNameToHue(cafe.name)
+                const hue = cafeHue(cafe.id)
                 const placeholderBg = [
                   `radial-gradient(circle at 25% 35%, transparent 22%, rgba(255,255,255,0.10) 22.5%, rgba(255,255,255,0.10) 26%, transparent 26.5%)`,
                   `radial-gradient(circle at 68% 58%, transparent 17%, rgba(255,255,255,0.07) 17.5%, rgba(255,255,255,0.07) 21%, transparent 21.5%)`,

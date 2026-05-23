@@ -278,6 +278,34 @@ body {
   border: 1px solid rgba(229, 220, 206, 0.60);
 }
 
+/* Map overlay glass — desktop full blur, mobile halved for GPU cost */
+.glass-map-bar {
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+}
+.glass-map-btn {
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+.glass-map-sheet {
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+@media (max-width: 767px) {
+  .glass-map-bar {
+    backdrop-filter: blur(10px) saturate(145%);
+    -webkit-backdrop-filter: blur(10px) saturate(145%);
+  }
+  .glass-map-btn {
+    backdrop-filter: blur(10px) saturate(145%);
+    -webkit-backdrop-filter: blur(10px) saturate(145%);
+  }
+  .glass-map-sheet {
+    backdrop-filter: blur(14px) saturate(145%);
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+  }
+}
+
 /* ── Kakao map marker coffee aroma (S자 곡선 증기) ── */
 @keyframes coffeeAromaS {
   0%   { transform: translateY(2px)    translateX(0px)  rotate(-2deg) scaleY(0.7) scaleX(1.05); opacity: 0; }

@@ -3,6 +3,7 @@
 import { Heart, MapPin, Star, Clock } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
+import { cafeHue } from '@/lib/cafeThumb'
 
 interface CafeListItemProps {
   cafe: Cafe
@@ -40,7 +41,7 @@ function distanceKm(cafe: Cafe, origin: LocationPoint): number {
 }
 
 function thumbnailStyle(cafe: Cafe) {
-  const hue = cafe.id.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % 30
+  const hue = cafeHue(cafe.id)
 
   return {
     backgroundImage: `

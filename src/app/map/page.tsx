@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Cafe } from '@/types/cafe'
+import KakaoMapScript from '@/components/KakaoMapScript'
 import MapView from '@/components/MapView'
 import SplashScreen from '@/components/SplashScreen'
 
@@ -59,6 +60,7 @@ export default function MapPage() {
 
   return (
     <main className="relative h-dvh overflow-hidden bg-[#EDE0CF] dark:bg-[#11100f]">
+      <KakaoMapScript apiKey={process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY ?? ''} />
       {showSplash && <SplashScreen onDone={handleSplashDone} />}
       {cafesLoaded ? (
         <MapView allCafes={cafes} />

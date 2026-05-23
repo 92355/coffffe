@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Noto_Sans_KR } from 'next/font/google'
-import KakaoMapScript from '@/components/KakaoMapScript'
 import './globals.css'
 
 const notoSansKR = Noto_Sans_KR({
@@ -28,7 +27,6 @@ export default function RootLayout({
           {children}
         </div>
       </body>
-      <KakaoMapScript apiKey={process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY ?? ''} />
     </html>
   )
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Cafe, RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
 import { createSupabaseAdminClient, createSupabaseClient } from '@/lib/supabase'
+import { matchesFilters } from '@/lib/cafeFilters'
 
 interface DatabaseCafe {
   id: string
@@ -50,20 +51,6 @@ function toCafe(databaseCafe: DatabaseCafe): Cafe {
   }
 }
 
-function applyFilters(
-  cafesToFilter: Cafe[],
-  roast: RoastLevel | null,
-  origin: BeanOrigin | null,
-  method: BrewMethod | null,
-): Cafe[] {
-  return cafesToFilter.filter((cafe) => {
-    if (roast && !cafe.roastLevels.includes(roast)) return false
-    if (origin && !cafe.beanOrigins.includes(origin)) return false
-    if (method && !cafe.brewMethods.includes(method)) return false
-
-    return true
-  })
-}
 
 async function getCafes(): Promise<Cafe[]> {
   try {
@@ -105,7 +92,8 @@ export async function GET(request: NextRequest) {
   const origin = searchParams.get('origin') as BeanOrigin | null
   const method = searchParams.get('method') as BrewMethod | null
 
-  const result = applyFilters(await getCafes(), roast, origin, method)
+  const filters = { roastLevel: roast, beanOrigin: origin, brewMethod: method }
+  const result = (await getCafes()).filter(cafe => matchesFilters(cafe, filters))
 
   return NextResponse.json(result, {
     headers: {

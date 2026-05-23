@@ -7,10 +7,32 @@ const ADMIN_KAKAO_IDS_KEY = 'ADMIN_KAKAO_IDS'
 
 export async function GET() {
   const session = await getUserSession()
-  const userProfile = session ? await readUserProfile(session.userId) : null
+
+  if (!session) {
+    return NextResponse.json({ user: null })
+  }
+
+  // 세션에 siteNickname이 있으면 DB 조회 없이 세션 데이터로 바로 응답한다.
+  if (session.siteNickname && session.siteAnimal) {
+    return NextResponse.json({
+      user: {
+        type: 'authenticated',
+        id: session.userId,
+        kakaoId: session.kakaoId,
+        nickname: session.nickname,
+        profileImageUrl: session.profileImageUrl,
+        siteNickname: session.siteNickname,
+        siteAnimal: session.siteAnimal,
+        isAdmin: session.isAdmin ?? isAdminKakaoId(session.kakaoId),
+      },
+    })
+  }
+
+  // 구 세션(siteNickname 미포함)은 기존처럼 DB에서 조회한다.
+  const userProfile = await readUserProfile(session.userId)
 
   return NextResponse.json({
-    user: session && userProfile
+    user: userProfile
       ? {
           type: 'authenticated',
           id: userProfile.id,

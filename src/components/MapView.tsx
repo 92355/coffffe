@@ -22,6 +22,7 @@ import { useMapViewUI } from '@/hooks/useMapViewUI'
 import { useReportState } from '@/hooks/useReportState'
 import type { LocationPoint } from '@/types/location'
 import type { ReportType } from '@/types/report'
+import { matchesFilters, matchesSearch, matchesCategory } from '@/lib/cafeFilters'
 
 const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), { ssr: false })
 
@@ -110,20 +111,11 @@ export default function MapView({ allCafes }: MapViewProps) {
   } = useLocationState()
 
   const baseFilteredCafes = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase()
-    const normalizedCategory = activeQuickCategory?.trim().toLowerCase() ?? ''
-
-    return allCafes.filter(cafe => {
-      if (filters.roastLevel && !cafe.roastLevels.includes(filters.roastLevel)) return false
-      if (filters.beanOrigin && !cafe.beanOrigins.includes(filters.beanOrigin)) return false
-      if (filters.brewMethod && !cafe.brewMethods.includes(filters.brewMethod)) return false
-
-      const searchTarget = `${cafe.name} ${cafe.shortDescription} ${cafe.fullDescription} ${cafe.address} ${cafe.tags.join(' ')}`.toLowerCase()
-      if (normalizedQuery && !searchTarget.includes(normalizedQuery)) return false
-      if (normalizedCategory && !searchTarget.includes(normalizedCategory)) return false
-
-      return true
-    })
+    return allCafes.filter(cafe =>
+      matchesFilters(cafe, filters) &&
+      matchesSearch(cafe, searchQuery) &&
+      matchesCategory(cafe, activeQuickCategory)
+    )
   }, [activeQuickCategory, allCafes, filters, searchQuery])
 
   const filteredCafes = useMemo(() => {
@@ -148,7 +140,7 @@ export default function MapView({ allCafes }: MapViewProps) {
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
 
   const profileDropdown = profileMenuOpen ? (
-    <div className="absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+    <div className="glass-map-bar absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
       <div className="mb-2 rounded-lg bg-[#f8efe6] p-3 dark:bg-white/12">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f2d8c1] dark:bg-white/12">
@@ -324,7 +316,7 @@ export default function MapView({ allCafes }: MapViewProps) {
 
       {/* Floating top bar — mobile only */}
       <div className="pointer-events-none absolute inset-x-4 top-4 z-30 flex flex-col gap-2 md:hidden">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+        <div className="glass-map-bar pointer-events-auto flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
           <Link href="/home" className="flex shrink-0 items-center no-underline">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f8efe6] dark:bg-white/10">
               <Image src="/image/logo/beenRoad.png" alt="원두로" width={32} height={32} className="h-full w-full object-cover" priority />
@@ -389,8 +381,8 @@ export default function MapView({ allCafes }: MapViewProps) {
         <AnimatePresence>
           {filterPanelOpen && (
             <motion.div
-              className="pointer-events-auto overflow-hidden rounded-2xl"
-              style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(20px) saturate(165%)', WebkitBackdropFilter: 'blur(20px) saturate(165%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+              className="glass-map-bar pointer-events-auto overflow-hidden rounded-2xl"
+              style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -462,8 +454,8 @@ export default function MapView({ allCafes }: MapViewProps) {
             })
           })}
           disabled={!hasPendingBoundsSearch || !currentMapBounds}
-          className="pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/90"
-          style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+          className="glass-map-btn pointer-events-auto flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black text-[#6f3b17] disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/90"
+          style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
         >
           <Search size={15} />
           이 지역 검색
@@ -471,7 +463,7 @@ export default function MapView({ allCafes }: MapViewProps) {
       </div>
 
       <div className="pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2 flex flex-col gap-3">
-          <div className="pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+          <div className="glass-map-btn pointer-events-auto overflow-hidden rounded-2xl" style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
             <button
               type="button"
               onClick={() => handleZoom('in')}
@@ -500,8 +492,8 @@ export default function MapView({ allCafes }: MapViewProps) {
                 setLocationPermissionModalOpen(true)
               }
             }}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
-            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+            className="glass-map-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="현재 위치"
           >
             <LocateFixed size={18} />
@@ -509,8 +501,8 @@ export default function MapView({ allCafes }: MapViewProps) {
           <button
             type="button"
             onClick={handleMapTypeToggle}
-            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
-            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', backdropFilter: 'blur(16px) saturate(160%)', WebkitBackdropFilter: 'blur(16px) saturate(160%)', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
+            className="glass-map-btn pointer-events-auto flex h-12 w-12 items-center justify-center rounded-2xl text-[#6f3b17] dark:text-white/90"
+            style={{ background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 20px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06)' }}
             aria-label="지도 레이어"
           >
             <Layers size={18} />
@@ -644,12 +636,10 @@ function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePre
 function BreadBadge({ count, small }: { count: number; small?: boolean }) {
   return (
     <div
-      className={`pointer-events-auto flex items-center whitespace-nowrap font-black text-[#5a2e11] dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
+      className={`glass-map-sheet pointer-events-auto flex items-center whitespace-nowrap font-black text-[#5a2e11] dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
       style={{
         borderRadius: '16px',
         background: 'color-mix(in srgb, var(--accent) 42%, transparent)',
-        backdropFilter: 'blur(28px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
         border: '1.5px solid color-mix(in srgb, var(--accent) 55%, transparent)',
         boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 26%, transparent), inset 0 1.5px 0 rgba(255, 255, 255, 0.22)',
       }}

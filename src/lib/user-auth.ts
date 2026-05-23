@@ -22,6 +22,9 @@ export interface UserSession {
   kakaoId: string
   nickname: string
   profileImageUrl?: string
+  siteNickname?: string
+  siteAnimal?: string
+  isAdmin?: boolean
 }
 
 interface SessionPayload extends UserSession {
@@ -86,6 +89,9 @@ function verifySession(token: string): UserSession | null {
       kakaoId: payload.kakaoId,
       nickname: payload.nickname,
       profileImageUrl: typeof payload.profileImageUrl === 'string' ? payload.profileImageUrl : undefined,
+      siteNickname: typeof payload.siteNickname === 'string' ? payload.siteNickname : undefined,
+      siteAnimal: typeof payload.siteAnimal === 'string' ? payload.siteAnimal : undefined,
+      isAdmin: payload.isAdmin === true,
     }
   } catch (error) {
     console.error('Failed to verify user session. / 사용자 세션 검증에 실패했습니다.', error)

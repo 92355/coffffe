@@ -30,7 +30,7 @@ import CafeListItem from '@/components/CafeListItem'
 import FilterBar from '@/components/FilterBar'
 import ThemeToggle from '@/components/ThemeToggle'
 import { kakaoMapUrl, googleMapUrl, naverMapUrl } from '@/lib/mapNavigation'
-import { cafeNameToHue } from '@/lib/cafeThumb'
+import { cafeHue } from '@/lib/cafeThumb'
 
 interface SidebarProps {
   cafes: Cafe[]
@@ -114,12 +114,12 @@ export default function Sidebar({
     onMobileExpandedChange?.(mobileExpanded)
   }, [mobileExpanded, onMobileExpandedChange])
 
-  const cafeHue = selectedCafe ? cafeNameToHue(selectedCafe.name) : 0
+  const selectedCafeHue = selectedCafe ? cafeHue(selectedCafe.id) : 0
   const cafePlaceholderBg = [
     `radial-gradient(circle at 25% 35%, transparent 22%, rgba(255,255,255,0.10) 22.5%, rgba(255,255,255,0.10) 26%, transparent 26.5%)`,
     `radial-gradient(circle at 68% 58%, transparent 17%, rgba(255,255,255,0.07) 17.5%, rgba(255,255,255,0.07) 21%, transparent 21.5%)`,
     `radial-gradient(circle at 52% 18%, transparent 13%, rgba(255,255,255,0.08) 13.5%, rgba(255,255,255,0.08) 16%, transparent 16.5%)`,
-    `hsl(${cafeHue}, 42%, 38%)`,
+    `hsl(${selectedCafeHue}, 42%, 38%)`,
   ].join(', ')
   const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
 
@@ -610,11 +610,9 @@ export default function Sidebar({
     <>
       {/* Desktop: inline flex panel */}
       <motion.aside
-        className="absolute left-0 top-0 z-10 hidden md:flex h-full flex-col overflow-hidden"
+        className="glass-map-sheet absolute left-0 top-0 z-10 hidden md:flex h-full flex-col overflow-hidden"
         style={{
           background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
-          backdropFilter: 'blur(28px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
           borderRight: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
           boxShadow: '4px 0 30px rgba(0, 0, 0, 0.22), inset -1px 0 0 rgba(255,255,255,0.06)',
         }}
@@ -684,11 +682,9 @@ export default function Sidebar({
         }}
       >
         <aside
-          className="flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
+          className="glass-map-sheet flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
           style={{
             background: 'color-mix(in srgb, var(--background) 68%, rgba(255,255,255,0.18))',
-            backdropFilter: 'blur(28px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(160%)',
             borderTop: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
             boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06)',
           }}
