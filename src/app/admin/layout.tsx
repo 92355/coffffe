@@ -1,7 +1,13 @@
 import type { ReactNode } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ADMIN_SESSION_COOKIE, getAdminSecret, isAdminSessionValue } from '@/lib/admin-auth'
+import {
+  ADMIN_SESSION_COOKIE,
+  createAdminSessionToken,
+  getAdminSecret,
+  getAdminSessionMaxAgeSeconds,
+  isAdminSessionValue,
+} from '@/lib/admin-auth'
 import AdminShell from '@/components/AdminShell'
 
 interface AdminLayoutProps {
@@ -20,12 +26,12 @@ async function login(formData: FormData) {
   const cookieStore = await cookies()
   cookieStore.set({
     name: ADMIN_SESSION_COOKIE,
-    value: password,
+    value: createAdminSessionToken(),
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 8,
+    maxAge: getAdminSessionMaxAgeSeconds(),
   })
 
   redirect('/admin')

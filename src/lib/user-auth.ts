@@ -14,7 +14,6 @@ const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 const KAKAO_REST_API_KEY = 'KAKAO_REST_API_KEY'
 const KAKAO_CLIENT_SECRET = 'KAKAO_CLIENT_SECRET'
 const KAKAO_SESSION_SECRET = 'KAKAO_SESSION_SECRET'
-const ADMIN_SECRET = 'ADMIN_SECRET'
 const SIGNATURE_ALGORITHM = 'sha256'
 
 export interface UserSession {
@@ -115,7 +114,7 @@ function isEqualSignature(received: string, expected: string): boolean {
 }
 
 function getSessionSecret(): string {
-  return process.env[KAKAO_SESSION_SECRET] ?? getRequiredEnv(ADMIN_SECRET)
+  return getRequiredEnv(KAKAO_SESSION_SECRET)
 }
 
 function encodeBase64Url(value: string): string {
