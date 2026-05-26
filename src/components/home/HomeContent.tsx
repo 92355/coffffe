@@ -1,272 +1,238 @@
 'use client'
 
-import Link from 'next/link'
 import Image from 'next/image'
+import Link from 'next/link'
 import { motion, type Variants } from 'framer-motion'
-import { ArrowRight, Bean, Coffee, Compass, MapPin, ShoppingBag } from 'lucide-react'
-import { BEANS } from '@/data/beans'
+import { Bean, Home, Map, Play, ShoppingBag, Sparkles, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 
-const FEATURED_BEANS = BEANS.slice(0, 4)
-
-const homeGlassCardClass =
-  'relative overflow-hidden border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.68),rgba(255,255,255,0.30))] shadow-[0_20px_54px_rgba(107,67,42,0.14),inset_0_1px_0_rgba(255,255,255,0.82)] backdrop-blur-2xl transition-all dark:border-white/14 dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.13),rgba(255,255,255,0.06))] dark:shadow-[0_20px_54px_rgba(0,0,0,0.36),inset_0_1px_0_rgba(255,255,255,0.12)]'
-const homeGlassShineClass =
-  'pointer-events-none absolute inset-x-4 top-0 h-px bg-white/90 dark:bg-white/24'
-const homeGlassGlowClass =
-  'pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[var(--accent)]/20 blur-2xl dark:bg-[var(--accent)]/12'
-const homeGlassIconClass =
-  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/70 text-[var(--primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_10px_22px_rgba(107,67,42,0.10)] transition-transform group-hover:scale-110 dark:border-white/12 dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_22px_rgba(0,0,0,0.22)]'
-
-function fadeUp(delay = 0) {
-  return {
-    initial: { opacity: 0, y: 24, filter: 'blur(10px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    transition: { duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] as const },
-  }
-}
-
-const serviceCards = [
+const CURATED_BEANS = [
   {
-    href: '/cbti',
-    title: '커피 CBTI',
-    description: '내 취향 타입 찾기',
-    icon: Coffee,
-    iconBgClass: 'bg-[var(--accent-soft)] dark:bg-[rgba(160,192,104,0.20)]',
+    initial: 'P',
+    origin: 'Panama',
+    name: '파나마 게이샤',
+    description: '화려한 꽃향기와 기분 좋은 산미가 어우러지는 밸런스. 스페셜티 커피의 여왕이라 불리는 품종입니다.',
+    notes: 'Jasmine, Peach, Honey',
+    swatches: ['#fdf2f0', '#fae5e1'],
+    gradient: 'from-[#ae8d87] to-[#3e2723]',
   },
   {
-    href: '/beans',
-    title: '원두 정보',
-    description: '산지별 원두 탐색',
-    icon: Bean,
-    iconBgClass: 'bg-[var(--sub-soft)] dark:bg-[rgba(192,138,90,0.20)]',
+    initial: 'E',
+    origin: 'Ethiopia',
+    name: '에티오피아 예가체프',
+    description: '베르가못의 향긋함과 레몬의 산뜻함이 주는 깔끔한 피니시. 아침을 깨우는 상쾌한 활력을 선사합니다.',
+    notes: 'Bergamot, Lemon, Tea',
+    swatches: ['#f1f4ea', '#e8f0d8'],
+    gradient: 'from-[#bdcca3] to-[#3e4b2c]',
   },
 ]
 
-const beanContainer: Variants = {
+const bottomNavItems = [
+  { href: '/', label: 'Home', icon: Home, active: true },
+  { href: '/map', label: 'Map', icon: Map, active: false },
+  { href: '/cbti', label: 'CBTI', icon: Sparkles, active: false },
+  { href: '/beans', label: 'Beans', icon: ShoppingBag, active: false },
+  { href: '#profile', label: 'User', icon: UserRound, active: false },
+]
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 22 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] as const },
+})
+
+const staggerContainer: Variants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.055,
-      delayChildren: 0.15,
+      staggerChildren: 0.08,
+      delayChildren: 0.12,
     },
   },
 }
 
-const beanItem: Variants = {
-  hidden: { opacity: 0, y: 18, scale: 0.96 },
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 18 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
   },
 }
 
 export default function HomeContent() {
   const { user, profilePrefs } = useUser()
-  const displayName = user?.nickname ?? null
+  const displayName = user?.nickname ?? '개발하는 검정곰'
   const siteAnimal = user?.type === 'authenticated' ? user.siteAnimal : user?.animal
   const kakaoProfileImageUrl = user?.type === 'authenticated' ? user.kakaoProfileImageUrl : undefined
   const useKakaoAvatar = profilePrefs.avatarPreference === 'kakao' && Boolean(kakaoProfileImageUrl)
   const avatarSrc = useKakaoAvatar
     ? kakaoProfileImageUrl!
-    : siteAnimal ? getAnimalAvatarPath(siteAnimal) : null
+    : siteAnimal ? getAnimalAvatarPath(siteAnimal) : '/image/animal_profill/bear.webp'
 
   return (
     <>
-      <div className="relative z-10 mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-5">
-
-        {/* Greeting */}
-        <motion.div
-          {...fadeUp(0)}
-          className="relative overflow-hidden rounded-3xl border border-white/75 bg-white/[0.42] p-4 shadow-[0_20px_60px_rgba(107,67,42,0.14),inset_0_1px_0_rgba(255,255,255,0.72)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08] dark:shadow-[0_20px_60px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.10)]"
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/85 dark:bg-white/18"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-[var(--accent)]/18 blur-2xl dark:bg-[var(--accent)]/10"
-          />
-          <div className="relative flex items-center gap-3">
-            {avatarSrc && (
-              <Image
-                src={avatarSrc}
-                alt={siteAnimal ?? '프로필'}
-                width={44}
-                height={44}
-                unoptimized={useKakaoAvatar}
-                className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm"
-                style={{ border: '2px solid var(--card-border)' }}
-              />
-            )}
-            <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase text-[var(--brown)]/70 dark:text-[var(--accent)]/85">
-                Today coffee
-              </p>
-              <p className="mt-1 text-xl font-black leading-snug text-[var(--foreground)]">
-                {displayName && (
-                  <span className="mb-1 inline-flex items-center rounded-2xl border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(240,229,218,0.58))] px-3 py-1 text-[1.35rem] font-black text-[var(--brown)] shadow-[0_12px_28px_rgba(107,67,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-white/14 dark:bg-[linear-gradient(135deg,rgba(160,192,104,0.24),rgba(255,255,255,0.08))] dark:text-white dark:shadow-[0_12px_28px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    {displayName}님
-                  </span>
-                )}
-                <span className="block font-black text-[var(--foreground)]">오늘 어떤 커피 마실까요?</span>
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Map hero card */}
-        <motion.div {...fadeUp(0.05)}>
-          <Link
-            href="/map"
-            className="group relative block min-h-[220px] overflow-hidden rounded-[2rem] border border-white/18 no-underline shadow-[0_28px_70px_rgba(107,67,42,0.25)] dark:border-white/12 dark:shadow-[0_30px_80px_rgba(0,0,0,0.58)]"
-            style={{ background: 'linear-gradient(135deg, #151412, #6B432A)' }}
-          >
-            <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
-              <div className="absolute left-[10%] top-[20%] h-px w-[85%] -rotate-[15deg] bg-[var(--sub)]" />
-              <div className="absolute left-0 top-[58%] h-px w-full rotate-[8deg] bg-[var(--sub)]" />
-              <div className="absolute left-[45%] top-0 h-full w-px rotate-[12deg] bg-[var(--sub)]" />
-              <div className="absolute left-[72%] top-0 h-full w-px -rotate-[8deg] bg-[var(--sub)]" />
-            </div>
-            <div className="pointer-events-none absolute -bottom-16 -right-12 h-52 w-52 rounded-full bg-[var(--accent)]/20 blur-3xl dark:bg-[var(--accent)]/14" />
-            <div className="pointer-events-none absolute inset-x-4 top-4 rounded-3xl border border-white/14 bg-white/10 p-3 backdrop-blur-xl dark:border-white/12 dark:bg-white/[0.07]">
-              <div className="flex items-center gap-2 text-xs font-black text-white/60 dark:text-white/72">
-                <Compass size={14} /> 근처 스페셜티 카페 탐색 중
+      <main className="relative z-10 mx-auto w-full max-w-md flex-1 px-5 pb-32 pt-24 text-[#1b1c1c] dark:text-[#f3f0ef]">
+        <motion.section {...fadeUp(0)} className="mb-16">
+          <Link href="/map" className="group relative mb-8 block aspect-[4/5] overflow-hidden rounded-2xl bg-[#271310] shadow-[0_26px_70px_rgba(62,39,35,0.24)]">
+            <Image
+              src="/image/home/cafe-1.png"
+              alt="따뜻한 조명의 스페셜티 카페 바"
+              fill
+              priority
+              sizes="(max-width: 480px) 100vw, 448px"
+              className="object-cover object-center transition-transform duration-1000 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#271310]/86 via-[#271310]/18 to-transparent" />
+            <div className="absolute bottom-8 left-8 right-8">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.22em] text-white/70">Today&apos;s Selection</p>
+              <h1 className="font-serif text-4xl font-bold italic leading-tight text-white">
+                기분좋은<br />오후에요.
+              </h1>
+              <div className="mt-6 flex items-center gap-3">
+                <Image
+                  src={avatarSrc}
+                  alt=""
+                  width={40}
+                  height={40}
+                  unoptimized={useKakaoAvatar}
+                  className="h-10 w-10 rounded-full border border-white/30 object-cover"
+                />
+                <span className="min-w-0 truncate text-sm font-bold text-white/90">{displayName}님</span>
               </div>
             </div>
-
-            <div className="relative z-10 p-6 pt-20">
-              <span
-                className="text-[10px] font-black uppercase tracking-widest"
-                style={{ color: 'var(--accent)' }}
-              >
-                원두로 지도
-              </span>
-              <h2 className="mt-2 text-2xl font-black leading-tight text-white">
-                스페셜티<br />카페를 탐색하세요
-              </h2>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--primary)] shadow-[0_12px_28px_rgba(143,174,90,0.28)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_36px_rgba(143,174,90,0.38)] active:scale-[0.98]">
-                <MapPin size={14} /> 지도 열기
-              </div>
+            <div className="absolute right-0 top-8 bg-[#d8e8be] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-[#131f05] [writing-mode:vertical-rl]">
+              LV.4 TASTER
             </div>
-
-            <motion.div
-              className="pointer-events-none absolute right-5 top-[92px] flex h-12 w-12 items-center justify-center rounded-2xl border border-white/18 bg-white/12 text-white shadow-lg backdrop-blur-xl dark:border-white/14 dark:bg-white/[0.08]"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MapPin size={18} />
-            </motion.div>
           </Link>
-        </motion.div>
 
-        {/* Service grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {serviceCards.map(({ href, title, description, icon: Icon, iconBgClass }, index) => (
-            <motion.div key={title} {...fadeUp(0.1 + index * 0.03)}>
-              <Link
-                href={href}
-                className={`group block min-h-[8.25rem] rounded-[1.65rem] p-5 no-underline hover:-translate-y-1 hover:shadow-[0_26px_62px_rgba(107,67,42,0.20)] dark:hover:shadow-[0_26px_62px_rgba(0,0,0,0.48)] ${homeGlassCardClass}`}
-              >
-                <span aria-hidden className={homeGlassShineClass} />
-                <span aria-hidden className={homeGlassGlowClass} />
-                <div className={`relative ${homeGlassIconClass} ${iconBgClass}`}>
-                  <Icon size={19} />
-                </div>
-                <h3 className="relative mt-3 break-keep text-sm font-black text-[var(--foreground)]">
-                  {title}
-                </h3>
-                <p className="relative mt-1 break-keep text-[11px] leading-relaxed text-[var(--text-secondary)]">
-                  {description}
-                </p>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Featured beans */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <p
-              className="text-[11px] font-black uppercase tracking-widest"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              추천 원두
-            </p>
+          <div className="flex items-center justify-between border-t border-[#e5e2e1] pt-6 dark:border-white/10">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#504442] dark:text-white/60">Bean of the Day</p>
+              <h2 className="mt-1 text-base font-bold text-[#271310] dark:text-[#e3beb8]">에스메랄다 프라이빗</h2>
+            </div>
             <Link
               href="/beans"
-              className="flex items-center gap-1 text-[11px] font-bold no-underline"
-              style={{ color: 'var(--accent)' }}
+              aria-label="오늘의 원두 보기"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-[#271310] text-white shadow-xl transition hover:bg-[#3e2723] dark:bg-[#e3beb8] dark:text-[#2b1613]"
             >
-              전체 보기 <ArrowRight size={11} />
+              <Play size={19} fill="currentColor" />
             </Link>
           </div>
-          <motion.div
-            variants={beanContainer}
-            initial="hidden"
-            animate="show"
-            className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide"
-          >
-            {FEATURED_BEANS.map((bean) => (
-              <motion.div key={bean.id} variants={beanItem} className="h-[6.4rem] w-32 shrink-0">
-                <Link
-                  href="/beans"
-                  className={`group flex h-full w-full flex-col rounded-[1.35rem] p-3.5 no-underline hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(107,67,42,0.18)] dark:hover:shadow-[0_22px_50px_rgba(0,0,0,0.46)] ${homeGlassCardClass}`}
-                >
-                  <span aria-hidden className={homeGlassShineClass} />
-                  <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[var(--sub)]/18 blur-2xl dark:bg-[var(--sub)]/10" />
-                  <span className="relative text-2xl leading-none">{bean.flag}</span>
-                  <p
-                    className="relative mt-2 overflow-hidden break-keep text-[11px] font-black leading-tight [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-                    style={{ color: 'var(--foreground)' }}
-                  >
-                    {bean.name}
-                  </p>
-                  <p
-                    className="relative mt-1 overflow-hidden break-keep text-[10px] leading-snug [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {bean.notes.slice(0, 2).join(' · ')}
-                  </p>
-                </Link>
-              </motion.div>
-            ))}
+        </motion.section>
+
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="mb-16 grid grid-cols-12 gap-4"
+        >
+          <motion.div variants={staggerItem} className="col-span-8">
+            <Link
+              href="/cbti"
+              className="group flex min-h-56 flex-col justify-between rounded-xl border border-transparent bg-[#f6f3f2] p-8 transition hover:border-[#d3c3c0] dark:bg-white/8 dark:hover:border-white/16"
+            >
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#556341] dark:text-[#bdcca3]">Test</span>
+                <h3 className="mt-4 font-serif text-3xl font-bold text-[#271310] dark:text-[#e3beb8]">커피 CBTI</h3>
+                <p className="mt-2 break-keep text-sm leading-relaxed text-[#504442] dark:text-white/68">
+                  당신만의 유니크한 커피 취향을 발견하는 시간.
+                </p>
+              </div>
+              <Sparkles className="ml-auto mt-8 text-[#271310]/15 transition group-hover:text-[#271310]/25 dark:text-white/14" size={42} />
+            </Link>
           </motion.div>
+          <motion.div variants={staggerItem} className="col-span-4 flex flex-col gap-4">
+            <Link href="/beans" className="flex aspect-square flex-col justify-between rounded-xl bg-[#3e2723] p-5 text-white">
+              <Bean size={20} />
+              <p className="break-keep text-[11px] font-bold leading-tight text-white/70">원두 정보<br />아카이브</p>
+            </Link>
+            <Link href="/map" className="group relative min-h-28 flex-1 overflow-hidden rounded-xl bg-[#fdf2f0]">
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(174,141,135,.52),rgba(214,230,187,.62))] transition-transform duration-700 group-hover:scale-110" />
+              <div className="absolute inset-0 flex items-center justify-center p-4">
+                <span className="rounded-full border border-[#271310]/20 bg-white/30 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[#271310] backdrop-blur-sm">
+                  Magazine
+                </span>
+              </div>
+            </Link>
+          </motion.div>
+        </motion.section>
+
+        <section className="mb-16">
+          <div className="mb-8 flex items-baseline justify-between px-1">
+            <h3 className="font-serif text-3xl font-bold italic text-[#271310] dark:text-[#e3beb8]">Curated Beans</h3>
+            <Link href="/beans" className="border-b border-[#827472]/30 pb-0.5 text-[11px] font-bold uppercase tracking-wider text-[#827472] dark:text-white/54">
+              View All
+            </Link>
+          </div>
+
+          <div className="space-y-12">
+            {CURATED_BEANS.map((bean, index) => {
+              const reversed = index % 2 === 1
+              return (
+                <motion.article
+                  key={bean.name}
+                  {...fadeUp(0.08 + index * 0.08)}
+                  className={`flex items-start gap-6 ${reversed ? 'flex-row-reverse text-right' : ''}`}
+                >
+                  <div className={`flex aspect-[3/4] w-1/3 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br ${bean.gradient} text-6xl font-bold text-white/10 shadow-sm`}>
+                    {bean.initial}
+                  </div>
+                  <div className="min-w-0 flex-1 pt-2">
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[#556341] dark:text-[#bdcca3]">{bean.origin}</p>
+                    <h4 className="mb-4 text-xl font-bold leading-tight text-[#271310] dark:text-[#e3beb8]">{bean.name}</h4>
+                    <p className="mb-6 line-clamp-3 break-keep text-xs font-normal leading-relaxed text-[#504442] dark:text-white/68">
+                      {bean.description}
+                    </p>
+                    <div className={`flex items-center gap-4 ${reversed ? 'justify-end' : ''}`}>
+                      {!reversed && (
+                        <div className="flex gap-1.5">
+                          {bean.swatches.map((swatch) => <span key={swatch} className="h-3 w-3 rounded-full border border-[#e5e2e1]" style={{ backgroundColor: swatch }} />)}
+                        </div>
+                      )}
+                      <span className="text-[10px] font-bold text-[#827472] dark:text-white/50">{bean.notes}</span>
+                      {reversed && (
+                        <div className="flex gap-1.5">
+                          {bean.swatches.map((swatch) => <span key={swatch} className="h-3 w-3 rounded-full border border-[#e5e2e1]" style={{ backgroundColor: swatch }} />)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.article>
+              )
+            })}
+          </div>
         </section>
 
-        {/* Marketplace teaser */}
-        <motion.div {...fadeUp(0.3)}>
-          <div className={`flex items-center gap-4 rounded-[1.65rem] px-5 py-4 ${homeGlassCardClass}`}>
-            <span aria-hidden className={homeGlassShineClass} />
-            <span aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[var(--accent)]/18 blur-2xl dark:bg-[var(--accent)]/10" />
-            <div className={`relative bg-[var(--card-icon-bg)] dark:bg-white/10 ${homeGlassIconClass}`}>
-              <ShoppingBag size={18} />
+        <motion.section {...fadeUp(0.25)} className="mb-10">
+          <Link href="/beans" className="group relative block overflow-hidden rounded-2xl bg-[#271310] p-10 text-center text-[#fcf9f8]">
+            <div className="absolute right-0 top-0 h-24 w-24 -translate-y-1/2 translate-x-1/2 rounded-full bg-white/5 blur-2xl" />
+            <div className="relative z-10">
+              <h3 className="font-serif text-2xl font-bold italic">Coming Soon</h3>
+              <p className="mb-8 mt-2 text-[11px] font-bold uppercase tracking-widest text-[#fcf9f8]/60">Bean Marketplace</p>
+              <span className="inline-block rounded-full border border-[#fcf9f8]/20 px-6 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition group-hover:bg-white group-hover:text-[#271310]">
+                Explore Market
+              </span>
             </div>
-            <div className="relative min-w-0 flex-1">
-              <p className="break-keep text-sm font-black" style={{ color: 'var(--foreground)' }}>
-                원두 마켓플레이스
-              </p>
-              <p className="mt-0.5 break-keep text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                스페셜티 원두 구매 · 준비 중
-              </p>
-            </div>
-            <span className="relative shrink-0 rounded-full border border-white/70 bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-black text-[var(--primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-[rgba(160,192,104,0.22)] dark:text-white">
-              SOON
-            </span>
-          </div>
-        </motion.div>
+          </Link>
+        </motion.section>
+      </main>
 
-      </div>
-
-      <footer className="relative z-10 px-4 py-6 text-center">
-        <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-          © 2026 원<span className="text-[#8FAE5A]">두</span>로
-        </p>
-      </footer>
+      <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-[#f0eded] bg-[#fcf9f8]/95 backdrop-blur-xl dark:border-white/10 dark:bg-[#161616]/92">
+        <div className="mx-auto flex h-20 max-w-md items-center justify-around px-6">
+          {bottomNavItems.map(({ href, label, icon: Icon, active }) => (
+            <Link
+              key={label}
+              href={href}
+              className={`flex flex-col items-center justify-center transition ${active ? 'scale-110 text-[#271310] dark:text-[#e3beb8]' : 'text-[#d3c3c0] hover:text-[#271310] dark:text-white/34 dark:hover:text-white/80'}`}
+            >
+              <Icon size={21} fill={active ? 'currentColor' : 'none'} />
+              <span className="mt-1 text-[9px] font-bold uppercase tracking-tight">{label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </>
   )
 }
