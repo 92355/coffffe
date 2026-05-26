@@ -239,23 +239,19 @@ export default function HomeContent() {
     async function loadWeather(): Promise<void> {
       try {
         const params = new URLSearchParams({
-          latitude: String(currentLocation.lat),
-          longitude: String(currentLocation.lng),
-          current: 'temperature_2m,weather_code',
-          timezone: 'auto',
+          lat: String(currentLocation.lat),
+          lng: String(currentLocation.lng),
         })
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, {
+        const response = await fetch(`/api/weather?${params.toString()}`, {
           signal: controller.signal,
         })
         if (!response.ok) throw new Error('Failed to load weather.')
         const data = await response.json() as {
-          current?: {
-            temperature_2m?: number
-            weather_code?: number
-          }
+          temperature?: number
+          weatherCode?: number
         }
-        const temperature = data.current?.temperature_2m
-        const weatherCode = data.current?.weather_code
+        const temperature = data.temperature
+        const weatherCode = data.weatherCode
 
         if (typeof temperature !== 'number' || typeof weatherCode !== 'number') {
           throw new Error('Invalid weather response.')
