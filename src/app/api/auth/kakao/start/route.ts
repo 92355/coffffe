@@ -1,18 +1,19 @@
-import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   KAKAO_OAUTH_STATE_COOKIE,
   KAKAO_PENDING_SIGNUP_COOKIE,
   KAKAO_RETURN_TO_COOKIE,
   getKakaoRestApiKey,
-} from '@/lib/user-auth'
+} from '@/lib/user-auth-edge'
 import { isNicknameAnimal } from '@/lib/nickname'
+
+export const runtime = 'edge'
 
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize'
 const OAUTH_STATE_MAX_AGE_SECONDS = 60 * 10
 
 export function GET(request: NextRequest) {
-  const state = randomBytes(24).toString('base64url')
+  const state = generateState()
   const redirectUri = getRedirectUri(request)
   const authorizeUrl = new URL(KAKAO_AUTHORIZE_URL)
 
@@ -48,6 +49,18 @@ export function GET(request: NextRequest) {
   }
 
   return response
+}
+
+function generateState(): string {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
 function getRedirectUri(request: NextRequest): string {
