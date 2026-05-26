@@ -29,11 +29,11 @@ const CURATED_BEANS = [
 ]
 
 const bottomNavItems = [
-  { href: '/', label: 'Home', icon: Home, active: true },
-  { href: '/map', label: 'Map', icon: Map, active: false },
-  { href: '/cbti', label: 'CBTI', icon: Sparkles, active: false },
-  { href: '/beans', label: 'Beans', icon: ShoppingBag, active: false },
-  { href: '#profile', label: 'User', icon: UserRound, active: false },
+  { href: '/', label: '홈', icon: Home, active: true },
+  { href: '/map', label: '지도', icon: Map, active: false },
+  { href: '/cbti', label: '취향테스트', icon: Sparkles, active: false },
+  { href: '/beans', label: '원두', icon: ShoppingBag, active: false },
+  { href: '#profile', label: '프로필', icon: UserRound, active: false },
 ]
 
 const fadeUp = (delay = 0) => ({
@@ -103,7 +103,7 @@ export default function HomeContent() {
               </div>
             </div>
             <div className="absolute right-0 top-8 bg-[#d8e8be] px-3 py-4 text-[10px] font-bold uppercase tracking-widest text-[#131f05] [writing-mode:vertical-rl]">
-              LV.4 TASTER
+              로스팅카페
             </div>
           </Link>
 
