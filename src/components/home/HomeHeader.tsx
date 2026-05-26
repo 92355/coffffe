@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, LogIn, LogOut, UserRound } from 'lucide-react'
+import { LayoutDashboard, LogOut, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -105,11 +105,13 @@ export default function HomeHeader() {
               <button
                 type="button"
                 onClick={loginWithKakao}
-                className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--brown)] px-2.5 text-xs font-black text-white shadow-[0_10px_24px_rgba(107,67,42,0.18)] transition-all hover:-translate-y-0.5 active:scale-[0.98] dark:bg-[var(--accent)] dark:text-[#151412] dark:shadow-[0_10px_24px_rgba(160,192,104,0.20)]"
+                className="flex h-9 items-center gap-1.5 rounded-full bg-[#FEE500] px-3 text-xs font-black text-[#191600] shadow-[0_10px_24px_rgba(254,229,0,0.35)] transition-all hover:-translate-y-0.5 active:scale-[0.98]"
                 aria-label="카카오 로그인"
               >
-                <LogIn size={14} />
-                <span className="hidden sm:inline">로그인</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.61 5.08 4.07 6.55l-1.04 3.86a.3.3 0 0 0 .46.32L9.7 19.1A11.3 11.3 0 0 0 12 19.3c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3" />
+                </svg>
+                <span className="hidden sm:inline">카카오 로그인</span>
               </button>
             )}
             <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/50 shadow-[0_8px_22px_rgba(107,67,42,0.10)] backdrop-blur-xl dark:border-white/12 dark:bg-white/10 dark:shadow-[0_8px_22px_rgba(0,0,0,0.28)] [&>button]:h-9 [&>button]:w-9 [&>button]:text-[var(--brown)] dark:[&>button]:text-white">

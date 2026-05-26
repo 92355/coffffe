@@ -81,9 +81,5 @@ export async function GET(request: NextRequest) {
   const filters = { roastLevel: roast, beanOrigin: origin, brewMethod: method }
   const result = (await getCafes()).filter(cafe => matchesFilters(cafe, filters))
 
-  return NextResponse.json(result, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  })
+  return NextResponse.json(result)
 }
