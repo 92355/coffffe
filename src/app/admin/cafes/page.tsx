@@ -14,7 +14,7 @@ const DEFAULT_SCORE = 4.5
 const DEFAULT_LAT = 37.3084
 const DEFAULT_LNG = 126.8419
 
-const PREFILL_KEY = 'coffffe_admin_cafe_prefill'
+const PREFILL_KEY = 'wonduro_admin_cafe_prefill'
 
 interface KakaoPlace {
   kakaoPlaceId: string
@@ -194,7 +194,7 @@ export default function CafesAdminPage() {
             <input
               value={kakaoQuery}
               onChange={e => setKakaoQuery(e.target.value)}
-              placeholder="안산 카페 검색"
+              placeholder="카페 검색"
               className="h-10 min-w-0 flex-1 rounded-md border border-[#d8c8b8] px-3 text-sm font-semibold outline-none focus:border-[#d66612]"
             />
             <button type="submit" className="flex h-10 w-10 items-center justify-center rounded-md bg-[#5a2e11] text-white">

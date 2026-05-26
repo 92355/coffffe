@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CheckCircle2, MapPin, MessageSquare, Trash2, XCircle } from 'lucide-react'
 import type { CafeReport, ReportStatus } from '@/types/report'
 
-const PREFILL_KEY = 'coffffe_admin_cafe_prefill'
+const PREFILL_KEY = 'wonduro_admin_cafe_prefill'
 const DEFAULT_LAT = 37.3084
 const DEFAULT_LNG = 126.8419
 

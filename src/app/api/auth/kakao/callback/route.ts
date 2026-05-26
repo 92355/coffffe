@@ -165,44 +165,15 @@ async function upsertKakaoUser(
   pendingProfile: PendingSignupProfile | null,
 ): Promise<DatabaseUser> {
   const profile = kakaoUser.kakao_account?.profile
-  const nickname = profile?.nickname?.trim() || `Kakao ${kakaoUser.id}`
-  const kakaoId = String(kakaoUser.id)
-  const databaseClient = createSupabaseAdminClient()
-  const { data: existingUser, error: existingUserError } = await databaseClient
-    .from('users')
-    .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
-    .eq('kakao_id', kakaoId)
-    .maybeSingle()
-
-  if (existingUserError) throw existingUserError
-
-  if (existingUser) {
-    const { data, error } = await databaseClient
-      .from('users')
-      .update({
-        nickname,
-        profile_image_url: profile?.profile_image_url ?? null,
-      })
-      .eq('id', existingUser.id)
-      .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
-      .single()
-
-    if (error) throw error
-
-    return data as DatabaseUser
-  }
-
   const siteProfile = pendingProfile ?? generateNickname()
-  const { data, error } = await databaseClient
-    .from('users')
-    .insert({
-      kakao_id: kakaoId,
-      nickname,
-      profile_image_url: profile?.profile_image_url ?? null,
-      site_nickname: siteProfile.nickname,
-      site_animal: siteProfile.animal,
+  const { data, error } = await createSupabaseAdminClient()
+    .rpc('upsert_kakao_user', {
+      p_kakao_id: String(kakaoUser.id),
+      p_nickname: profile?.nickname?.trim() || `Kakao ${kakaoUser.id}`,
+      p_profile_image_url: profile?.profile_image_url ?? null,
+      p_site_nickname: siteProfile.nickname,
+      p_site_animal: siteProfile.animal,
     })
-    .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
     .single()
 
   if (error) throw error

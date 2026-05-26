@@ -1,4 +1,4 @@
-export const NICKNAME_STORAGE_KEY = 'coffffe_user'
+export const NICKNAME_STORAGE_KEY = 'wonduro_user'
 
 export const NICKNAME_ADJECTIVES = [
   '부드러운',

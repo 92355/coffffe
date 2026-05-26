@@ -24,7 +24,7 @@ interface HomeExperienceProps {
 
 const FEATURES = [
   {
-    title: '안산 카페 지도',
+    title: '카페 지도',
     description: '스페셜티·로스터리·노트북·디저트 카페를 한 화면에서 탐색하고, 마커를 탭하면 바로 상세 정보를 확인합니다.',
     icon: MapPin,
     href: '/map',
@@ -142,7 +142,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/12 px-4 py-1.5 text-xs font-bold text-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-xl"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_18px_rgba(143,174,90,0.95)]" />
-              안산 스페셜티 커피 큐레이션
+              스페셜티 커피 큐레이션
             </motion.span>
 
             <motion.h1
@@ -158,7 +158,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
               variants={riseItem}
               className="mx-auto mt-6 max-w-xl text-base font-bold leading-8 text-[#f3eee7]/85 sm:text-lg lg:mx-0"
             >
-              안산의 스페셜티 카페와 원두를 취향 필터로 탐색합니다.
+              스페셜티 카페와 원두를 취향 필터로 탐색합니다.
               <br className="hidden sm:block" />
               산미·바디·로스팅까지 보고 오늘 갈 카페를 골라보세요.
             </motion.p>
@@ -286,7 +286,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
                   <div className="rounded-2xl border border-[#5a2e11]/12 bg-white p-4">
                     <p className="text-xs font-bold text-[#8fae5a]">추천 카페</p>
                     <p className="mt-1 text-lg font-black text-[#2d1a10]">
-                      {featuredCafes[0]?.name ?? '안산 스페셜티'}
+                      {featuredCafes[0]?.name ?? '스페셜티 카페'}
                     </p>
                   </div>
                   <div className="rounded-2xl p-4" style={{ background: '#5a2e11' }}>
@@ -398,7 +398,7 @@ export default function HomeExperience({ featuredCafes }: HomeExperienceProps) {
             </div>
             <h2 className="text-3xl font-black text-[#2d1a10] sm:text-4xl">취향에 맞는 커피, 더 쉽게</h2>
             <p className="mx-auto mt-4 max-w-lg text-sm font-medium leading-7 text-[#7a5c3e]">
-              카페 검색부터 취향 분석까지, 안산 스페셜티 커피 씬을 한 곳에서 탐색하세요.
+              카페 검색부터 취향 분석까지, 스페셜티 커피 씬을 한 곳에서 탐색하세요.
             </p>
           </div>
           <div className="grid gap-5 md:grid-cols-3">

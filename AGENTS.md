@@ -49,7 +49,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 4. 고정 기술 기준
 
-- 안산 스페셜티 카페와 원두 정보를 탐색하는 개인/소규모 웹앱
+- 스페셜티 카페와 원두 정보를 탐색하는 개인/소규모 웹앱
 - Next.js App Router
 - React
 - TypeScript

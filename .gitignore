@@ -3,9 +3,6 @@
 # dependencies
 /node_modules
 /.pnp
-<<<<<<< HEAD
-.pnp.js
-=======
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -38,9 +35,6 @@ yarn-error.log*
 
 .pnpm-debug.log*
 
-
-
-
 # vercel
 .vercel
 
@@ -53,7 +47,9 @@ next-env.d.ts
 
 .claude/
 
-.vercel
-
 CLAUDE.md
 AGENTS.md
+
+# screenshots & local utility scripts
+/screenshots/
+/scripts/screenshot-all.js

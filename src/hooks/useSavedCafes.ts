@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { User } from '@/hooks/useUser'
 
-const SAVED_CAFES_STORAGE_KEY = 'coffffe_saved_cafes'
+const SAVED_CAFES_STORAGE_KEY = 'wonduro_saved_cafes'
 
 interface SavedCafesState {
   favoriteCafeIds: string[]

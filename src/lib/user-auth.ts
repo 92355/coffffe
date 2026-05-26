@@ -5,10 +5,10 @@ import { cookies } from 'next/headers'
 
 import { getRequiredEnv } from './env'
 
-export const USER_SESSION_COOKIE = 'coffffe_session'
-export const KAKAO_OAUTH_STATE_COOKIE = 'coffffe_kakao_oauth_state'
-export const KAKAO_PENDING_SIGNUP_COOKIE = 'coffffe_pending_signup'
-export const KAKAO_RETURN_TO_COOKIE = 'coffffe_kakao_return_to'
+export const USER_SESSION_COOKIE = 'wonduro_session'
+export const KAKAO_OAUTH_STATE_COOKIE = 'wonduro_kakao_oauth_state'
+export const KAKAO_PENDING_SIGNUP_COOKIE = 'wonduro_pending_signup'
+export const KAKAO_RETURN_TO_COOKIE = 'wonduro_kakao_return_to'
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 const KAKAO_REST_API_KEY = 'KAKAO_REST_API_KEY'

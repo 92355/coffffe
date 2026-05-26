@@ -147,7 +147,7 @@ export default function HomeContent() {
                 원두로 지도
               </span>
               <h2 className="mt-2 text-2xl font-black leading-tight text-white">
-                안산 스페셜티<br />카페를 탐색하세요
+                스페셜티<br />카페를 탐색하세요
               </h2>
               <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--primary)] shadow-[0_12px_28px_rgba(143,174,90,0.28)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_36px_rgba(143,174,90,0.38)] active:scale-[0.98]">
                 <MapPin size={14} /> 지도 열기

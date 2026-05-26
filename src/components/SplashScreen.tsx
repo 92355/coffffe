@@ -188,7 +188,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
           원<span style={{ color: '#8FAE5A' }}>두</span>로
         </p>
         <p style={{ fontSize: 12, color: 'rgba(100,65,30,0.55)', marginTop: 6, letterSpacing: '0.06em' }}>
-          안산 스페셜티 커피 큐레이션
+          스페셜티 커피 큐레이션
         </p>
       </div>
 

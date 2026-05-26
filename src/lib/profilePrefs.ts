@@ -6,7 +6,7 @@ export interface ProfilePrefs {
   avatarPreference: AvatarPreference
 }
 
-export const PROFILE_PREFS_STORAGE_KEY = 'coffffe_profile_prefs'
+export const PROFILE_PREFS_STORAGE_KEY = 'wonduro_profile_prefs'
 
 const DEFAULT_PROFILE_PREFS: ProfilePrefs = {
   nicknamePreference: 'random',
