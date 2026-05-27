@@ -8,6 +8,7 @@ export interface ReportPayload {
   address?: string
   lat?: number
   lng?: number
+  imageUrl?: string
   correctionTypes: string[]
   memo?: string
   anonymousId: string
@@ -69,6 +70,7 @@ export function parseReportPayload(value: unknown): ReportPayload {
     address: readOptionalString(value, 'address', MAX_ADDRESS_LENGTH),
     lat: readOptionalNumber(value, 'lat'),
     lng: readOptionalNumber(value, 'lng'),
+    imageUrl: readOptionalString(value, 'imageUrl', 500),
     correctionTypes: readCorrectionTypes(value),
     memo: readOptionalString(value, 'memo'),
     anonymousId: readRequiredString(value, 'anonymousId', MAX_NAME_LENGTH),

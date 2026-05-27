@@ -1,7 +1,7 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { Check, MapPin, Search, X } from 'lucide-react'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { Camera, Check, MapPin, Search, X } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
 import type { ReportType } from '@/types/report'
@@ -49,10 +49,13 @@ export default function ReportSheet({
   const [manualAddress, setManualAddress] = useState(initialLocation ? '주소 확인 중...' : '')
   const [selectedCorrectionTypes, setSelectedCorrectionTypes] = useState<string[]>([])
   const [memo, setMemo] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [searching, setSearching] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const selectedCafe = useMemo(
     () => cafes.find((cafe) => cafe.id === selectedCafeId) ?? null,
@@ -120,6 +123,40 @@ export default function ReportSheet({
     ))
   }
 
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage('파일 크기는 5MB 이하여야 합니다.')
+      return
+    }
+
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+    setMessage('')
+  }
+
+  function removeImage() {
+    setImageFile(null)
+    if (imagePreview) URL.revokeObjectURL(imagePreview)
+    setImagePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function uploadImage(file: File): Promise<string | null> {
+    const form = new FormData()
+    form.append('image', file)
+    const response = await fetch('/api/reports/images', { method: 'POST', body: form })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({})) as { error?: unknown }
+      setMessage(typeof body.error === 'string' ? body.error : '이미지 업로드에 실패했습니다.')
+      return null
+    }
+    const body = await response.json() as { url: string }
+    return body.url
+  }
+
   async function submitReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -139,11 +176,22 @@ export default function ReportSheet({
     setSubmitting(true)
     setMessage('제보를 보내는 중입니다.')
 
+    let imageUrl: string | undefined
+    if (imageFile) {
+      const url = await uploadImage(imageFile)
+      if (!url) {
+        setSubmitting(false)
+        return
+      }
+      imageUrl = url
+    }
+
     const response = await fetch('/api/reports', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...payload,
+        imageUrl,
         anonymousId: user.type === 'anonymous' ? user.anonymousId : user.id,
         nickname: user.nickname,
       }),
@@ -355,6 +403,40 @@ export default function ReportSheet({
               className="mt-1 w-full rounded-xl border border-[#d8c8b8] bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-[#d66612]"
             />
           </label>
+
+          <div className="mt-4">
+            <p className="mb-2 text-sm font-bold text-[#5f4634]">사진 첨부 <span className="font-semibold text-[#9a8474]">(선택)</span></p>
+            {imagePreview ? (
+              <div className="relative inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagePreview} alt="첨부 이미지 미리보기" className="h-32 w-auto max-w-full rounded-xl border border-[#d8c8b8] object-cover" />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#5a2e11] text-white shadow"
+                  aria-label="이미지 제거"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex h-20 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#c4a98e] bg-white text-sm font-bold text-[#9a7a60] hover:border-[#d66612] hover:text-[#d66612]"
+              >
+                <Camera size={18} />
+                사진 추가
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
 
           <label className="mt-4 flex items-start gap-2 rounded-xl bg-white p-3 text-xs font-bold leading-5 text-[#6f5a47]">
             <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-1" />

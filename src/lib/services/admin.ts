@@ -135,6 +135,7 @@ export async function submitReport(body: unknown, userId: string | null = null):
     address: p.address ?? null,
     lat: p.lat ?? null,
     lng: p.lng ?? null,
+    image_url: p.imageUrl ?? null,
     correction_types: p.correctionTypes,
     memo: p.memo ?? null,
     anonymous_id: p.anonymousId,

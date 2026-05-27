@@ -218,6 +218,16 @@ export async function uploadCafeImage(path: string, file: File): Promise<string>
   return data.publicUrl
 }
 
+export async function uploadReportImage(path: string, file: File): Promise<string> {
+  const supabase = createSupabaseAdminClient()
+  const { error } = await supabase.storage
+    .from('report-images')
+    .upload(path, file, { contentType: file.type, upsert: false })
+  if (error) throw error
+  const { data } = supabase.storage.from('report-images').getPublicUrl(path)
+  return data.publicUrl
+}
+
 export async function uploadAvatar(path: string, file: File, userId: string): Promise<string> {
   const supabase = createSupabaseAdminClient()
   const { error: uploadError } = await supabase.storage
@@ -244,6 +254,7 @@ export interface DatabaseReportPayload {
   address: string | null
   lat: number | null
   lng: number | null
+  image_url: string | null
   correction_types: string[]
   memo: string | null
   anonymous_id: string

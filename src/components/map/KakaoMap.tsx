@@ -61,6 +61,7 @@ export default function KakaoMap({
   const onUserLocationChangeRef = useRef(onUserLocationChange)
   const onMapClickRef = useRef(onMapClick)
   const handledZoomRequestIdRef = useRef(0)
+  const locationRequestIdRef = useRef(locationRequestId)
 
   // Latest cafes for the map-init callback (before effects can run)
   const cafesRef = useRef(cafes)
@@ -68,6 +69,7 @@ export default function KakaoMap({
   const prevCafesRef = useRef(cafes)
   const prevSelectedIdRef = useRef<string | null>(selectedCafe?.id ?? null)
 
+  useEffect(() => { locationRequestIdRef.current = locationRequestId }, [locationRequestId])
   useEffect(() => { onSelectRef.current = onCafeSelect }, [onCafeSelect])
   useEffect(() => { onBoundsChangeRef.current = onMapBoundsChange }, [onMapBoundsChange])
   useEffect(() => { onUserLocationChangeRef.current = onUserLocationChange }, [onUserLocationChange])
@@ -202,6 +204,9 @@ export default function KakaoMap({
     setMapType(map, mapType)
     notifyMapBoundsChange(map)
     renderAllRef.current(cafesRef.current, prevSelectedIdRef.current)
+    if (locationRequestIdRef.current !== 0) {
+      startWatchingUserLocation(map, userLocationOverlayRef, geolocationWatchIdRef, onUserLocationChangeRef)
+    }
   })
 
   useEffect(() => () => {

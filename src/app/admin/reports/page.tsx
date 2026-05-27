@@ -85,7 +85,7 @@ export default function ReportsAdminPage() {
       tags: [],
       openHours: '확인 필요',
       closedDays: [],
-      images: [],
+      images: report.imageUrl ? [report.imageUrl] : [],
       phone: '',
       instagramHandle: '',
       kakaoPlaceId: report.kakaoPlaceId ?? '',
@@ -134,6 +134,12 @@ export default function ReportsAdminPage() {
                 {report.memo && <p className="mt-2 text-xs font-semibold text-[#5f4634]">{report.memo}</p>}
                 {report.correctionTypes.length > 0 && (
                   <p className="mt-2 text-xs font-bold text-[#8b5a32]">수정 요청: {report.correctionTypes.join(', ')}</p>
+                )}
+                {report.imageUrl && (
+                  <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={report.imageUrl} alt="제보 첨부 이미지" className="max-h-48 w-auto rounded-md border border-[#eadfd3] object-contain" />
+                  </a>
                 )}
               </div>
             </div>
