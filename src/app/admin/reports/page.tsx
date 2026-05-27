@@ -1,11 +1,18 @@
 'use client'
 
-import { startTransition, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCircle2, MapPin, MessageSquare, Trash2, XCircle } from 'lucide-react'
+import { type FormEvent, startTransition, useEffect, useState } from 'react'
+import { CheckCircle2, ExternalLink, Link2, MapPin, MessageSquare, Trash2, X, XCircle } from 'lucide-react'
 import type { CafeReport, ReportStatus } from '@/types/report'
+import {
+  type CafeForm,
+  type KakaoPlace,
+  EMPTY_CAFE_FORM,
+  createKakaoCafeId,
+  toCafePayload,
+  CafeFormSection,
+  KakaoSearch,
+} from '@/components/admin/CafeFormPanel'
 
-const PREFILL_KEY = 'wonduro_admin_cafe_prefill'
 const DEFAULT_LAT = 37.3084
 const DEFAULT_LNG = 126.8419
 
@@ -24,9 +31,11 @@ async function readApiErrorMessage(response: Response): Promise<string> {
 }
 
 export default function ReportsAdminPage() {
-  const router = useRouter()
   const [reports, setReports] = useState<CafeReport[]>([])
   const [message, setMessage] = useState('')
+  const [panelReport, setPanelReport] = useState<CafeReport | null>(null)
+  const [cafeForm, setCafeForm] = useState<CafeForm>(EMPTY_CAFE_FORM)
+  const [panelMessage, setPanelMessage] = useState('')
 
   const pendingCount = reports.filter(r => r.status === 'pending').length
 
@@ -46,7 +55,7 @@ export default function ReportsAdminPage() {
   }, [])
 
   async function updateStatus(id: string, status: ReportStatus) {
-    setMessage('제보 상태를 변경하는 중입니다.')
+    setMessage('상태 변경 중...')
     const res = await fetch('/api/admin/reports', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -55,22 +64,22 @@ export default function ReportsAdminPage() {
     })
     if (!res.ok) { setMessage(`상태 변경 실패: ${await readApiErrorMessage(res)}`); return }
     await loadReports()
-    setMessage('제보 상태를 변경했습니다.')
+    setMessage('상태 변경됨')
   }
 
   async function deleteReport(id: string) {
-    setMessage('제보를 삭제하는 중입니다.')
+    setMessage('삭제 중...')
     const res = await fetch(`/api/admin/reports?id=${encodeURIComponent(id)}`, {
       method: 'DELETE', credentials: 'same-origin',
     })
     if (!res.ok) { setMessage(`삭제 실패: ${await readApiErrorMessage(res)}`); return }
     await loadReports()
-    setMessage('삭제했습니다.')
+    setMessage('삭제됨')
   }
 
-  function applyReportToForm(report: CafeReport) {
+  function openPanel(report: CafeReport) {
     const reportMemo = report.memo ? `제보 메모: ${report.memo}` : '제보로 등록된 카페입니다.'
-    const formData = {
+    setCafeForm({
       id: createReportCafeId(report),
       name: report.name ?? '',
       shortDescription: '제보로 등록된 카페입니다.',
@@ -78,20 +87,51 @@ export default function ReportsAdminPage() {
       address: report.address ?? '',
       lat: report.lat ?? DEFAULT_LAT,
       lng: report.lng ?? DEFAULT_LNG,
-      roastLevels: [],
-      beanOrigins: [],
-      brewMethods: [],
-      qualityScore: '4.5',
-      tags: [],
-      openHours: '확인 필요',
-      closedDays: [],
+      roastLevels: [], beanOrigins: [], brewMethods: [],
+      tags: [], openHours: '확인 필요', closedDays: [],
       images: report.imageUrl ? [report.imageUrl] : [],
-      phone: '',
-      instagramHandle: '',
-      kakaoPlaceId: report.kakaoPlaceId ?? '',
-    }
-    sessionStorage.setItem(PREFILL_KEY, JSON.stringify({ reportId: report.id, formData }))
-    router.push('/admin/cafes')
+      phone: '', instagramHandle: '', kakaoPlaceId: report.kakaoPlaceId ?? '',
+    })
+    setPanelReport(report)
+    setPanelMessage('')
+  }
+
+  function closePanel() {
+    setPanelReport(null)
+    setCafeForm(EMPTY_CAFE_FORM)
+    setPanelMessage('')
+  }
+
+  function applyPlace(place: KakaoPlace) {
+    setCafeForm(f => ({
+      ...f,
+      id: createKakaoCafeId(place),
+      name: place.name, address: place.address,
+      lat: place.lat, lng: place.lng,
+      phone: place.phone ?? '', kakaoPlaceId: place.kakaoPlaceId,
+    }))
+  }
+
+  async function saveCafeFromReport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!panelReport) return
+    setPanelMessage('저장 중...')
+    const res = await fetch('/api/admin/cafes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(toCafePayload(cafeForm)),
+    })
+    if (!res.ok) { setPanelMessage(`저장 실패: ${await readApiErrorMessage(res)}`); return }
+    await fetch('/api/admin/reports', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id: panelReport.id, status: 'approved' }),
+    })
+    await loadReports()
+    closePanel()
+    setMessage('카페 등록 + 제보 승인 완료')
   }
 
   return (
@@ -118,7 +158,7 @@ export default function ReportsAdminPage() {
         {reports.map(report => (
           <article key={report.id} className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-sm font-black">{report.name ?? '이름 없음'}</h3>
                   <ReportStatusBadge status={report.status} />
@@ -128,13 +168,38 @@ export default function ReportsAdminPage() {
                 </p>
                 {report.address && (
                   <p className="mt-2 flex items-start gap-1 text-xs font-semibold text-[#7a6654]">
-                    <MapPin size={13} />{report.address}
+                    <MapPin size={13} className="mt-0.5 shrink-0" />{report.address}
                   </p>
                 )}
                 {report.memo && <p className="mt-2 text-xs font-semibold text-[#5f4634]">{report.memo}</p>}
                 {report.correctionTypes.length > 0 && (
                   <p className="mt-2 text-xs font-bold text-[#8b5a32]">수정 요청: {report.correctionTypes.join(', ')}</p>
                 )}
+
+                {/* 외부 링크 버튼 */}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {report.kakaoPlaceId && (
+                    <a
+                      href={`https://place.map.kakao.com/${report.kakaoPlaceId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full border border-[#f5d000] bg-[#fffde7] px-2.5 py-1 text-xs font-bold text-[#5a4a00] hover:bg-[#fff8c0]"
+                    >
+                      <ExternalLink size={11} />카카오맵
+                    </a>
+                  )}
+                  {report.instagramHandle && (
+                    <a
+                      href={`https://instagram.com/${report.instagramHandle.replace(/^@/, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full border border-pink-200 bg-pink-50 px-2.5 py-1 text-xs font-bold text-pink-700 hover:bg-pink-100"
+                    >
+                      <Link2 size={11} />@{report.instagramHandle.replace(/^@/, '')}
+                    </a>
+                  )}
+                </div>
+
                 {report.imageUrl && (
                   <a href={report.imageUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -160,9 +225,9 @@ export default function ReportsAdminPage() {
             </div>
 
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => applyReportToForm(report)}
+              <button type="button" onClick={() => openPanel(report)}
                 className="h-9 rounded-md bg-[#5a2e11] text-xs font-black text-white hover:bg-[#6b3715] transition-colors">
-                폼 채워넣기 →
+                카페 등록 →
               </button>
               <button type="button" onClick={() => void deleteReport(report.id)}
                 className="flex h-9 items-center justify-center gap-1 rounded-md border border-neutral-300 bg-white text-xs font-black text-neutral-700 hover:border-red-200 hover:bg-red-50 hover:text-red-700 transition-colors">
@@ -172,6 +237,48 @@ export default function ReportsAdminPage() {
           </article>
         ))}
       </div>
+
+      {/* 슬라이드오버 패널 */}
+      {panelReport && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40" onClick={closePanel} />
+          <div className="fixed right-0 top-0 bottom-0 z-50 flex w-full max-w-3xl flex-col bg-white shadow-2xl">
+            {/* 패널 헤더 */}
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-[#eadfd3] px-5">
+              <div>
+                <span className="text-sm font-black text-[#3f2618]">카페 등록</span>
+                <span className="ml-2 text-xs font-semibold text-[#7a6654]">제보: {panelReport.name ?? '이름 없음'}</span>
+              </div>
+              <button type="button" onClick={closePanel} className="rounded-md p-1.5 text-[#5f4634] hover:bg-[#f7eee5]">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* 패널 본문 */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid gap-5 p-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+                {/* 카카오 검색 */}
+                <div className="rounded-lg border border-[#eadfd3] bg-[#fdf9f5] p-4">
+                  <KakaoSearch onApply={applyPlace} />
+                </div>
+
+                {/* 카페 폼 */}
+                <div>
+                  <CafeFormSection
+                    form={cafeForm}
+                    editingId={null}
+                    onFormChange={setCafeForm}
+                    onSubmit={saveCafeFromReport}
+                    onCancel={() => setCafeForm(EMPTY_CAFE_FORM)}
+                    message={panelMessage}
+                    submitLabel="등록 + 제보 승인"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

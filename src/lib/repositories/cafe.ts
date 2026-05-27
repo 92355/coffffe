@@ -107,7 +107,7 @@ export async function listCafes(): Promise<Cafe[]> {
   const { data, error } = await createSupabaseAdminClient()
     .from('cafes')
     .select('*')
-    .order('quality_score', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) throw error
   return (data as DatabaseCafe[]).map(toCafe)

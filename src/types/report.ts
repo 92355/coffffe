@@ -11,6 +11,7 @@ export interface CafeReport {
   lat?: number
   lng?: number
   imageUrl?: string
+  instagramHandle?: string
   correctionTypes: string[]
   memo?: string
   anonymousId: string

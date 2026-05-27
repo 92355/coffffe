@@ -89,7 +89,7 @@ export function parseCafePayload(value: unknown): CafePayload {
     roastLevels: readStringArray(value, 'roastLevels') as RoastLevel[],
     beanOrigins: readStringArray(value, 'beanOrigins') as BeanOrigin[],
     brewMethods: readStringArray(value, 'brewMethods') as BrewMethod[],
-    qualityScore: readNumber(value, 'qualityScore'),
+    qualityScore: typeof value.qualityScore === 'number' ? value.qualityScore : 0,
     tags: readStringArray(value, 'tags'),
     openHours: readString(value, 'openHours'),
     closedDays: readStringArray(value, 'closedDays'),
