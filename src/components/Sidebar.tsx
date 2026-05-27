@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -88,6 +88,10 @@ const MOBILE_CLOSED_HEIGHT_PX = 36
 const MOBILE_DRAG_THRESHOLD_PX = 48
 const MOBILE_DISMISS_THRESHOLD_PX = 72
 const MOBILE_DISMISS_VELOCITY = 400
+const MOBILE_SCROLL_DRAG_THRESHOLD_PX = 36
+const MOBILE_SCROLL_DRAG_PREVENT_THRESHOLD_PX = 8
+const MOBILE_SCROLL_LOCK_QUERY = '(max-width: 767px)'
+const preloadedCafeImageUrls = new Set<string>()
 
 export default function Sidebar({
   cafes,
@@ -117,6 +121,8 @@ export default function Sidebar({
   const mobileExpanded = mobileSheetMode === 'full'
   const mobileSheetOpen = mobileSheetMode !== 'closed'
   const selectedCafeId = selectedCafe?.id ?? null
+  const scrollDragStartYRef = useRef<number | null>(null)
+  const scrollDragStartTimeRef = useRef<number>(0)
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -133,6 +139,37 @@ export default function Sidebar({
   }, [mobileSheetOpen, onMobileExpandedChange])
 
   useEffect(() => {
+    if (!mobileSheetOpen || !window.matchMedia(MOBILE_SCROLL_LOCK_QUERY).matches) return
+
+    const scrollY = window.scrollY
+    const { body, documentElement } = document
+    const previousBodyOverflow = body.style.overflow
+    const previousBodyPosition = body.style.position
+    const previousBodyTop = body.style.top
+    const previousBodyWidth = body.style.width
+    const previousHtmlOverflow = documentElement.style.overflow
+    const previousHtmlOverscrollBehavior = documentElement.style.overscrollBehavior
+
+    // Lock page scroll while the mobile sheet is open. / 모바일 시트가 열린 동안 페이지 스크롤을 잠급니다.
+    body.style.overflow = 'hidden'
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.width = '100%'
+    documentElement.style.overflow = 'hidden'
+    documentElement.style.overscrollBehavior = 'none'
+
+    return () => {
+      body.style.overflow = previousBodyOverflow
+      body.style.position = previousBodyPosition
+      body.style.top = previousBodyTop
+      body.style.width = previousBodyWidth
+      documentElement.style.overflow = previousHtmlOverflow
+      documentElement.style.overscrollBehavior = previousHtmlOverscrollBehavior
+      window.scrollTo(0, scrollY)
+    }
+  }, [mobileSheetOpen])
+
+  useEffect(() => {
     if (!mobileShowDetail || !selectedCafeId) return
 
     const animationFrame = window.requestAnimationFrame(() => {
@@ -143,6 +180,18 @@ export default function Sidebar({
   }, [mobileDetailInitialMode, mobileShowDetail, selectedCafeId])
 
   useViewTracker(selectedCafeId)
+
+  useEffect(() => {
+    const imageUrl = selectedCafe?.images?.[0]
+    if (!imageUrl || preloadedCafeImageUrls.has(imageUrl)) return
+
+    const image = new window.Image()
+    image.src = imageUrl
+    preloadedCafeImageUrls.add(imageUrl)
+    void image.decode?.().catch((error: unknown) => {
+      console.warn('Failed to preload cafe image. / 카페 이미지 미리 불러오기 실패.', error)
+    })
+  }, [selectedCafe?.images])
 
   const selectedCafeHue = selectedCafe ? cafeHue(selectedCafe.id) : 0
   const cafePlaceholderBg = [
@@ -185,6 +234,49 @@ export default function Sidebar({
     closeMobileSheet()
   }
 
+  function handleMobileScrollTouchStart(event: React.TouchEvent<HTMLDivElement>): void {
+    if (event.currentTarget.scrollTop > 0) {
+      scrollDragStartYRef.current = null
+      return
+    }
+
+    scrollDragStartYRef.current = event.touches[0]?.clientY ?? null
+    scrollDragStartTimeRef.current = Date.now()
+  }
+
+  function handleMobileScrollTouchMove(event: React.TouchEvent<HTMLDivElement>): void {
+    const startY = scrollDragStartYRef.current
+    if (startY === null || event.currentTarget.scrollTop > 0) return
+
+    const currentY = event.touches[0]?.clientY
+    if (currentY === undefined) return
+
+    const dragOffsetY = currentY - startY
+    if (dragOffsetY <= MOBILE_SCROLL_DRAG_PREVENT_THRESHOLD_PX) return
+
+    // At the top, hand downward swipes to the sheet. / 최상단에서는 아래 스와이프를 시트 제스처로 넘깁니다.
+    event.preventDefault()
+  }
+
+  function handleMobileScrollTouchEnd(event: React.TouchEvent<HTMLDivElement>): void {
+    const startY = scrollDragStartYRef.current
+    scrollDragStartYRef.current = null
+    if (startY === null || event.currentTarget.scrollTop > 0) return
+
+    const touch = event.changedTouches[0]
+    if (!touch) return
+
+    const dragOffsetY = touch.clientY - startY
+    if (dragOffsetY <= MOBILE_SCROLL_DRAG_THRESHOLD_PX) return
+
+    const elapsedMs = Math.max(Date.now() - scrollDragStartTimeRef.current, 1)
+    const velocityY = (dragOffsetY / elapsedMs) * 1000
+    handleMobileSheetDragEnd({
+      offset: { y: dragOffsetY },
+      velocity: { y: velocityY },
+    })
+  }
+
   function handleMobileHandleClick(): void {
     if (mobileShowDetail && selectedCafe) {
       setMobileSheetMode(mobileSheetMode === 'full' ? 'preview' : 'full')
@@ -218,6 +310,8 @@ export default function Sidebar({
             fill
             className="object-cover"
             unoptimized
+            priority
+            sizes="100vw"
           />
         ) : (
           <div className="absolute inset-0" style={{ background: cafePlaceholderBg }}>
@@ -336,7 +430,15 @@ export default function Sidebar({
       </div>
 
       {/* 스크롤 영역 */}
-      <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
+      <div
+        className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto"
+        onTouchStart={handleMobileScrollTouchStart}
+        onTouchMove={handleMobileScrollTouchMove}
+        onTouchEnd={handleMobileScrollTouchEnd}
+        onTouchCancel={() => {
+          scrollDragStartYRef.current = null
+        }}
+      >
         <div className="px-4 pb-3 pt-4">
           <CafeDescription cafe={selectedCafe} />
         </div>
@@ -381,7 +483,15 @@ export default function Sidebar({
         <div className="flex items-start gap-3">
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
             {selectedCafe.images?.[0] ? (
-              <Image src={selectedCafe.images[0]} alt={selectedCafe.name} fill className="object-cover" unoptimized />
+              <Image
+                src={selectedCafe.images[0]}
+                alt={selectedCafe.name}
+                fill
+                className="object-cover"
+                unoptimized
+                priority
+                sizes="56px"
+              />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-xl font-black text-white/80" style={{ background: cafePlaceholderBg }}>
                 {selectedCafe.name[0]}
@@ -654,9 +764,20 @@ export default function Sidebar({
           {/* Open: preview or full sidebar content */}
           {mobileSheetOpen && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {mobileShowDetail && selectedCafe
-                ? (mobileSheetMode === 'preview' ? mobilePreviewPanel : mobileDetailPanel)
-                : expandedContent}
+              {mobileShowDetail && selectedCafe ? (
+                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                  {/* Detail panel — always in flow, image always composited */}
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                    {mobileDetailPanel}
+                  </div>
+                  {/* Preview panel — absolute overlay, unmounts when going full */}
+                  {mobileSheetMode === 'preview' && (
+                    <div className="absolute inset-0 z-10" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))' }}>
+                      {mobilePreviewPanel}
+                    </div>
+                  )}
+                </div>
+              ) : expandedContent}
             </div>
           )}
         </aside>

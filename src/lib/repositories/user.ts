@@ -31,6 +31,15 @@ export async function removeFavorite(userId: string, cafeId: string): Promise<vo
   if (error) throw error
 }
 
+export async function deleteFavoritesByUser(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('favorite_cafes')
+    .delete()
+    .eq('user_id', userId)
+
+  if (error) throw error
+}
+
 export interface CbtiProfile {
   cbtiType: string | null
   updatedAt: string | null
@@ -56,6 +65,15 @@ export async function upsertCbtiProfile(userId: string, cbtiType: string): Promi
 
   if (error) throw error
   return { cbtiType: data.cbti_type, updatedAt: data.updated_at }
+}
+
+export async function deleteCbtiProfileByUser(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('user_cbti_profiles')
+    .delete()
+    .eq('user_id', userId)
+
+  if (error) throw error
 }
 
 export interface UserProfileRecord {
@@ -113,4 +131,13 @@ export async function updateUserSiteProfile(
   }
 
   return { siteNickname: data.site_nickname, siteAnimal: data.site_animal }
+}
+
+export async function deleteUserProfile(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('users')
+    .delete()
+    .eq('id', userId)
+
+  if (error) throw error
 }

@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { randomUUID } from 'crypto'
 import { createSupabaseAdminClient } from '../supabase'
 import type { FootprintEmojiKey } from '../footprintEmojis'
 
@@ -231,6 +232,29 @@ export async function deleteReviewByIdRow(reviewId: string): Promise<void> {
     .from('cafe_reviews')
     .delete()
     .eq('id', reviewId)
+  if (error) throw error
+}
+
+export async function deleteReviewsByUser(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('cafe_reviews')
+    .delete()
+    .eq('author_user_id', userId)
+
+  if (error) throw error
+}
+
+export async function anonymizeReviewsByUser(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('cafe_reviews')
+    .update({
+      author_user_id: null,
+      author_anonymous_id: `withdrawn-${randomUUID()}`,
+      author_nickname: '탈퇴한 사용자',
+      author_animal: 'cat',
+    })
+    .eq('author_user_id', userId)
+
   if (error) throw error
 }
 

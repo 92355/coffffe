@@ -12,6 +12,7 @@ import type { CafeReport } from '@/types/report'
 import type { Cafe } from '@/types/cafe'
 
 type Tab = 'favorites' | 'reviews' | 'reports'
+type WithdrawalContentAction = 'delete' | 'anonymize'
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending:  { label: '검토중',  color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
@@ -28,6 +29,11 @@ export default function ProfilePage() {
   const [reports, setReports] = useState<CafeReport[]>([])
   const [loading, setLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false)
+  const [withdrawalReviewsAction, setWithdrawalReviewsAction] = useState<WithdrawalContentAction>('anonymize')
+  const [withdrawalConfirmText, setWithdrawalConfirmText] = useState('')
+  const [withdrawing, setWithdrawing] = useState(false)
+  const [withdrawalError, setWithdrawalError] = useState<string | null>(null)
 
   const isAuthenticated = user?.type === 'authenticated'
   const avatarSrc = user && 'siteAnimal' in user
@@ -44,29 +50,45 @@ export default function ProfilePage() {
     : user?.nickname ?? ''
 
   useEffect(() => {
-    setLoading(true)
-    if (tab === 'favorites') {
-      void fetch('/api/me/favorites')
-        .then(r => r.json())
-        .then(async (data: { cafeIds?: string[] }) => {
-          if (!data.cafeIds?.length) { setFavorites([]); return }
+    let active = true
+
+    async function loadActiveTab(): Promise<void> {
+      setLoading(true)
+      try {
+        if (tab === 'favorites') {
+          const response = await fetch('/api/me/favorites')
+          const data = await response.json() as { cafeIds?: string[] }
+          if (!active) return
+          if (!data.cafeIds?.length) {
+            setFavorites([])
+            return
+          }
+
           const all = await fetch('/api/cafes').then(r => r.json()) as Cafe[]
           const ids = new Set(data.cafeIds)
-          setFavorites(all.filter(c => ids.has(c.id)))
-        })
-        .finally(() => setLoading(false))
-    } else if (tab === 'reviews') {
-      if (!isAuthenticated) { setLoading(false); return }
-      void fetch('/api/me/reviews')
-        .then(r => r.json())
-        .then((data: { reviews?: ReviewDbRow[] }) => setReviews(data.reviews ?? []))
-        .finally(() => setLoading(false))
-    } else {
-      if (!isAuthenticated) { setLoading(false); return }
-      void fetch('/api/me/reports')
-        .then(r => r.json())
-        .then((data: { reports?: CafeReport[] }) => setReports(data.reports ?? []))
-        .finally(() => setLoading(false))
+          if (active) setFavorites(all.filter(c => ids.has(c.id)))
+          return
+        }
+
+        if (!isAuthenticated) return
+
+        if (tab === 'reviews') {
+          const data = await fetch('/api/me/reviews').then(r => r.json()) as { reviews?: ReviewDbRow[] }
+          if (active) setReviews(data.reviews ?? [])
+          return
+        }
+
+        const data = await fetch('/api/me/reports').then(r => r.json()) as { reports?: CafeReport[] }
+        if (active) setReports(data.reports ?? [])
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    void loadActiveTab()
+
+    return () => {
+      active = false
     }
   }, [tab, isAuthenticated])
 
@@ -85,11 +107,38 @@ export default function ProfilePage() {
     router.push('/')
   }
 
+  async function handleWithdraw() {
+    setWithdrawing(true)
+    setWithdrawalError(null)
+    try {
+      const response = await fetch('/api/me/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewsAction: withdrawalReviewsAction,
+          confirmText: withdrawalConfirmText,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({})) as { error?: string }
+        throw new Error(data.error ?? '회원탈퇴에 실패했습니다.')
+      }
+
+      await logout()
+      router.push('/')
+    } catch (error) {
+      setWithdrawalError(error instanceof Error ? error.message : '회원탈퇴에 실패했습니다.')
+    } finally {
+      setWithdrawing(false)
+    }
+  }
+
   return (
     <div className="mx-auto min-h-dvh w-full max-w-md bg-[var(--main-bg,#fff)] pb-12 text-[#201b16] dark:bg-[#161616] dark:text-[#f3f0ef]">
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-5 pb-3 pt-12">
-        <button type="button" onClick={() => router.back()} className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfd3] bg-white/60 text-[#6b432a] dark:border-white/18 dark:bg-white/10 dark:text-white">
+        <button type="button" onClick={() => router.push('/')} className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#eadfd3] bg-white/60 text-[#6b432a] dark:border-white/18 dark:bg-white/10 dark:text-white">
           <ArrowLeft size={16} />
         </button>
         <h1 className="text-lg font-black">내 정보</h1>
@@ -159,6 +208,26 @@ export default function ProfilePage() {
             <LogOut size={14} />
             로그아웃
           </button>
+        )}
+
+        {isAuthenticated && (
+          <div className="mt-4 rounded-xl border border-red-100 bg-red-50/70 p-3 dark:border-red-500/20 dark:bg-red-500/10">
+            <p className="text-xs font-bold text-red-700 dark:text-red-300">계정 관리</p>
+            <p className="mt-1 text-[11px] leading-5 text-red-700/75 dark:text-red-200/70">
+              회원탈퇴는 내 정보 화면에서만 가능합니다. 탈퇴 전 리뷰 처리 방식을 직접 선택할 수 있습니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setWithdrawalOpen(true)
+                setWithdrawalError(null)
+              }}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white py-2.5 text-sm font-black text-red-700 transition-colors hover:bg-red-50 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200 dark:hover:bg-red-500/16"
+            >
+              <Trash2 size={14} />
+              회원탈퇴
+            </button>
+          </div>
         )}
       </div>
 
@@ -258,7 +327,111 @@ export default function ProfilePage() {
           </>
         )}
       </div>
+
+      {withdrawalOpen && isAuthenticated && (
+        <div className="fixed inset-0 z-[80] flex items-end bg-[#1f150f]/55 px-4 pb-4 pt-10 sm:items-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="withdrawal-title"
+            className="mx-auto w-full max-w-md rounded-2xl border border-red-100 bg-white p-5 text-[#201b16] shadow-[0_24px_70px_rgba(34,20,10,0.28)] dark:border-red-500/20 dark:bg-[#171514] dark:text-white"
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-500/12 dark:text-red-300">
+                <TriangleAlert size={20} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="withdrawal-title" className="text-base font-black">회원탈퇴</h2>
+                <p className="mt-1 text-xs font-semibold leading-5 text-[#7d6149] dark:text-white/68">
+                  즐겨찾기와 CBTI 기록은 삭제됩니다. 제보는 자동으로 익명화되고, 리뷰는 아래 선택에 따라 삭제하거나 작성자 정보만 익명화합니다.
+                </p>
+              </div>
+            </div>
+
+            <WithdrawalChoice title="리뷰 처리" value={withdrawalReviewsAction} onChange={setWithdrawalReviewsAction} />
+            <div className="mt-4 rounded-xl border border-[#eadfd3] bg-[#fff8ef] px-3 py-2 dark:border-white/12 dark:bg-white/8">
+              <p className="text-xs font-black text-[#5f4634] dark:text-white/80">제보 처리</p>
+              <p className="mt-1 text-[11px] font-semibold leading-5 text-[#7d6149] dark:text-white/64">
+                제보는 서비스 운영 기록으로 보존하되 작성자 연결만 자동으로 끊습니다.
+              </p>
+            </div>
+
+            <label className="mt-4 block">
+              <span className="text-xs font-black text-[#5f4634] dark:text-white/80">확인 문구</span>
+              <input
+                value={withdrawalConfirmText}
+                onChange={(event) => setWithdrawalConfirmText(event.target.value)}
+                placeholder="탈퇴"
+                className="mt-1 h-11 w-full rounded-xl border border-[#eadfd3] bg-white px-3 text-sm font-bold outline-none focus:border-red-400 dark:border-white/12 dark:bg-white/8"
+              />
+            </label>
+
+            {withdrawalError && (
+              <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold leading-5 text-red-700 dark:bg-red-500/12 dark:text-red-200">
+                {withdrawalError}
+              </p>
+            )}
+
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setWithdrawalOpen(false)}
+                disabled={withdrawing}
+                className="h-11 rounded-xl border border-[#eadfd3] bg-white text-sm font-black text-[#6b432a] disabled:opacity-60 dark:border-white/12 dark:bg-white/8 dark:text-white/72"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleWithdraw()}
+                disabled={withdrawing || withdrawalConfirmText.trim() !== '탈퇴'}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                {withdrawing && <Loader2 size={14} className="animate-spin" />}
+                탈퇴하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function WithdrawalChoice({
+  title,
+  value,
+  onChange,
+}: {
+  title: string
+  value: WithdrawalContentAction
+  onChange: (value: WithdrawalContentAction) => void
+}) {
+  return (
+    <fieldset className="mt-4">
+      <legend className="text-xs font-black text-[#5f4634] dark:text-white/80">{title}</legend>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {([
+          { value: 'anonymize', label: '익명화', description: '내용은 남기고 작성자 연결만 끊기' },
+          { value: 'delete', label: '삭제', description: '내가 남긴 내용 삭제' },
+        ] as const).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            aria-pressed={value === option.value}
+            className={`min-h-20 rounded-xl border px-3 py-2 text-left transition-colors ${
+              value === option.value
+                ? 'border-red-400 bg-red-50 text-red-800 dark:border-red-400/60 dark:bg-red-500/14 dark:text-red-100'
+                : 'border-[#eadfd3] bg-white text-[#5f4634] dark:border-white/12 dark:bg-white/8 dark:text-white/72'
+            }`}
+          >
+            <span className="block text-sm font-black">{option.label}</span>
+            <span className="mt-1 block text-[11px] font-semibold leading-4 opacity-72">{option.description}</span>
+          </button>
+        ))}
+      </div>
+    </fieldset>
   )
 }
 

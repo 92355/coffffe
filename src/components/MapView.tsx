@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ import FilterBar from '@/components/FilterBar'
 import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
-import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
+import type { MapBounds } from '@/components/map/KakaoMap'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import { useUser } from '@/hooks/useUser'
 import { useSavedCafes } from '@/hooks/useSavedCafes'
@@ -20,7 +20,6 @@ import { useMapState } from '@/hooks/useMapState'
 import { useMapViewUI } from '@/hooks/useMapViewUI'
 import { useReportState } from '@/hooks/useReportState'
 import type { LocationPoint } from '@/types/location'
-import type { ReportType } from '@/types/report'
 import { matchesFilters, matchesSearch, matchesCategory } from '@/lib/cafeFilters'
 
 const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), { ssr: false })
@@ -34,6 +33,8 @@ const INITIAL_FILTERS: FilterState = {
   beanOrigin: null,
   brewMethod: null,
 }
+const NEARBY_CAFE_RADIUS_KM = 1.5
+const EARTH_RADIUS_KM = 6371
 const MAP_QUICK_CATEGORIES = [
   { label: '전체', value: null, icon: Sparkles, activeColor: '#5a2e11', activeShadow: 'rgba(90,46,17,0.25)' },
   { label: '스페셜티', value: '스페셜티', icon: Coffee, activeColor: '#b45a12', activeShadow: 'rgba(180,90,18,0.28)' },
@@ -118,10 +119,14 @@ export default function MapView({ allCafes }: MapViewProps) {
   }, [activeQuickCategory, allCafes, filters, searchQuery])
 
   const filteredCafes = useMemo(() => {
-    if (!activeMapBounds) return baseFilteredCafes
+    const locationFilteredCafes = userLocation
+      ? baseFilteredCafes.filter(cafe => distanceKm(cafe, userLocation) <= NEARBY_CAFE_RADIUS_KM)
+      : baseFilteredCafes
 
-    return baseFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
-  }, [activeMapBounds, baseFilteredCafes])
+    if (!activeMapBounds) return locationFilteredCafes
+
+    return locationFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
+  }, [activeMapBounds, baseFilteredCafes, userLocation])
   const favoriteCafes = useMemo(() => {
     const favoriteOrder = new Map(favoriteCafeIds.map((cafeId, index) => [cafeId, index]))
 
@@ -600,6 +605,20 @@ function isCafeInsideBounds(cafe: Cafe, bounds: MapBounds): boolean {
   const isInsideLongitude = cafe.lng >= bounds.west && cafe.lng <= bounds.east
 
   return isInsideLatitude && isInsideLongitude
+}
+
+function distanceKm(cafe: Cafe, origin: LocationPoint): number {
+  const latitudeDelta = ((cafe.lat - origin.lat) * Math.PI) / 180
+  const longitudeDelta = ((cafe.lng - origin.lng) * Math.PI) / 180
+  const originLatitude = (origin.lat * Math.PI) / 180
+  const cafeLatitude = (cafe.lat * Math.PI) / 180
+  const haversine =
+    Math.sin(latitudeDelta / 2) * Math.sin(latitudeDelta / 2) +
+    Math.cos(originLatitude) * Math.cos(cafeLatitude) *
+    Math.sin(longitudeDelta / 2) * Math.sin(longitudeDelta / 2)
+  const angularDistance = 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine))
+
+  return EARTH_RADIUS_KM * angularDistance
 }
 
 function getProfileLabel(user: ReturnType<typeof useUser>['user'], profilePrefs: ReturnType<typeof useUser>['profilePrefs']): string {

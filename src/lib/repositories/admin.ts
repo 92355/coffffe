@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { randomUUID } from 'crypto'
 import type { CafeReport, ReportStatus, ReportType } from '@/types/report'
 import { createSupabaseAdminClient } from '../supabase'
 
@@ -155,6 +156,19 @@ export async function updateReportStatus(id: string, status: ReportStatus): Prom
 
 export async function deleteReport(id: string): Promise<void> {
   const { error } = await createSupabaseAdminClient().from('reports').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function anonymizeReportsByUser(userId: string): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from('reports')
+    .update({
+      user_id: null,
+      anonymous_id: `withdrawn-${randomUUID()}`,
+      nickname: '탈퇴한 사용자',
+    })
+    .eq('user_id', userId)
+
   if (error) throw error
 }
 

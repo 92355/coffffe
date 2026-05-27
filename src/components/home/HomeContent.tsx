@@ -36,7 +36,9 @@ const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 const FEATURED_CAFE_LIMIT = 2
 const FEATURED_PLACEHOLDER_COUNT = 1
+const QUIET_COFFEE_IMAGE = '/image/home/hero-quiet-coffee.png'
 const HERO_BACKGROUND_IMAGES = [
+  QUIET_COFFEE_IMAGE,
   '/image/home/hero-coffee-recommendation.png',
   '/image/home/hero-coffee-recommendation-alt.png',
 ] as const
@@ -333,10 +335,10 @@ export default function HomeContent() {
 
   return (
     <>
-      <main className="relative z-10 mx-auto w-full max-w-md flex-1 overflow-hidden bg-[var(--main-bg)] pb-32 pt-16 text-[#201b16] dark:bg-[#161616] dark:text-[#f3f0ef]">
+      <main className="relative z-10 mx-auto w-full max-w-md flex-1 overflow-hidden bg-[#f4eadf] pb-[calc(5rem+env(safe-area-inset-bottom))] pt-16 text-[#201b16] dark:bg-[#241c16] dark:text-[#f3f0ef]">
         <motion.section
           {...fadeUp(0)}
-          className="relative overflow-hidden rounded-b-[2.5rem] bg-[#45493d] px-5 pb-6 pt-5 shadow-[0_18px_38px_rgba(32,27,22,0.16)]"
+          className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-[#45493d] px-5 pb-6 pt-5 shadow-[0_18px_38px_rgba(32,27,22,0.16)]"
         >
           <Image
             src={heroBackgroundImage}
@@ -349,12 +351,12 @@ export default function HomeContent() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#1d2118]/28 via-[#303629]/36 to-[#23291f]/58" />
 
           <div className="relative z-10">
-            <div className="mb-12 flex flex-col items-start gap-2 text-left font-extrabold text-white">
+            <div className="mb-10 flex flex-col items-start gap-2 text-left font-extrabold text-white">
               <span className="truncate text-[28px] leading-tight">{heroCopy.greeting}</span>
-              <span className="mt-5 inline-flex max-w-[300px] rounded-full border border-white/10 bg-white/12 px-5 py-2 text-xl font-bold text-white/82 backdrop-blur-md">
+              <span className="mt-3 inline-flex max-w-[300px] rounded-xl border border-white/15 bg-white/16 px-3 py-2 text-xl font-bold text-white backdrop-blur-md">
                 <span className="min-w-0 truncate">{displayName}님</span>
               </span>
-              <span className="max-w-[300px] break-keep pt-5 text-xl font-bold leading-snug text-white/86">
+              <span className="max-w-[300px] break-keep pt-3 text-2xl font-bold leading-snug text-white/90">
                 {heroCopy.recommendation}
               </span>
             </div>
@@ -384,13 +386,13 @@ export default function HomeContent() {
           </div>
         </motion.section>
 
-        <section className="grid grid-cols-2 gap-4 px-5 pt-5">
+        <section className="relative z-10 grid grid-cols-2 gap-4 px-5 pt-5">
           <Link
             href="/cbti"
             className="relative flex h-44 flex-col justify-between overflow-hidden rounded-[1.6rem] border border-[#526134]/5 bg-[#eef1e6] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
           >
             <Image
-              src="/image/home/cbti-card-bg.png"
+              src="/image/home/cbti-card-bg2.png"
               alt=""
               fill
               sizes="(max-width: 480px) 50vw, 224px"
@@ -432,7 +434,7 @@ export default function HomeContent() {
           </Link>
         </section>
 
-        <section className="px-5 pt-5">
+        <section className="relative z-10 px-5 pt-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#201b16] dark:text-[#f3f0ef]">
               주변 스페셜티 카페
@@ -501,7 +503,7 @@ export default function HomeContent() {
           </div>
         </section>
 
-        <section className="px-5 pt-5">
+        <section className="relative z-10 px-5 pt-5">
           <Link
             href="/beans"
             className="flex items-center justify-between rounded-[1.6rem] border border-[#c6c8ba]/30 bg-white p-5 shadow-[0_8px_30px_rgba(32,27,22,0.06)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
@@ -522,18 +524,19 @@ export default function HomeContent() {
             </span>
           </Link>
         </section>
+
       </main>
 
-      <nav className="pointer-events-none fixed bottom-0 left-0 z-50 w-full pb-6">
-        <div className="pointer-events-auto mx-auto flex w-fit items-center gap-1 rounded-[2rem] border border-white/20 bg-white/80 px-3 py-2 shadow-[0_8px_40px_rgba(28,23,19,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1e1e1e]/85">
+      <nav className="fixed inset-x-0 bottom-0 z-50">
+        <div className="mx-auto flex w-full max-w-md items-center justify-between gap-1 border-x border-t border-[#eadfd3] bg-[#fff8f3] px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgba(80,48,24,0.08)] dark:border-white/10 dark:bg-[#241c16]">
           {bottomNavItems.map(({ href, label, icon: Icon, active }) => (
             <Link
               key={label}
               href={href}
-              className={`flex flex-col items-center justify-center rounded-[1.4rem] px-4 py-2 transition ${
+              className={`flex min-w-0 flex-1 flex-col items-center justify-center rounded-[1.2rem] px-2 py-2 transition ${
                 active
                   ? 'bg-[#526134] text-white shadow-sm'
-                  : 'text-[#45483d] hover:bg-[#f0ebe5] dark:text-white/60 dark:hover:bg-white/10'
+                  : 'text-[#45483d] hover:bg-white/45 dark:text-white/60 dark:hover:bg-white/10'
               }`}
             >
               <Icon size={20} fill={active ? 'currentColor' : 'none'} />
