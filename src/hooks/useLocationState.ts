@@ -61,15 +61,12 @@ export function useLocationState(): LocationState {
 
   useEffect(() => {
     if (!navigator.permissions) {
-      window.setTimeout(() => setLocationPermissionModalOpen(true), 0)
       return
     }
 
     void navigator.permissions.query({ name: 'geolocation' }).then((result) => {
       if (result.state === 'granted') {
         setLocationRequestId((current) => current + 1)
-      } else if (result.state === 'prompt') {
-        setLocationPermissionModalOpen(true)
       }
       // denied → 모달 안 띄움
     })

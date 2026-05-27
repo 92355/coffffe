@@ -19,6 +19,11 @@ export function getKakaoClientSecret(): string | undefined {
   return process.env[KAKAO_CLIENT_SECRET]
 }
 
+export function getKakaoRedirectUri(): string | undefined {
+  const value = process.env['KAKAO_REDIRECT_URI']
+  return value && value.length > 0 ? value : undefined
+}
+
 export function getUserSessionMaxAgeSeconds(): number {
   return SESSION_MAX_AGE_SECONDS
 }

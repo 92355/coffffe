@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BookOpen, ChevronDown, Coffee, CupSoda, Heart, Layers, LocateFixed, LogOut, MapPin, Minus, PawPrint, Plus, RefreshCw, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
-import BottomSheet from '@/components/BottomSheet'
 import FilterBar from '@/components/FilterBar'
 import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
@@ -278,8 +277,8 @@ export default function MapView({ allCafes }: MapViewProps) {
         onMobileExpandedChange={setMobileSheetExpanded}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
-        mobileShowDetail={selectedFrom === 'sidebar'}
-        mobileBottomBarHidden={selectedFrom === 'map' && Boolean(visibleSelectedCafe)}
+        mobileShowDetail={Boolean(selectedFrom && visibleSelectedCafe)}
+        mobileDetailInitialMode={selectedFrom === 'map' ? 'preview' : 'full'}
       />
 
       <div className="absolute inset-0">
@@ -288,7 +287,7 @@ export default function MapView({ allCafes }: MapViewProps) {
           selectedCafe={visibleSelectedCafe}
           onCafeSelect={(cafe) => {
             setSelectedCafe(cafe)
-            setSelectedFrom('map')
+            setSelectedFrom(cafe ? 'map' : null)
           }}
           onMapBoundsChange={handleMapBoundsChange}
           mapType={mapType}
@@ -517,7 +516,7 @@ export default function MapView({ allCafes }: MapViewProps) {
         {!mobileSheetExpanded && (
           <motion.div
             className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 md:hidden"
-            style={{ bottom: 'calc(92px + 12px)' }}
+            style={{ bottom: '92px' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
@@ -529,16 +528,6 @@ export default function MapView({ allCafes }: MapViewProps) {
       </AnimatePresence>
 
 
-      <div className="md:hidden">
-        <BottomSheet
-          cafe={selectedFrom === 'map' ? visibleSelectedCafe : null}
-          onClose={() => setSelectedCafe(null)}
-          favorite={visibleSelectedCafe ? favoriteCafeIdSet.has(visibleSelectedCafe.id) : false}
-          onFavoriteToggle={(cafeId) => {
-            void toggleFavoriteCafe(cafeId)
-          }}
-        />
-      </div>
       {reportSheetOpen && (
         <ReportSheet
           cafes={allCafes}
@@ -636,16 +625,15 @@ function getProfileImageUrl(user: ReturnType<typeof useUser>['user'], profilePre
 function BreadBadge({ count, small }: { count: number; small?: boolean }) {
   return (
     <div
-      className={`glass-map-sheet pointer-events-auto flex items-center whitespace-nowrap font-black text-white dark:text-white ${small ? 'h-8 px-4 text-xs' : 'h-11 px-6 text-[15px]'}`}
+      aria-label={`${count}개의 카페 발견`}
+      className={`pointer-events-auto flex items-center justify-center whitespace-nowrap rounded-full bg-[#53613a] font-semibold leading-none text-white shadow-[0_10px_20px_rgba(40,52,28,0.22)] ring-1 ring-white/10 dark:bg-[#4b5834] dark:text-white ${small ? 'h-8 min-w-[118px] px-3.5 text-xs' : 'h-10 min-w-[144px] px-5 text-sm'}`}
       style={{
-        borderRadius: '16px',
-        background: 'color-mix(in srgb, var(--accent) 88%, var(--background))',
-        border: '1.5px solid color-mix(in srgb, var(--accent) 85%, transparent)',
-        boxShadow: '0 8px 32px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 1.5px 0 rgba(255, 255, 255, 0.28)',
+        boxShadow: '0 10px 20px rgba(40, 52, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
       }}
     >
-      <span className={`mr-0.5 font-black tabular-nums text-white dark:text-white ${small ? 'text-sm' : 'text-xl'}`}>{count}</span>
-      개의 카페 발견
+      <span className="tabular-nums">
+        <span className={`${small ? 'text-[14.4px]' : 'text-[16.8px]'} mr-[3px]`}>{count}</span>개의 카페 발견
+      </span>
     </div>
   )
 }

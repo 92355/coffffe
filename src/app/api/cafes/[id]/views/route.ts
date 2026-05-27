@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { recordView } from '@/lib/cafeFootprint'
+import { badRequest, created, serverError } from '@/lib/response'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -7,16 +8,12 @@ interface RouteContext {
 
 export async function POST(_request: NextRequest, context: RouteContext) {
   const { id } = await context.params
-
-  if (!id) {
-    return NextResponse.json({ error: 'cafe id is required' }, { status: 400 })
-  }
+  if (!id) return badRequest('cafe id is required')
 
   try {
     await recordView(id)
-    return NextResponse.json({ ok: true }, { status: 201 })
+    return created({ ok: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'view tracking failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return serverError(error instanceof Error ? error.message : 'view tracking failed')
   }
 }

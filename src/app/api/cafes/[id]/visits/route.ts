@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { extractClientIdentity } from '@/lib/clientIdentity'
 import { recordVisit } from '@/lib/cafeFootprint'
+import { badRequest, created, serverError } from '@/lib/response'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -8,20 +9,15 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   const { id } = await context.params
-  if (!id) {
-    return NextResponse.json({ error: 'cafe id is required' }, { status: 400 })
-  }
+  if (!id) return badRequest('cafe id is required')
 
   const { anonymousId } = extractClientIdentity(request)
-  if (!anonymousId) {
-    return NextResponse.json({ error: 'anonymous id required' }, { status: 400 })
-  }
+  if (!anonymousId) return badRequest('anonymous id required')
 
   try {
     await recordVisit(id, anonymousId)
-    return NextResponse.json({ ok: true }, { status: 201 })
+    return created({ ok: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'visit failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return serverError(error instanceof Error ? error.message : 'visit failed')
   }
 }

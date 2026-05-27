@@ -1,20 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getUserSession } from '@/lib/user-auth'
-import { createSupabaseAdminClient } from '@/lib/supabase'
-import { generateNickname, isNicknameAnimal, type NicknameAnimal } from '@/lib/nickname'
-
-const ADMIN_KAKAO_IDS_KEY = 'ADMIN_KAKAO_IDS'
+import { isAdminKakaoId } from '@/lib/identity'
+import { getUserProfile, updateUserSiteProfile } from '@/lib/repositories/user'
+import { isNicknameAnimal } from '@/lib/nickname'
+import { generateNickname } from '@/lib/nickname'
+import { ok, unauthorized, serverError } from '@/lib/response'
 
 export async function GET() {
   const session = await getUserSession()
 
-  if (!session) {
-    return NextResponse.json({ user: null })
-  }
+  if (!session) return ok({ user: null })
 
   // 세션에 siteNickname이 있으면 DB 조회 없이 세션 데이터로 바로 응답한다.
   if (session.siteNickname && session.siteAnimal) {
-    return NextResponse.json({
+    return ok({
       user: {
         type: 'authenticated',
         id: session.userId,
@@ -28,19 +27,19 @@ export async function GET() {
     })
   }
 
-  // 구 세션(siteNickname 미포함)은 기존처럼 DB에서 조회한다.
-  const userProfile = await readUserProfile(session.userId)
+  // 구 세션(siteNickname 미포함)은 DB에서 조회한다.
+  const userProfile = await getUserProfile(session.userId)
 
-  return NextResponse.json({
+  return ok({
     user: userProfile
       ? {
           type: 'authenticated',
           id: userProfile.id,
-          kakaoId: userProfile.kakao_id,
+          kakaoId: userProfile.kakaoId,
           nickname: userProfile.nickname,
-          profileImageUrl: userProfile.profile_image_url,
-          siteNickname: userProfile.site_nickname,
-          siteAnimal: userProfile.site_animal,
+          profileImageUrl: userProfile.profileImageUrl,
+          siteNickname: userProfile.siteNickname,
+          siteAnimal: userProfile.siteAnimal,
           isAdmin: isAdminKakaoId(session.kakaoId),
         }
       : null,
@@ -49,10 +48,10 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   const session = await getUserSession()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session) return unauthorized()
 
   let siteNickname: string
-  let siteAnimal: NicknameAnimal
+  let siteAnimal: string
 
   try {
     const body = await request.json() as { siteNickname?: unknown; siteAnimal?: unknown }
@@ -75,62 +74,8 @@ export async function PATCH(request: NextRequest) {
     siteAnimal = generated.animal
   }
 
-  const { data, error } = await createSupabaseAdminClient()
-    .from('users')
-    .update({
-      site_nickname: siteNickname,
-      site_animal: siteAnimal,
-    })
-    .eq('id', session.userId)
-    .select('site_nickname, site_animal')
-    .single()
+  const result = await updateUserSiteProfile(session.userId, siteNickname, siteAnimal)
+  if (!result) return serverError('Failed to update profile')
 
-  if (error) {
-    console.error('Failed to update site profile. / 사이트 프로필 갱신 실패.', error)
-    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
-  }
-
-  return NextResponse.json({
-    siteNickname: data.site_nickname,
-    siteAnimal: data.site_animal,
-  })
-}
-
-function isAdminKakaoId(kakaoId: string): boolean {
-  const adminKakaoIds = process.env[ADMIN_KAKAO_IDS_KEY]
-
-  if (!adminKakaoIds) return false
-
-  return adminKakaoIds
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean)
-    .includes(kakaoId)
-}
-
-interface UserProfileRecord {
-  id: string
-  kakao_id: string
-  nickname: string
-  profile_image_url: string | null
-  site_nickname: string
-  site_animal: string
-}
-
-async function readUserProfile(userId: string): Promise<UserProfileRecord | null> {
-  const { data, error } = await createSupabaseAdminClient()
-    .from('users')
-    .select('id, kakao_id, nickname, profile_image_url, site_nickname, site_animal')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (error) {
-    console.error('Failed to read user profile. / 사용자 프로필 조회 실패.', error)
-    return null
-  }
-
-  if (!data) return null
-  if (typeof data.site_nickname !== 'string' || !isNicknameAnimal(data.site_animal)) return null
-
-  return data as UserProfileRecord
+  return ok({ siteNickname: result.siteNickname, siteAnimal: result.siteAnimal })
 }

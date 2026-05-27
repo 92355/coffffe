@@ -1,26 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { isAuthorizedAdminRequest } from '@/lib/admin-auth'
 import { deleteReview } from '@/lib/cafeFootprint'
+import { unauthorized, badRequest, ok, serverError } from '@/lib/response'
 
 interface RouteContext {
   params: Promise<{ reviewId: string }>
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
-  if (!isAuthorizedAdminRequest(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!isAuthorizedAdminRequest(request)) return unauthorized()
 
   const { reviewId } = await context.params
-  if (!reviewId) {
-    return NextResponse.json({ error: 'review id is required' }, { status: 400 })
-  }
+  if (!reviewId) return badRequest('review id is required')
 
   try {
     await deleteReview(reviewId)
-    return NextResponse.json({ ok: true })
+    return ok({ ok: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'review delete failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return serverError(error instanceof Error ? error.message : 'review delete failed')
   }
 }

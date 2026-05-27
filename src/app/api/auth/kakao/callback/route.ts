@@ -1,47 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabase'
 import {
   KAKAO_OAUTH_STATE_COOKIE,
   KAKAO_PENDING_SIGNUP_COOKIE,
   KAKAO_RETURN_TO_COOKIE,
   USER_SESSION_COOKIE,
   createSessionToken,
-  getKakaoClientSecret,
-  getKakaoRestApiKey,
   getUserSessionMaxAgeSeconds,
-  type UserSession,
 } from '@/lib/user-auth'
-import { generateNickname, isNicknameAnimal, type NicknameAnimal } from '@/lib/nickname'
+import { getOptionalEnv } from '@/lib/env'
+import { handleKakaoOAuthCallback } from '@/lib/services/auth'
 
-const KAKAO_TOKEN_URL = 'https://kauth.kakao.com/oauth/token'
-const KAKAO_USER_URL = 'https://kapi.kakao.com/v2/user/me'
 const FALLBACK_REDIRECT_PATH = '/'
-
-interface KakaoTokenResponse {
-  access_token?: string
-  token_type?: string
-  error?: string
-  error_description?: string
-}
-
-interface KakaoUserResponse {
-  id?: number
-  kakao_account?: {
-    profile?: {
-      nickname?: string
-      profile_image_url?: string
-    }
-  }
-}
-
-interface DatabaseUser {
-  id: string
-  kakao_id: string
-  nickname: string
-  profile_image_url: string | null
-  site_nickname: string
-  site_animal: NicknameAnimal
-}
 
 export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get('state')
@@ -56,21 +25,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const redirectUri = getRedirectUri(request)
-    const accessToken = await requestKakaoAccessToken(code, redirectUri)
-    const kakaoUser = await requestKakaoUser(accessToken)
-    const pendingProfile = parsePendingSignupCookie(request.cookies.get(KAKAO_PENDING_SIGNUP_COOKIE)?.value)
-    const user = await upsertKakaoUser(kakaoUser, pendingProfile)
-    const session: UserSession = {
-      userId: user.id,
-      kakaoId: user.kakao_id,
-      nickname: user.nickname,
-      profileImageUrl: user.profile_image_url ?? undefined,
-      siteNickname: user.site_nickname,
-      siteAnimal: user.site_animal,
-      isAdmin: isAdminKakaoId(user.kakao_id),
-    }
-    const response = NextResponse.redirect(redirectTarget)
+    const pendingProfileRaw = request.cookies.get(KAKAO_PENDING_SIGNUP_COOKIE)?.value
+    const session = await handleKakaoOAuthCallback(code, redirectUri, pendingProfileRaw)
 
+    const response = NextResponse.redirect(redirectTarget)
     response.cookies.delete(KAKAO_OAUTH_STATE_COOKIE)
     response.cookies.delete(KAKAO_PENDING_SIGNUP_COOKIE)
     response.cookies.delete(KAKAO_RETURN_TO_COOKIE)
@@ -86,107 +44,21 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Kakao login failed. / 카카오 로그인 실패.', error)
     redirectTarget.searchParams.set('auth', 'failed')
-
     return NextResponse.redirect(redirectTarget)
   }
 }
 
 function getRedirectTarget(request: NextRequest): URL {
   const returnTo = sanitizeReturnTo(request.cookies.get(KAKAO_RETURN_TO_COOKIE)?.value)
-
   return new URL(returnTo ?? FALLBACK_REDIRECT_PATH, request.nextUrl.origin)
 }
 
 function sanitizeReturnTo(value: string | undefined): string | null {
   if (!value?.startsWith('/')) return null
   if (value.startsWith('//')) return null
-
   return value
 }
 
-async function requestKakaoAccessToken(code: string, redirectUri: string): Promise<string> {
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    client_id: getKakaoRestApiKey(),
-    redirect_uri: redirectUri,
-    code,
-  })
-  const clientSecret = getKakaoClientSecret()
-
-  if (clientSecret) body.set('client_secret', clientSecret)
-
-  const response = await fetch(KAKAO_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
-    body,
-  })
-  const data = await response.json() as KakaoTokenResponse
-
-  if (!response.ok || !data.access_token) {
-    throw new Error(data.error_description ?? data.error ?? 'Failed to request Kakao access token')
-  }
-
-  return data.access_token
-}
-
-async function requestKakaoUser(accessToken: string): Promise<Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse> {
-  const response = await fetch(KAKAO_USER_URL, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-  const data = await response.json() as KakaoUserResponse
-
-  if (!response.ok || typeof data.id !== 'number') {
-    throw new Error('Failed to request Kakao user profile')
-  }
-
-  return data as Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse
-}
-
-interface PendingSignupProfile {
-  nickname: string
-  animal: NicknameAnimal
-}
-
-function parsePendingSignupCookie(raw: string | undefined): PendingSignupProfile | null {
-  if (!raw) return null
-  try {
-    const parsed = JSON.parse(raw) as { nickname?: unknown; animal?: unknown }
-    if (typeof parsed.nickname === 'string' && typeof parsed.animal === 'string' && isNicknameAnimal(parsed.animal)) {
-      return { nickname: parsed.nickname, animal: parsed.animal }
-    }
-  } catch {
-    // ignore
-  }
-  return null
-}
-
-async function upsertKakaoUser(
-  kakaoUser: Required<Pick<KakaoUserResponse, 'id'>> & KakaoUserResponse,
-  pendingProfile: PendingSignupProfile | null,
-): Promise<DatabaseUser> {
-  const profile = kakaoUser.kakao_account?.profile
-  const siteProfile = pendingProfile ?? generateNickname()
-  const { data, error } = await createSupabaseAdminClient()
-    .rpc('upsert_kakao_user', {
-      p_kakao_id: String(kakaoUser.id),
-      p_nickname: profile?.nickname?.trim() || `Kakao ${kakaoUser.id}`,
-      p_profile_image_url: profile?.profile_image_url ?? null,
-      p_site_nickname: siteProfile.nickname,
-      p_site_animal: siteProfile.animal,
-    })
-    .single()
-
-  if (error) throw error
-
-  return data as DatabaseUser
-}
-
 function getRedirectUri(request: NextRequest): string {
-  return process.env.KAKAO_REDIRECT_URI ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
-}
-
-function isAdminKakaoId(kakaoId: string): boolean {
-  const adminKakaoIds = process.env['ADMIN_KAKAO_IDS']
-  if (!adminKakaoIds) return false
-  return adminKakaoIds.split(',').map((id) => id.trim()).filter(Boolean).includes(kakaoId)
+  return getOptionalEnv('KAKAO_REDIRECT_URI') ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
 }

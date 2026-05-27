@@ -4,6 +4,7 @@ import {
   KAKAO_PENDING_SIGNUP_COOKIE,
   KAKAO_RETURN_TO_COOKIE,
   getKakaoRestApiKey,
+  getKakaoRedirectUri,
 } from '@/lib/user-auth-edge'
 import { isNicknameAnimal } from '@/lib/nickname'
 
@@ -64,7 +65,7 @@ function generateState(): string {
 }
 
 function getRedirectUri(request: NextRequest): string {
-  return process.env.KAKAO_REDIRECT_URI ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
+  return getKakaoRedirectUri() ?? new URL('/api/auth/kakao/callback', request.nextUrl.origin).toString()
 }
 
 function sanitizeReturnTo(value: string | null): string | null {

@@ -61,8 +61,21 @@ describe('useLocationState', () => {
     const { result } = renderHook(() => useLocationState())
 
     await waitFor(() => {
-      expect(result.current.locationPermissionModalOpen).toBe(true)
+      expect(navigator.permissions.query).toHaveBeenCalledWith({ name: 'geolocation' })
     })
+    expect(result.current.locationPermissionModalOpen).toBe(false)
+    expect(result.current.locationRequestId).toBe(0)
+  })
+
+  it('권한 API가 없어도 접속만으로 모달을 열지 않는다', async () => {
+    Object.defineProperty(navigator, 'permissions', {
+      value: undefined,
+      configurable: true,
+    })
+
+    const { result } = renderHook(() => useLocationState())
+
+    expect(result.current.locationPermissionModalOpen).toBe(false)
     expect(result.current.locationRequestId).toBe(0)
   })
 
