@@ -1,13 +1,15 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BookOpen, ChevronDown, Coffee, CupSoda, Heart, Layers, LocateFixed, LogOut, MapPin, Minus, PawPrint, Plus, RefreshCw, Search, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import type { Cafe, FilterState } from '@/types/cafe'
 import FilterBar from '@/components/FilterBar'
+import MobileCafeCarousel from '@/components/MobileCafeCarousel'
 import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
@@ -35,6 +37,7 @@ const INITIAL_FILTERS: FilterState = {
 }
 const NEARBY_CAFE_RADIUS_KM = 1.5
 const EARTH_RADIUS_KM = 6371
+const MOBILE_CAROUSEL_LIMIT = 12
 const MAP_QUICK_CATEGORIES = [
   { label: '전체', value: null, icon: Sparkles, activeColor: '#5a2e11', activeShadow: 'rgba(90,46,17,0.25)' },
   { label: '스페셜티', value: '스페셜티', icon: Coffee, activeColor: '#b45a12', activeShadow: 'rgba(180,90,18,0.28)' },
@@ -45,6 +48,7 @@ const MAP_QUICK_CATEGORIES = [
 ]
 
 export default function MapView({ allCafes }: MapViewProps) {
+  const searchParams = useSearchParams()
   const {
     user,
     profilePrefs,
@@ -54,11 +58,12 @@ export default function MapView({ allCafes }: MapViewProps) {
     logout,
   } = useUser()
   const { favoriteCafeIds, favoriteCafeIdSet, toggleFavoriteCafe, favoriteError } = useSavedCafes(user)
-  const [selectedFrom, setSelectedFrom] = useState<'sidebar' | 'map' | null>(null)
+  const [selectedFrom, setSelectedFrom] = useState<'sidebar' | 'map-marker' | 'carousel' | 'direct' | null>(null)
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS)
   const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeQuickCategory, setActiveQuickCategory] = useState<string | null>(null)
+  const initialCafeQueryHandledRef = useRef<string | null>(null)
   const {
     profileMenuRef,
     profileMenuRefDesktop,
@@ -127,6 +132,23 @@ export default function MapView({ allCafes }: MapViewProps) {
       ? baseFilteredCafes.filter(cafe => distanceKm(cafe, userLocation) <= NEARBY_CAFE_RADIUS_KM)
       : baseFilteredCafes
   }, [activeMapBounds, baseFilteredCafes, userLocation])
+  const mapCafes = useMemo(() => {
+    if (!selectedCafe || filteredCafes.some(cafe => cafe.id === selectedCafe.id)) return filteredCafes
+
+    return [...filteredCafes, selectedCafe]
+  }, [filteredCafes, selectedCafe])
+  const mobileCarouselCafes = useMemo(() => {
+    const candidates = userLocation
+      ? [...baseFilteredCafes].sort((left, right) => distanceKm(left, userLocation) - distanceKm(right, userLocation))
+      : currentMapBounds
+        ? baseFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, currentMapBounds))
+        : baseFilteredCafes
+
+    const visibleCafes = candidates.slice(0, MOBILE_CAROUSEL_LIMIT)
+    if (!selectedCafe || visibleCafes.some(cafe => cafe.id === selectedCafe.id)) return visibleCafes
+
+    return [...visibleCafes, selectedCafe]
+  }, [baseFilteredCafes, currentMapBounds, selectedCafe, userLocation])
   const favoriteCafes = useMemo(() => {
     const favoriteOrder = new Map(favoriteCafeIds.map((cafeId, index) => [cafeId, index]))
 
@@ -135,13 +157,29 @@ export default function MapView({ allCafes }: MapViewProps) {
       .sort((left, right) => (favoriteOrder.get(left.id) ?? 0) - (favoriteOrder.get(right.id) ?? 0))
   }, [allCafes, favoriteCafeIds])
 
-  const visibleSelectedCafe = selectedCafe && filteredCafes.some(cafe => cafe.id === selectedCafe.id)
+  const visibleSelectedCafe = selectedCafe && mapCafes.some(cafe => cafe.id === selectedCafe.id)
     ? selectedCafe
     : null
   const hasActiveFilters = filters.roastLevel !== null || filters.beanOrigin !== null || filters.brewMethod !== null
   const profileLabel = getProfileLabel(user, profilePrefs)
   const profileAvatar = getProfileAvatar(user)
   const profileImageUrl = getProfileImageUrl(user, profilePrefs)
+
+  useEffect(() => {
+    const cafeId = searchParams.get('cafe')
+    if (!cafeId || initialCafeQueryHandledRef.current === cafeId) return
+
+    const cafe = allCafes.find((item) => item.id === cafeId)
+    if (!cafe) return
+
+    initialCafeQueryHandledRef.current = cafeId
+    const timeoutId = window.setTimeout(() => {
+      setSelectedCafe(cafe)
+      setSelectedFrom('direct')
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [allCafes, searchParams])
 
   const profileDropdown = profileMenuOpen ? (
     <div className="glass-map-bar absolute right-0 top-[calc(100%+0.5rem)] w-[min(calc(100vw-2rem),20rem)] rounded-xl p-3 text-[#5a2e11] dark:text-white" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 8px 26px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
@@ -282,17 +320,18 @@ export default function MapView({ allCafes }: MapViewProps) {
         onMobileExpandedChange={setMobileSheetExpanded}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
-        mobileShowDetail={Boolean(selectedFrom && visibleSelectedCafe)}
-        mobileDetailInitialMode={selectedFrom === 'map' ? 'preview' : 'full'}
+        mobileShowDetail={Boolean(visibleSelectedCafe && selectedFrom && selectedFrom !== 'map-marker')}
+        mobileDetailInitialMode="full"
       />
 
       <div className="absolute inset-0">
       <KakaoMap
-          cafes={filteredCafes}
+          cafes={mapCafes}
           selectedCafe={visibleSelectedCafe}
           onCafeSelect={(cafe) => {
             setSelectedCafe(cafe)
-            setSelectedFrom(cafe ? 'map' : null)
+            setSelectedFrom(cafe ? 'map-marker' : null)
+            setMobileSheetExpanded(false)
           }}
           onMapBoundsChange={handleMapBoundsChange}
           mapType={mapType}
@@ -513,24 +552,32 @@ export default function MapView({ allCafes }: MapViewProps) {
           </button>
         </div>
 
-      {/* 카페 발견 배지 — 데스크탑: 하단 가운데 / 모바일: 바텀시트 위 */}
+      {/* Cafe count badge — desktop only. / 카페 발견 배지 — 데스크탑 전용. */}
       <div className="pointer-events-none absolute bottom-5 left-1/2 z-20 -translate-x-1/2 hidden md:block">
         <BreadBadge count={filteredCafes.length} />
       </div>
-      <AnimatePresence>
-        {!mobileSheetExpanded && (
-          <motion.div
-            className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 md:hidden"
-            style={{ bottom: '92px' }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-          >
-            <BreadBadge count={filteredCafes.length} small />
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      {!mobileSheetExpanded && (
+        <MobileCafeCarousel
+          cafes={mobileCarouselCafes}
+          selectedCafeId={visibleSelectedCafe?.id ?? null}
+          distanceOrigin={userLocation}
+          showLocationHint={!userLocation}
+          onSelect={(cafe) => {
+            setSelectedCafe(cafe)
+            setSelectedFrom('carousel')
+          }}
+          onRequestLocation={() => {
+            setLocationPermissionError(null)
+            setLocationPermissionModalOpen(true)
+          }}
+          onReportNewPlace={openNewPlaceReport}
+          favoriteCafeIds={favoriteCafeIdSet}
+          onFavoriteToggle={(cafeId) => {
+            void toggleFavoriteCafe(cafeId)
+          }}
+        />
+      )}
 
 
       {reportSheetOpen && (

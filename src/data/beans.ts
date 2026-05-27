@@ -20,6 +20,21 @@ export interface Bean {
   special?: string      // 특이사항 (희귀, 고가 등)
 }
 
+export const BEAN_COVER_IMAGE_BY_ID: Record<string, string> = {
+  'panama-geisha': '/image/beansCover/panama-geisha-cover.png',
+  'ethiopia-yirgacheffe': '/image/beansCover/ethiopia-yirgacheffe-cover.png',
+  'ethiopia-guji-natural': '/image/beansCover/ethiopia-guji-natural-cover.png',
+  'kenya-aa': '/image/beansCover/kenya-aa-cover.png',
+  'colombia-narino': '/image/beansCover/colombia-narino-cover.png',
+  'jamaica-blue-mountain': '/image/beansCover/jamaica-blue-mountain-cover.png',
+  'yemen-mocha-mattari': '/image/beansCover/yemen-mocha-mattari-cover.png',
+  'sumatra-mandheling': '/image/beansCover/sumatra-mandheling-cover.png',
+  'costa-rica-tarrazu': '/image/beansCover/costa-rica-tarrazu-cover.png',
+  'guatemala-antigua': '/image/beansCover/guatemala-antigua-cover.png',
+  'hawaii-kona': '/image/beansCover/hawaii-kona-cover.png',
+  'burundi-bourbon': '/image/beansCover/burundi-bourbon-cover.png',
+}
+
 export const BEANS: Bean[] = [
   {
     id: 'panama-geisha',
@@ -35,6 +50,7 @@ export const BEANS: Bean[] = [
     acidity: '밝고 산뜻한 산미',
     desc: '세계에서 가장 유명한 스페셜티 원두. 꽃향기와 열대과일의 화려한 컵 프로파일.',
     flag: '🇵🇦',
+    image: BEAN_COVER_IMAGE_BY_ID['panama-geisha'],
     special: '세계 최고가 원두 중 하나',
   },
   {
@@ -51,6 +67,7 @@ export const BEANS: Bean[] = [
     acidity: '밝고 과일향 산미',
     desc: '스페셜티 커피의 아이콘. 깔끔한 워시드 공정으로 꽃향기와 시트러스가 두드러짐.',
     flag: '🇪🇹',
+    image: BEAN_COVER_IMAGE_BY_ID['ethiopia-yirgacheffe'],
   },
   {
     id: 'ethiopia-guji-natural',
@@ -66,6 +83,7 @@ export const BEANS: Bean[] = [
     acidity: '와인 같은 산미',
     desc: '내추럴 가공의 정수. 발효된 과일의 진하고 복잡한 풍미가 인상적.',
     flag: '🇪🇹',
+    image: BEAN_COVER_IMAGE_BY_ID['ethiopia-guji-natural'],
   },
   {
     id: 'kenya-aa',
@@ -81,6 +99,7 @@ export const BEANS: Bean[] = [
     acidity: '강하고 복잡한 산미',
     desc: 'AA는 최대 등급의 스크린 사이즈를 의미. 케냐 특유의 묵직한 바디와 강렬한 과일 산미.',
     flag: '🇰🇪',
+    image: BEAN_COVER_IMAGE_BY_ID['kenya-aa'],
   },
   {
     id: 'colombia-narino',
@@ -96,6 +115,7 @@ export const BEANS: Bean[] = [
     acidity: '밝고 달콤한 산미',
     desc: '해발 2,000m 이상 고지대에서 자란 원두. 균형 잡힌 단맛과 견과류 풍미.',
     flag: '🇨🇴',
+    image: BEAN_COVER_IMAGE_BY_ID['colombia-narino'],
   },
   {
     id: 'jamaica-blue-mountain',
@@ -111,6 +131,7 @@ export const BEANS: Bean[] = [
     acidity: '부드럽고 낮은 산미',
     desc: '세계 3대 커피 중 하나. 쓴맛·신맛·단맛이 완벽히 균형을 이루는 부드러운 원두.',
     flag: '🇯🇲',
+    image: BEAN_COVER_IMAGE_BY_ID['jamaica-blue-mountain'],
     special: '엄격한 생산량 규제로 희소성 높음',
   },
   {
@@ -127,6 +148,7 @@ export const BEANS: Bean[] = [
     acidity: '와인 같은 복잡한 산미',
     desc: '커피 역사의 기원. 수백 년간 변하지 않은 전통 재배 방식으로 독특한 야생미를 지님.',
     flag: '🇾🇪',
+    image: BEAN_COVER_IMAGE_BY_ID['yemen-mocha-mattari'],
     special: '커피 무역의 발상지',
   },
   {
@@ -143,6 +165,7 @@ export const BEANS: Bean[] = [
     acidity: '낮은 산미',
     desc: '웻헐드 공정 특유의 묵직하고 어시(earthy)한 풍미. 에스프레소 블렌드의 베이스로 인기.',
     flag: '🇮🇩',
+    image: BEAN_COVER_IMAGE_BY_ID['sumatra-mandheling'],
   },
   {
     id: 'costa-rica-tarrazu',
@@ -158,6 +181,7 @@ export const BEANS: Bean[] = [
     acidity: '균형 잡힌 산미',
     desc: '허니 프로세스로 단맛이 살아있는 코스타리카 대표 원두. 클린하면서도 풍성한 풍미.',
     flag: '🇨🇷',
+    image: BEAN_COVER_IMAGE_BY_ID['costa-rica-tarrazu'],
   },
   {
     id: 'guatemala-antigua',
@@ -173,6 +197,7 @@ export const BEANS: Bean[] = [
     acidity: '부드러운 산미',
     desc: '화산 토양과 독특한 기후가 만든 풍미. 달콤한 초콜릿 노트와 은은한 스모키함.',
     flag: '🇬🇹',
+    image: BEAN_COVER_IMAGE_BY_ID['guatemala-antigua'],
   },
   {
     id: 'hawaii-kona',
@@ -188,6 +213,7 @@ export const BEANS: Bean[] = [
     acidity: '밝고 깔끔한 산미',
     desc: '세계 3대 커피 중 하나. 마우나로아 화산 기슭에서 재배. 풍부한 향과 부드러운 맛.',
     flag: '🇺🇸',
+    image: BEAN_COVER_IMAGE_BY_ID['hawaii-kona'],
     special: '미국 본토 유일의 상업 커피 산지',
   },
   {
@@ -204,6 +230,7 @@ export const BEANS: Bean[] = [
     acidity: '달콤하고 과일향 나는 산미',
     desc: '아프리카 숨겨진 보석. 부르봉 품종 특유의 단맛과 복잡한 과일 노트.',
     flag: '🇧🇮',
+    image: BEAN_COVER_IMAGE_BY_ID['burundi-bourbon'],
     special: '스페셜티 업계 주목 신흥 산지',
   },
 ]

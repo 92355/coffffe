@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { Bean } from '@/data/beans'
-import { BEANS } from '@/data/beans'
+import { BEAN_COVER_IMAGE_BY_ID, BEANS } from '@/data/beans'
 import { createSupabaseClient } from '@/lib/supabase'
 
 interface DatabaseBean {
@@ -17,6 +17,7 @@ interface DatabaseBean {
   acidity: string
   description: string
   flag: string
+  image_url?: string | null
   special: string | null
 }
 
@@ -35,6 +36,7 @@ function toBean(row: DatabaseBean): Bean {
     acidity: row.acidity,
     desc: row.description,
     flag: row.flag,
+    image: row.image_url ?? BEAN_COVER_IMAGE_BY_ID[row.id],
     special: row.special ?? undefined,
   }
 }

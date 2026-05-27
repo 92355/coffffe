@@ -6,7 +6,9 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Bean, ChevronRight, Coffee, Compass, Heart, Home, Map, ShoppingBag, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
-import type { Cafe } from '@/types/cafe'
+import { getAnimalAvatarPath } from '@/lib/animalAvatar'
+import type { BeanOrigin, BrewMethod, Cafe, RoastLevel } from '@/types/cafe'
+import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
 
 const featuredCafes = [
@@ -36,6 +38,7 @@ const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 const FEATURED_CAFE_LIMIT = 2
 const FEATURED_PLACEHOLDER_COUNT = 1
+const RECOMMENDATION_CANDIDATE_LIMIT = 5
 const QUIET_COFFEE_IMAGE = '/image/home/hero-quiet-coffee.png'
 const HERO_BACKGROUND_IMAGES = [
   QUIET_COFFEE_IMAGE,
@@ -46,11 +49,6 @@ const HERO_BACKGROUND_IMAGES = [
 interface HeroCopy {
   greeting: string
   recommendation: string
-}
-
-interface WeatherState {
-  label: string
-  temperature: number
 }
 
 interface FeaturedCafeCard {
@@ -65,7 +63,7 @@ interface FeaturedCafeCard {
 
 const DEFAULT_HERO_COPY: HeroCopy = {
   greeting: '좋은 오후입니다,',
-  recommendation: '기분 좋은 시간에 필터커피 한잔 어때요?',
+  recommendation: '오늘은 필터커피 어때요?',
 }
 
 const TIME_LABELS = [
@@ -76,36 +74,19 @@ const TIME_LABELS = [
   { startHour: 0, endHour: 5, label: '깊은 밤입니다,' },
 ]
 
-const SEASON_MOODS = [
-  { months: [2, 3, 4], labels: ['포근한 날씨에', '산뜻한 공기에', '볕 좋은 시간에'] },
-  { months: [5, 6, 7], labels: ['시원한 커피가 당기는 날씨에', '느긋한 오후 공기에', '햇살 좋은 시간에'] },
-  { months: [8, 9, 10], labels: ['선선한 바람에', '차분한 날씨에', '향이 깊어지는 시간에'] },
-  { months: [11, 0, 1], labels: ['따뜻한 커피가 어울리는 날씨에', '차가운 공기에', '몸을 녹이고 싶은 시간에'] },
-]
-
-const COFFEE_RECOMMENDATIONS = [
-  '필터커피 한잔 어때요?',
-  '고소한 라떼 한잔 어때요?',
-  '싱글오리진 커피 어때요?',
-  '향 좋은 드립커피 어때요?',
-  '오늘의 추천 커피 어때요?',
-]
-
-const WEATHER_LABELS: Array<{ codes: number[], label: string }> = [
-  { codes: [0], label: '맑은 날씨에' },
-  { codes: [1, 2, 3], label: '구름 낀 날씨에' },
-  { codes: [45, 48], label: '안개 낀 공기에' },
-  { codes: [51, 53, 55, 56, 57], label: '가볍게 비가 스치는 날씨에' },
-  { codes: [61, 63, 65, 66, 67, 80, 81, 82], label: '비 오는 날에' },
-  { codes: [71, 73, 75, 77, 85, 86], label: '눈 내리는 날에' },
-  { codes: [95, 96, 99], label: '흐린 하늘 아래' },
-]
-
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
 })
+
+type RecommendationKind = 'brewMethod' | 'roastLevel' | 'beanOrigin' | 'tag'
+
+interface RecommendationToken {
+  kind: RecommendationKind
+  value: string
+  label: string
+}
 
 function distanceKm(cafe: Cafe, origin: LocationPoint): number {
   const dLat = ((cafe.lat - origin.lat) * Math.PI) / 180
@@ -131,10 +112,89 @@ function findNearestCafe(cafes: Cafe[], userLocation: LocationPoint): Cafe | nul
   }, null)
 }
 
+function getCandidateCafes(cafes: Cafe[], userLocation: LocationPoint | null): Cafe[] {
+  const orderedCafes = userLocation
+    ? [...cafes].sort((a, b) => distanceKm(a, userLocation) - distanceKm(b, userLocation))
+    : cafes
+
+  return orderedCafes.slice(0, RECOMMENDATION_CANDIDATE_LIMIT)
+}
+
+function makeDateSeed(now: Date): number {
+  return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
+}
+
+function uniqueTokens(tokens: RecommendationToken[]): RecommendationToken[] {
+  const seen = new Set<string>()
+
+  return tokens.filter((token) => {
+    const key = `${token.kind}:${token.value}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function getRecommendationTokens(cafes: Cafe[]): RecommendationToken[] {
+  const brewMethodTokens = cafes.flatMap((cafe) => cafe.brewMethods.map((value) => ({
+    kind: 'brewMethod' as const,
+    value,
+    label: `${BREW_LABELS[value]} 커피`,
+  })))
+  if (brewMethodTokens.length > 0) return uniqueTokens(brewMethodTokens)
+
+  const roastLevelTokens = cafes.flatMap((cafe) => cafe.roastLevels.map((value) => ({
+    kind: 'roastLevel' as const,
+    value,
+    label: `${ROAST_LABELS[value]} 로스팅 커피`,
+  })))
+  if (roastLevelTokens.length > 0) return uniqueTokens(roastLevelTokens)
+
+  const beanOriginTokens = cafes.flatMap((cafe) => cafe.beanOrigins.map((value) => ({
+    kind: 'beanOrigin' as const,
+    value,
+    label: `${ORIGIN_LABELS[value]} 원두 커피`,
+  })))
+  if (beanOriginTokens.length > 0) return uniqueTokens(beanOriginTokens)
+
+  return uniqueTokens(cafes.flatMap((cafe) => cafe.tags.map((value) => ({
+    kind: 'tag' as const,
+    value,
+    label: `${value} 커피`,
+  }))))
+}
+
+function getDailyRecommendation(cafes: Cafe[], now: Date): RecommendationToken | null {
+  const tokens = getRecommendationTokens(cafes)
+  if (tokens.length === 0) return null
+
+  return tokens[makeDateSeed(now) % tokens.length]
+}
+
+function cafeMatchesRecommendation(cafe: Cafe, recommendation: RecommendationToken | null): boolean {
+  if (!recommendation) return false
+
+  switch (recommendation.kind) {
+    case 'brewMethod':
+      return cafe.brewMethods.includes(recommendation.value as BrewMethod)
+    case 'roastLevel':
+      return cafe.roastLevels.includes(recommendation.value as RoastLevel)
+    case 'beanOrigin':
+      return cafe.beanOrigins.includes(recommendation.value as BeanOrigin)
+    case 'tag':
+      return cafe.tags.includes(recommendation.value)
+  }
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)]
+}
+
 function getFeaturedCafeCards(
   cafes: Cafe[],
   userLocation: LocationPoint | null,
   locationStatus: 'checking' | 'ready' | 'unavailable',
+  recommendation: RecommendationToken | null,
 ): FeaturedCafeCard[] {
   if (!cafes.length || locationStatus === 'checking') {
     const placeholderCount = Math.min(FEATURED_PLACEHOLDER_COUNT, featuredCafes.length)
@@ -150,100 +210,86 @@ function getFeaturedCafeCards(
     }))
   }
 
-  const sortedCafes = userLocation
+  const orderedCafes = userLocation
     ? [...cafes].sort((a, b) => distanceKm(a, userLocation) - distanceKm(b, userLocation))
     : cafes
+  const sortedCafes = [...orderedCafes].sort((a, b) => {
+    const aMatched = cafeMatchesRecommendation(a, recommendation)
+    const bMatched = cafeMatchesRecommendation(b, recommendation)
+    if (aMatched === bMatched) return 0
+
+    return aMatched ? -1 : 1
+  })
 
   return sortedCafes.slice(0, FEATURED_CAFE_LIMIT).map((cafe) => ({
     name: cafe.name,
     distance: userLocation ? formatDistance(distanceKm(cafe, userLocation)) : '추천 카페',
     image: cafe.images?.[0] ?? '/image/home/cafe-1.png',
     tags: cafe.tags.slice(0, 2),
-    href: `/cafes/${cafe.id}`,
+    href: `/map?cafe=${encodeURIComponent(cafe.id)}`,
     imageIsRemote: cafe.images?.[0]?.startsWith('http') ?? false,
   }))
 }
 
-function pickRandom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)]
-}
-
-function createHeroCopy(now: Date): HeroCopy {
-  const hour = now.getHours()
-  const month = now.getMonth()
-  const greeting = TIME_LABELS.find(({ startHour, endHour }) => hour >= startHour && hour < endHour)?.label
-    ?? DEFAULT_HERO_COPY.greeting
-  const seasonMood = SEASON_MOODS.find(({ months }) => months.includes(month))?.labels
-    ?? ['기분 좋은 시간에']
-
-  return {
-    greeting,
-    recommendation: `${pickRandom(seasonMood)} ${pickRandom(COFFEE_RECOMMENDATIONS)}`,
-  }
-}
-
-function getWeatherLabel(weatherCode: number): string {
-  return WEATHER_LABELS.find(({ codes }) => codes.includes(weatherCode))?.label ?? '기분 좋은 날씨에'
-}
-
-function createWeatherHeroCopy(now: Date, weather: WeatherState): HeroCopy {
+function createHeroCopy(now: Date, recommendation: RecommendationToken | null): HeroCopy {
   const hour = now.getHours()
   const greeting = TIME_LABELS.find(({ startHour, endHour }) => hour >= startHour && hour < endHour)?.label
     ?? DEFAULT_HERO_COPY.greeting
-  const temperatureLabel = weather.temperature >= 28
-    ? '시원한 커피가 생각나는 날씨에'
-    : weather.temperature <= 5
-      ? '따뜻한 커피가 어울리는 날씨에'
-      : weather.label
 
   return {
     greeting,
-    recommendation: `${temperatureLabel} ${pickRandom(COFFEE_RECOMMENDATIONS)}`,
+    recommendation: `오늘은 ${recommendation?.label ?? '필터커피'} 어때요?`,
   }
 }
 
 export default function HomeContent() {
-  const { user } = useUser()
+  const { user, profilePrefs } = useUser()
   const [cafes, setCafes] = useState<Cafe[]>([])
   const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
   const [locationStatus, setLocationStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking')
-  const [weather, setWeather] = useState<WeatherState | null>(null)
   const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY)
   const [heroBackgroundImage, setHeroBackgroundImage] = useState<string>(HERO_BACKGROUND_IMAGES[0])
   const displayName = user?.nickname ?? '개발하는 검정곰'
+  const siteAnimal = user?.type === 'authenticated' ? user.siteAnimal : user?.animal
+  const kakaoProfileImageUrl = user?.type === 'authenticated' ? user.kakaoProfileImageUrl : undefined
+  const useKakaoAvatar = profilePrefs.avatarPreference === 'kakao' && Boolean(kakaoProfileImageUrl)
+  const profileImageUrl = useKakaoAvatar
+    ? kakaoProfileImageUrl!
+    : siteAnimal ? getAnimalAvatarPath(siteAnimal) : null
   const nearestCafe = useMemo(() => {
     if (!cafes.length) return null
     if (!userLocation) return cafes[0]
     return findNearestCafe(cafes, userLocation)
   }, [cafes, userLocation])
   const nearestDistance = nearestCafe && userLocation ? formatDistance(distanceKm(nearestCafe, userLocation)) : null
-  const heroCafeHref = nearestCafe ? `/cafes/${nearestCafe.id}` : '/map'
+  const heroCafeHref = nearestCafe ? `/map?cafe=${encodeURIComponent(nearestCafe.id)}` : '/map'
   const heroCafeName = nearestCafe?.name ?? '스페셜티 카페'
   const heroCafeImage = nearestCafe?.images?.[0] ?? '/image/logo/beenRoad.png'
   const heroCafeImageIsRemote = heroCafeImage.startsWith('http')
+  const recommendationCandidateCafes = useMemo(
+    () => getCandidateCafes(cafes, userLocation),
+    [cafes, userLocation],
+  )
+  const dailyRecommendation = useMemo(
+    () => getDailyRecommendation(recommendationCandidateCafes, new Date()),
+    [recommendationCandidateCafes],
+  )
   const recommendedCafes = useMemo(
-    () => getFeaturedCafeCards(cafes, userLocation, locationStatus),
-    [cafes, locationStatus, userLocation],
+    () => getFeaturedCafeCards(cafes, userLocation, locationStatus, dailyRecommendation),
+    [cafes, dailyRecommendation, locationStatus, userLocation],
   )
   const heroDistanceLabel = nearestDistance
     ?? (locationStatus === 'checking' ? '위치 확인중' : '추천 카페')
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => setHeroCopy(createHeroCopy(new Date())), 0)
+    const timeoutId = window.setTimeout(() => setHeroCopy(createHeroCopy(new Date(), dailyRecommendation)), 0)
     return () => window.clearTimeout(timeoutId)
-  }, [])
+  }, [dailyRecommendation])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setHeroBackgroundImage(pickRandom([...HERO_BACKGROUND_IMAGES])), 0)
     return () => window.clearTimeout(timeoutId)
   }, [])
-
-  useEffect(() => {
-    if (!weather) return
-
-    const timeoutId = window.setTimeout(() => setHeroCopy(createWeatherHeroCopy(new Date(), weather)), 0)
-    return () => window.clearTimeout(timeoutId)
-  }, [weather])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -293,48 +339,6 @@ export default function HomeContent() {
     )
   }, [])
 
-  useEffect(() => {
-    if (!userLocation) return
-
-    const controller = new AbortController()
-    const currentLocation = userLocation
-
-    async function loadWeather(): Promise<void> {
-      try {
-        const params = new URLSearchParams({
-          lat: String(currentLocation.lat),
-          lng: String(currentLocation.lng),
-        })
-        const response = await fetch(`/api/weather?${params.toString()}`, {
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error('Failed to load weather.')
-        const data = await response.json() as {
-          temperature?: number
-          weatherCode?: number
-        }
-        const temperature = data.temperature
-        const weatherCode = data.weatherCode
-
-        if (typeof temperature !== 'number' || typeof weatherCode !== 'number') {
-          throw new Error('Invalid weather response.')
-        }
-
-        setWeather({
-          label: getWeatherLabel(weatherCode),
-          temperature,
-        })
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        console.warn('Failed to load home weather. / 홈 날씨 로드 실패.', error)
-      }
-    }
-
-    void loadWeather()
-
-    return () => controller.abort()
-  }, [userLocation])
-
   return (
     <>
       <main className="relative z-10 mx-auto w-full max-w-md flex-1 overflow-hidden bg-[#f4eadf] pb-[calc(5rem+env(safe-area-inset-bottom))] pt-16 text-[#201b16] dark:bg-[#241c16] dark:text-[#f3f0ef]">
@@ -356,6 +360,20 @@ export default function HomeContent() {
             <div className="mb-10 flex flex-col items-start gap-2 text-left font-extrabold text-white">
               <span className="truncate text-[28px] leading-tight">{heroCopy.greeting}</span>
               <span className="mt-3 inline-flex max-w-[300px] rounded-xl border border-white/15 bg-white/16 px-3 py-2 text-xl font-bold text-white backdrop-blur-md">
+                <span className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/25 bg-white/20">
+                  {profileImageUrl ? (
+                    <Image
+                      src={profileImageUrl}
+                      alt=""
+                      width={28}
+                      height={28}
+                      unoptimized={useKakaoAvatar}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound size={16} className="text-white/86" />
+                  )}
+                </span>
                 <span className="min-w-0 truncate">{displayName}님</span>
               </span>
               <span className="max-w-[300px] break-keep pt-3 text-2xl font-bold leading-snug text-white/90">

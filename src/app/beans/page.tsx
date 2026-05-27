@@ -8,7 +8,7 @@ import { BEANS, ORIGINS, ORIGIN_MAP, ROAST_LABEL, ROAST_COLOR } from '@/data/bea
 import type { Bean } from '@/data/beans'
 import ThemeToggle from '@/components/ThemeToggle'
 
-const COLLAPSED_NOTE_COUNT = 14
+const COLLAPSED_NOTE_COUNT = 10
 
 export default function BeansPage() {
   const [beans, setBeans] = useState<Bean[]>(BEANS)
@@ -151,12 +151,12 @@ export default function BeansPage() {
       <div className="max-w-3xl mx-auto w-full flex flex-col flex-1 px-4">
 
         {/* Origin filter chips */}
-        <div className="pt-4 pb-2 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
+        <div className="pt-3 pb-2 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
           {ORIGINS.map(o => (
             <button
               key={o}
               onClick={() => setActiveOrigin(o)}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-bold backdrop-blur-xl transition-colors ${
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold backdrop-blur-xl transition-colors ${
                 activeOrigin === o
                   ? 'border-transparent bg-[var(--accent)] text-white shadow-[0_8px_18px_rgba(143,174,90,0.22)]'
                   : 'border-white/70 bg-white/60 text-[var(--text-secondary)] dark:border-white/30 dark:bg-white/15 dark:text-white/85'
@@ -168,10 +168,10 @@ export default function BeansPage() {
         </div>
 
         {/* Note filter chips */}
-        <section className="pb-3 shrink-0">
-          <div className="rounded-2xl border border-white/70 bg-white/42 p-3 backdrop-blur-xl shadow-[0_8px_24px_rgba(107,67,42,0.08)] dark:bg-gray-900/40 dark:border-white/8">
+        <section className="pb-2.5 shrink-0">
+          <div className="rounded-2xl border border-white/70 bg-white/42 p-2.5 backdrop-blur-xl shadow-[0_8px_24px_rgba(107,67,42,0.08)] dark:bg-gray-900/40 dark:border-white/8">
             <div className="flex items-center gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/70 bg-white/60 px-3 py-2 dark:bg-white/8 dark:border-white/10">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/70 bg-white/60 px-3 py-1.5 dark:bg-white/8 dark:border-white/10">
                 <Search size={14} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-secondary)' }} />
                 <input
                   value={noteQuery}
@@ -196,7 +196,7 @@ export default function BeansPage() {
                 <button
                   type="button"
                   onClick={() => setActiveNotes(new Set())}
-                  className="shrink-0 rounded-xl border border-white/70 bg-white/52 px-3 py-2 text-xs font-semibold dark:bg-white/8 dark:border-white/10"
+                  className="shrink-0 rounded-xl border border-white/70 bg-white/52 px-3 py-1.5 text-xs font-semibold dark:bg-white/8 dark:border-white/10"
                   style={{ color: 'var(--accent)' }}
                 >
                   초기화
@@ -205,14 +205,14 @@ export default function BeansPage() {
             </div>
 
             <div
-              className={`mt-3 flex flex-wrap gap-1.5 overflow-hidden transition-[max-height] duration-300 ${
-                !normalizedNoteQuery && !showAllNotes ? 'max-h-[4.35rem]' : 'max-h-[18rem]'
+              className={`mt-2 flex flex-wrap gap-1.5 overflow-hidden transition-[max-height] duration-300 ${
+                !normalizedNoteQuery && !showAllNotes ? 'max-h-[2.25rem]' : 'max-h-[18rem]'
               }`}
             >
               <button
                 type="button"
                 onClick={() => toggleNote('전체')}
-                className={`rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-bold transition-colors ${
                   activeNotes.size === 0
                     ? 'border-transparent bg-[var(--foreground)] text-[var(--background)]'
                     : 'border-white/70 bg-white/65 text-[var(--text-secondary)] dark:border-white/30 dark:bg-white/15 dark:text-white/85'
@@ -227,7 +227,7 @@ export default function BeansPage() {
                     key={n}
                     type="button"
                     onClick={() => toggleNote(n)}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-bold transition-colors ${
                       active
                         ? 'border-transparent bg-[var(--foreground)] text-[var(--background)]'
                         : 'border-white/70 bg-white/65 text-[var(--text-secondary)] dark:border-white/30 dark:bg-white/15 dark:text-white/85'
@@ -249,7 +249,7 @@ export default function BeansPage() {
               <button
                 type="button"
                 onClick={() => setShowAllNotes(prev => !prev)}
-                className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-white/60 bg-white/40 py-2 text-xs font-semibold dark:bg-white/5 dark:border-white/8"
+                className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-white/60 bg-white/40 py-1.5 text-xs font-semibold dark:bg-white/5 dark:border-white/8"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 {showAllNotes ? '태그 접기' : `태그 ${hiddenNoteCount}개 더 보기`}
@@ -264,7 +264,7 @@ export default function BeansPage() {
         </section>
 
         {/* Bean count */}
-        <p className="pb-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
+        <p className="pb-2.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
           {filtered.length}종의 원두{activeNotes.size > 0 ? ` · 향미 ${activeNotes.size}개 선택` : ''}
         </p>
 
@@ -272,7 +272,7 @@ export default function BeansPage() {
         <main
           ref={listRef}
           onScroll={handleCardScroll}
-          className="-mx-4 flex flex-1 snap-x snap-mandatory gap-3.5 overflow-x-auto scroll-smooth px-[7%] pb-10 scrollbar-hide sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0"
+          className="-mx-4 flex flex-1 snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-[7%] pb-10 scrollbar-hide sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0"
         >
           {filtered.length === 0 && (
             <div className="min-w-[86%] snap-center rounded-[1.65rem] border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-5 py-8 text-center shadow-[0_18px_48px_rgba(107,67,42,0.10)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/10 sm:col-span-2 sm:min-w-0">
@@ -309,7 +309,7 @@ export default function BeansPage() {
                     src={bean.image}
                     alt={bean.name}
                     fill
-                    className="object-cover"
+                    className="object-cover scale-[1.02]"
                     unoptimized
                   />
                 )}
@@ -318,21 +318,21 @@ export default function BeansPage() {
                   className="absolute inset-0"
                   style={{
                     background: bean.image
-                      ? `linear-gradient(145deg, ${ROAST_COLOR[bean.roast]}dd, ${ROAST_COLOR[bean.roast]}99 65%, ${ROAST_COLOR[bean.roast]}66)`
+                      ? 'linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.18) 42%, rgba(0,0,0,0.68) 100%)'
                       : `linear-gradient(145deg, ${ROAST_COLOR[bean.roast]}88, ${ROAST_COLOR[bean.roast]}55 65%, ${ROAST_COLOR[bean.roast]}28)`,
                   }}
                 />
                 <div aria-hidden className="absolute -bottom-10 -right-10 h-36 w-36 rounded-full border border-white/20 bg-white/12 backdrop-blur-md" />
                 <div aria-hidden className="absolute -top-6 right-12 h-20 w-20 rounded-full bg-white/10 blur-xl" />
-                <div className="relative px-5 pb-5 pt-6">
-                  <p className="text-[11px] font-black uppercase tracking-widest text-white/70">
+                <div className="relative flex min-h-[13.5rem] flex-col justify-end px-4 pb-4 pt-12 sm:min-h-[14.25rem]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/75">
                     {bean.origin}
                   </p>
-                  <p className="mt-1.5 text-[1.6rem] font-black leading-tight text-white drop-shadow-sm">
+                  <p className="mt-1 text-[1.45rem] font-black leading-tight text-white drop-shadow-sm">
                     {bean.name}
                   </p>
                   <span
-                    className="mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black text-white"
+                    className="mt-1.5 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[10px] font-black text-white"
                     style={{
                       background: 'rgba(0,0,0,0.32)',
                       border: '1px solid rgba(255,255,255,0.32)',
@@ -341,11 +341,11 @@ export default function BeansPage() {
                     {ROAST_LABEL[bean.roast]}
                   </span>
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    <div className="rounded-lg px-2 py-1.5" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
+                    <div className="rounded-lg px-2 py-1" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
                       <span className="block text-[9px] font-black text-white/80">바디</span>
                       <span className="block text-[10px] font-black text-white">{bean.body}</span>
                     </div>
-                    <div className="rounded-lg px-2 py-1.5" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
+                    <div className="rounded-lg px-2 py-1" style={{ background: 'rgba(0,0,0,0.30)', border: '1px solid rgba(255,255,255,0.28)' }}>
                       <span className="block text-[9px] font-black text-white/80">산미</span>
                       <span className="block text-[10px] font-black text-white">{bean.acidity}</span>
                     </div>
@@ -354,15 +354,15 @@ export default function BeansPage() {
               </div>
 
               {/* Card body / 카드 본문 */}
-              <div className="relative px-5 py-4">
+              <div className="relative px-4 py-3">
                 {/* 설명 — 상단 */}
-                <p className="mb-4 rounded-2xl border border-[rgba(107,67,42,0.14)] bg-[rgba(255,255,255,0.68)] px-4 py-3.5 text-[15px] font-medium leading-[1.75] tracking-[-0.01em] text-balance text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10" style={{ color: 'var(--foreground)' }}>
+                <p className="mb-3 rounded-xl border border-[rgba(107,67,42,0.14)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 text-[13px] font-semibold leading-[1.55] text-balance shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10" style={{ color: 'var(--foreground)' }}>
                   {bean.desc}
                 </p>
 
-                <div className="mb-4 border-t border-[rgba(107,67,42,0.12)] pt-4 dark:border-white/10">
+                <div className="mb-3 border-t border-[rgba(107,67,42,0.12)] pt-3 dark:border-white/10">
                   {/* Meta list / 메타 정보 */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {[
                       ['지역', bean.region],
                       ['품종', bean.variety],
@@ -370,12 +370,12 @@ export default function BeansPage() {
                     ].map(([label, value]) => (
                       <div
                         key={label}
-                        className="flex min-w-0 items-start gap-3 rounded-2xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
+                        className="flex min-w-0 items-start gap-2.5 rounded-xl border border-[rgba(107,67,42,0.18)] bg-[rgba(255,255,255,0.68)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10"
                       >
-                        <span className="w-9 shrink-0 text-xs font-black leading-5" style={{ color: 'var(--accent)' }}>
+                        <span className="w-8 shrink-0 text-[11px] font-black leading-5" style={{ color: 'var(--accent)' }}>
                           {label}
                         </span>
-                        <span className="min-w-0 flex-1 break-keep text-sm font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
+                        <span className="min-w-0 flex-1 break-keep text-[13px] font-semibold leading-5" style={{ color: 'var(--foreground)' }}>
                           {value}
                         </span>
                       </div>
@@ -384,13 +384,13 @@ export default function BeansPage() {
                 </div>
 
                 {/* Notes chips / 향미 태그 박스 */}
-                <div className="rounded-2xl border border-[rgba(107,67,42,0.16)] bg-[rgba(255,255,255,0.68)] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
-                  <span className="mb-2 block text-xs font-black" style={{ color: 'var(--accent)' }}>향미</span>
-                  <div className="flex flex-wrap gap-1.5">
+                <div className="rounded-xl border border-[rgba(107,67,42,0.16)] bg-[rgba(255,255,255,0.68)] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-white/10">
+                  <span className="mb-1.5 block text-[11px] font-black" style={{ color: 'var(--accent)' }}>향미</span>
+                  <div className="flex flex-wrap gap-1">
                     {bean.notes.map(note => (
                       <span
                         key={note}
-                        className="rounded-full border border-[rgba(107,67,42,0.16)] bg-white/80 px-2.5 py-1 text-xs font-bold dark:border-white/12 dark:bg-white/12"
+                        className="rounded-full border border-[rgba(107,67,42,0.16)] bg-white/80 px-2 py-0.5 text-[11px] font-bold dark:border-white/12 dark:bg-white/12"
                         style={{ color: 'var(--foreground)' }}
                       >
                         {note}
@@ -402,7 +402,7 @@ export default function BeansPage() {
                 {/* Special badge */}
                 {bean.special && (
                   <div
-                    className="mt-3 flex items-center gap-1.5 rounded-2xl border border-white/60 bg-white/35 px-3 py-2 text-xs font-bold dark:bg-white/5 dark:border-white/10"
+                    className="mt-2.5 flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/35 px-3 py-1.5 text-[11px] font-bold dark:bg-white/5 dark:border-white/10"
                     style={{ color: 'var(--accent)' }}
                   >
                     <Sparkles size={13} strokeWidth={2.4} />

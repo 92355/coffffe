@@ -61,7 +61,7 @@ interface SidebarProps {
   mobileBottomBarHidden?: boolean
 }
 
-type MobileSheetMode = 'closed' | 'preview' | 'full'
+type MobileSheetMode = 'closed' | 'full'
 
 const QUICK_CATEGORIES = [
   { label: '전체', value: null, icon: Sparkles, activeColor: '#5a2e11', activeShadow: 'rgba(90,46,17,0.25)' },
@@ -82,7 +82,6 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
 }
 
-const MOBILE_PREVIEW_HEIGHT_DVH = 34
 const MOBILE_FULL_HEIGHT_DVH = 86
 const MOBILE_CLOSED_HEIGHT_PX = 36
 const MOBILE_DRAG_THRESHOLD_PX = 48
@@ -204,9 +203,7 @@ export default function Sidebar({
   const isPortrait = useIsPortrait(selectedCafe?.images?.[0])
   const mobileSheetHeight = mobileSheetMode === 'full'
     ? `${MOBILE_FULL_HEIGHT_DVH}dvh`
-    : mobileSheetMode === 'preview'
-      ? `${MOBILE_PREVIEW_HEIGHT_DVH}dvh`
-      : (mobileBottomBarHidden ? 0 : `${MOBILE_CLOSED_HEIGHT_PX}px`)
+    : (mobileBottomBarHidden ? 0 : `${MOBILE_CLOSED_HEIGHT_PX}px`)
 
   function closeMobileSheet(): void {
     setMobileSheetMode('closed')
@@ -226,11 +223,6 @@ export default function Sidebar({
     }
 
     if (!draggedDown) return
-
-    if (mobileShowDetail && selectedCafe && mobileSheetMode === 'full') {
-      setMobileSheetMode('preview')
-      return
-    }
 
     closeMobileSheet()
   }
@@ -279,11 +271,6 @@ export default function Sidebar({
   }
 
   function handleMobileHandleClick(): void {
-    if (mobileShowDetail && selectedCafe) {
-      setMobileSheetMode(mobileSheetMode === 'full' ? 'preview' : 'full')
-      return
-    }
-
     setMobileSheetMode(mobileSheetMode === 'full' ? 'closed' : 'full')
     if (mobileSheetMode === 'full') onMobileClose?.()
   }
@@ -502,79 +489,6 @@ export default function Sidebar({
     </>
   ) : null
 
-  const mobilePreviewPanel = selectedCafe ? (
-    <>
-      <div className="flex flex-col px-4 pb-4 pt-1 gap-3">
-        {/* 상단: 썸네일 + 이름/설명 + 찜 */}
-        <div className="flex items-start gap-3">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
-            {selectedCafe.images?.[0] ? (
-              <>
-                {isPortrait && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedCafe.images[0]}
-                    alt=""
-                    aria-hidden
-                    className="absolute inset-0 h-full w-full object-cover"
-                    style={{ filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.2)', transformOrigin: 'center' }}
-                  />
-                )}
-                <Image
-                  src={selectedCafe.images[0]}
-                  alt={selectedCafe.name}
-                  fill
-                  className={isPortrait ? 'object-contain' : 'object-cover'}
-                  unoptimized
-                  priority
-                  sizes="56px"
-                />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-xl font-black text-white/80" style={{ background: cafePlaceholderBg }}>
-                {selectedCafe.name[0]}
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-black leading-tight text-[#2c2118] dark:text-white">{selectedCafe.name}</h2>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onFavoriteToggle(selectedCafe.id)}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
-              isFavorite
-                ? 'border-[#d66612] bg-[#d66612] text-white'
-                : 'border-[#eadfd3] bg-white/70 text-[#6b432a] dark:border-white/18 dark:bg-white/12 dark:text-white/80'
-            }`}
-            aria-label={isFavorite ? `${selectedCafe.name} 저장 해제` : `${selectedCafe.name} 저장`}
-            aria-pressed={isFavorite}
-          >
-            <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
-        </div>
-
-        {/* 태그 */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <CafeTagList cafe={selectedCafe} />
-        </div>
-
-        {/* 주소 */}
-        <div className="flex w-full items-start gap-2 text-xs text-[#7d6149] dark:text-white/90">
-          <MapPin size={12} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
-          <span className="leading-relaxed">{selectedCafe.address}</span>
-          <CopyAddressButton address={selectedCafe.address} />
-        </div>
-
-        {/* 힌트 */}
-        <p className="animate-float-hint text-center pt-5 text-[12px] text-[#b8aa9b] dark:text-white/38">
-          위로 올려서 자세히 보기
-        </p>
-      </div>
-    </>
-  ) : null
-
   const expandedContent = (
     <>
       <div className="shrink-0 px-4 pb-3 pt-4">
@@ -770,56 +684,48 @@ export default function Sidebar({
         )}
       </AnimatePresence>
 
-      {/* Mobile: drag bottom sheet — always visible */}
-      <motion.div
-        className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
-        animate={{ height: mobileSheetHeight }}
-        transition={{ type: 'spring', damping: 32, stiffness: 320 }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0.06, bottom: 0.3 }}
-        onDragEnd={(_, info) => handleMobileSheetDragEnd(info)}
-      >
-        <aside
-          className="glass-map-sheet flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
-          style={{
-            background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))',
-            borderTop: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
-            boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06)',
-          }}
+      {/* Mobile: selected cafe detail sheet only. / 모바일: 선택한 카페 상세 시트만 표시. */}
+      {mobileShowDetail && selectedCafe && (
+        <motion.div
+          className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
+          animate={{ height: mobileSheetHeight }}
+          transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.06, bottom: 0.3 }}
+          onDragEnd={(_, info) => handleMobileSheetDragEnd(info)}
         >
-          {/* Handle — tap to toggle */}
-          <button
-            type="button"
-            className="flex w-full shrink-0 cursor-grab items-center justify-center pb-2 pt-3 active:cursor-grabbing"
-            onClick={handleMobileHandleClick}
-            aria-label={mobileExpanded ? '목록 접기' : '목록 펼치기'}
+          <aside
+            className="glass-map-sheet flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
+            style={{
+              background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))',
+              borderTop: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)',
+              boxShadow: '0 -8px 36px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
           >
-            <div className="h-1 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/38" />
-          </button>
+            {/* Handle — tap to toggle. / 핸들 — 탭해서 접고 펼칩니다. */}
+            <button
+              type="button"
+              className="flex w-full shrink-0 cursor-grab items-center justify-center pb-2 pt-3 active:cursor-grabbing"
+              onClick={handleMobileHandleClick}
+              aria-label={mobileExpanded ? '상세 접기' : '상세 펼치기'}
+            >
+              <div className="h-1 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/38" />
+            </button>
 
-
-          {/* Open: preview or full sidebar content */}
-          {mobileSheetOpen && (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {mobileShowDetail && selectedCafe ? (
+            {mobileSheetOpen && (
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-                  {/* Detail panel — always in flow, image always composited */}
+                  {/* Detail panel — always in flow. / 상세 패널 — 항상 레이아웃 흐름에 둡니다. */}
                   <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                     {mobileDetailPanel}
                   </div>
-                  {/* Preview panel — absolute overlay, unmounts when going full */}
-                  {mobileSheetMode === 'preview' && (
-                    <div className="absolute inset-0 z-10" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))' }}>
-                      {mobilePreviewPanel}
-                    </div>
-                  )}
                 </div>
-              ) : expandedContent}
-            </div>
-          )}
-        </aside>
-      </motion.div>
+              </div>
+            )}
+          </aside>
+        </motion.div>
+      )}
     </>
   )
 }
