@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Bean, ChevronRight, Coffee, Compass, Heart, Home, Map, ShoppingBag, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
+import { BEANS, ROAST_LABEL as BEAN_ROAST_LABEL } from '@/data/beans'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import type { BeanOrigin, BrewMethod, Cafe, RoastLevel } from '@/types/cafe'
 import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
@@ -39,6 +40,12 @@ const GEOLOCATION_MAXIMUM_AGE_MS = 60000
 const FEATURED_CAFE_LIMIT = 2
 const FEATURED_PLACEHOLDER_COUNT = 1
 const RECOMMENDATION_CANDIDATE_LIMIT = 5
+const HOME_BEAN_RECOMMENDATION_IDS = [
+  'panama-geisha',
+  'ethiopia-yirgacheffe',
+  'colombia-narino',
+  'sumatra-mandheling',
+] as const
 const QUIET_COFFEE_IMAGE = '/image/home/hero-quiet-coffee.png'
 const HERO_BACKGROUND_IMAGES = [
   QUIET_COFFEE_IMAGE,
@@ -79,6 +86,10 @@ const fadeUp = (delay = 0) => ({
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
 })
+
+const recommendedBeans = HOME_BEAN_RECOMMENDATION_IDS
+  .map((id) => BEANS.find((bean) => bean.id === id))
+  .filter((bean): bean is NonNullable<typeof bean> => Boolean(bean))
 
 type RecommendationKind = 'brewMethod' | 'roastLevel' | 'beanOrigin' | 'tag'
 
@@ -454,6 +465,62 @@ export default function HomeContent() {
               </span>
             </span>
           </Link>
+        </section>
+
+        <section className="relative z-10 px-5 pt-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-[#6f5835] dark:text-[#d8eab0]">Beans Pick</p>
+              <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#201b16] dark:text-[#f3f0ef]">
+                오늘의 원두 추천
+              </h2>
+            </div>
+            <Link href="/beans" className="flex items-center gap-0.5 text-xs font-bold text-[#6f5835] dark:text-[#d8eab0]">
+              더보기
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-4 scrollbar-hide">
+            {recommendedBeans.map((bean, index) => (
+              <motion.article
+                key={bean.id}
+                {...fadeUp(0.06 + index * 0.05)}
+                className="min-w-[168px] overflow-hidden rounded-[1.45rem] border border-[#f3e9df] bg-white shadow-[0_8px_28px_rgba(32,27,22,0.06)] dark:border-white/10 dark:bg-white/8"
+              >
+                <Link href="/beans" className="group block transition active:scale-[0.98]">
+                  <div className="relative h-32 overflow-hidden bg-[#ece0d9]">
+                    {bean.image && (
+                      <Image
+                        src={bean.image}
+                        alt={bean.name}
+                        fill
+                        sizes="180px"
+                        className="object-cover transition duration-700 group-hover:scale-105"
+                      />
+                    )}
+                    <span className="absolute inset-0 bg-gradient-to-b from-black/8 via-black/16 to-black/62" />
+                    <span className="absolute left-3 top-3 rounded-full border border-white/25 bg-black/24 px-2 py-0.5 text-[10px] font-extrabold text-white backdrop-blur-md">
+                      {BEAN_ROAST_LABEL[bean.roast]}
+                    </span>
+                    <span className="absolute inset-x-3 bottom-3">
+                      <span className="block text-[11px] font-bold text-white/75">{bean.origin}</span>
+                      <span className="mt-0.5 block truncate text-base font-extrabold text-white">{bean.name}</span>
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <div className="flex flex-wrap gap-1">
+                      {bean.notes.slice(0, 3).map((note) => (
+                        <span key={note} className="rounded-full bg-[#fdf1ea] px-2 py-0.5 text-[10px] font-bold text-[#8a714b] dark:bg-white/10 dark:text-white/70">
+                          {note}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              </motion.article>
+            ))}
+          </div>
         </section>
 
         <section className="relative z-10 px-5 pt-5">
