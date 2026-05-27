@@ -1,272 +1,453 @@
 'use client'
 
-import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import { motion, type Variants } from 'framer-motion'
-import { ArrowRight, Bean, Coffee, Compass, MapPin, ShoppingBag } from 'lucide-react'
-import { BEANS } from '@/data/beans'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { Bean, ChevronRight, Coffee, Compass, Heart, Home, Map, ShoppingBag, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
-import { getAnimalAvatarPath } from '@/lib/animalAvatar'
+import type { Cafe } from '@/types/cafe'
+import type { LocationPoint } from '@/types/location'
 
-const FEATURED_BEANS = BEANS.slice(0, 4)
-
-const homeGlassCardClass =
-  'relative overflow-hidden border border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,0.68),rgba(255,255,255,0.30))] shadow-[0_20px_54px_rgba(107,67,42,0.14),inset_0_1px_0_rgba(255,255,255,0.82)] backdrop-blur-2xl transition-all dark:border-white/14 dark:bg-[linear-gradient(145deg,rgba(255,255,255,0.13),rgba(255,255,255,0.06))] dark:shadow-[0_20px_54px_rgba(0,0,0,0.36),inset_0_1px_0_rgba(255,255,255,0.12)]'
-const homeGlassShineClass =
-  'pointer-events-none absolute inset-x-4 top-0 h-px bg-white/90 dark:bg-white/24'
-const homeGlassGlowClass =
-  'pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[var(--accent)]/20 blur-2xl dark:bg-[var(--accent)]/12'
-const homeGlassIconClass =
-  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/70 text-[var(--primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_10px_22px_rgba(107,67,42,0.10)] transition-transform group-hover:scale-110 dark:border-white/12 dark:text-white dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_22px_rgba(0,0,0,0.22)]'
-
-function fadeUp(delay = 0) {
-  return {
-    initial: { opacity: 0, y: 24, filter: 'blur(10px)' },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    transition: { duration: 0.58, delay, ease: [0.22, 1, 0.36, 1] as const },
-  }
-}
-
-const serviceCards = [
+const featuredCafes = [
   {
-    href: '/cbti',
-    title: '커피 CBTI',
-    description: '내 취향 타입 찾기',
-    icon: Coffee,
-    iconBgClass: 'bg-[var(--accent-soft)] dark:bg-[rgba(160,192,104,0.20)]',
+    name: '스테이 모카',
+    distance: '450m',
+    image: '/image/home/cafe-1.png',
+    tags: ['분위기', '핸드드립'],
   },
   {
-    href: '/beans',
-    title: '원두 정보',
-    description: '산지별 원두 탐색',
-    icon: Bean,
-    iconBgClass: 'bg-[var(--sub-soft)] dark:bg-[rgba(192,138,90,0.20)]',
+    name: '빈즈 가든',
+    distance: '1.2km',
+    image: '/image/home/cafe-1.png',
+    tags: ['로스터리', '원두맛집'],
   },
 ]
 
-const beanContainer: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.055,
-      delayChildren: 0.15,
-    },
-  },
+const bottomNavItems = [
+  { href: '/', label: '홈', icon: Home, active: true },
+  { href: '/map', label: '지도', icon: Map, active: false },
+  { href: '/beans', label: '원두', icon: Coffee, active: false },
+  { href: '#profile', label: '내 정보', icon: UserRound, active: false },
+]
+
+const EARTH_RADIUS_KM = 6371
+const GEOLOCATION_TIMEOUT_MS = 10000
+const GEOLOCATION_MAXIMUM_AGE_MS = 60000
+
+interface HeroCopy {
+  greeting: string
+  recommendation: string
 }
 
-const beanItem: Variants = {
-  hidden: { opacity: 0, y: 18, scale: 0.96 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] },
-  },
+interface WeatherState {
+  label: string
+  temperature: number
+}
+
+const DEFAULT_HERO_COPY: HeroCopy = {
+  greeting: '좋은 오후입니다,',
+  recommendation: '기분 좋은 시간에 필터커피 한잔 어때요?',
+}
+
+const TIME_LABELS = [
+  { startHour: 5, endHour: 11, label: '좋은 아침입니다,' },
+  { startHour: 11, endHour: 17, label: '좋은 오후입니다,' },
+  { startHour: 17, endHour: 22, label: '편안한 저녁입니다,' },
+  { startHour: 22, endHour: 24, label: '고요한 밤입니다,' },
+  { startHour: 0, endHour: 5, label: '깊은 밤입니다,' },
+]
+
+const SEASON_MOODS = [
+  { months: [2, 3, 4], labels: ['포근한 날씨에', '산뜻한 공기에', '볕 좋은 시간에'] },
+  { months: [5, 6, 7], labels: ['시원한 커피가 당기는 날씨에', '느긋한 오후 공기에', '햇살 좋은 시간에'] },
+  { months: [8, 9, 10], labels: ['선선한 바람에', '차분한 날씨에', '향이 깊어지는 시간에'] },
+  { months: [11, 0, 1], labels: ['따뜻한 커피가 어울리는 날씨에', '차가운 공기에', '몸을 녹이고 싶은 시간에'] },
+]
+
+const COFFEE_RECOMMENDATIONS = [
+  '필터커피 한잔 어때요?',
+  '고소한 라떼 한잔 어때요?',
+  '싱글오리진 커피 어때요?',
+  '향 좋은 드립커피 어때요?',
+  '오늘의 추천 커피 어때요?',
+]
+
+const WEATHER_LABELS: Array<{ codes: number[], label: string }> = [
+  { codes: [0], label: '맑은 날씨에' },
+  { codes: [1, 2, 3], label: '구름 낀 날씨에' },
+  { codes: [45, 48], label: '안개 낀 공기에' },
+  { codes: [51, 53, 55, 56, 57], label: '가볍게 비가 스치는 날씨에' },
+  { codes: [61, 63, 65, 66, 67, 80, 81, 82], label: '비 오는 날에' },
+  { codes: [71, 73, 75, 77, 85, 86], label: '눈 내리는 날에' },
+  { codes: [95, 96, 99], label: '흐린 하늘 아래' },
+]
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 18 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
+})
+
+function distanceKm(cafe: Cafe, origin: LocationPoint): number {
+  const dLat = ((cafe.lat - origin.lat) * Math.PI) / 180
+  const dLng = ((cafe.lng - origin.lng) * Math.PI) / 180
+  const lat1 = (origin.lat * Math.PI) / 180
+  const lat2 = (cafe.lat * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return EARTH_RADIUS_KM * c
+}
+
+function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`
+}
+
+function findNearestCafe(cafes: Cafe[], userLocation: LocationPoint): Cafe | null {
+  return cafes.reduce<Cafe | null>((nearest, cafe) => {
+    if (!nearest) return cafe
+    return distanceKm(cafe, userLocation) < distanceKm(nearest, userLocation) ? cafe : nearest
+  }, null)
+}
+
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)]
+}
+
+function createHeroCopy(now: Date): HeroCopy {
+  const hour = now.getHours()
+  const month = now.getMonth()
+  const greeting = TIME_LABELS.find(({ startHour, endHour }) => hour >= startHour && hour < endHour)?.label
+    ?? DEFAULT_HERO_COPY.greeting
+  const seasonMood = SEASON_MOODS.find(({ months }) => months.includes(month))?.labels
+    ?? ['기분 좋은 시간에']
+
+  return {
+    greeting,
+    recommendation: `${pickRandom(seasonMood)} ${pickRandom(COFFEE_RECOMMENDATIONS)}`,
+  }
+}
+
+function getWeatherLabel(weatherCode: number): string {
+  return WEATHER_LABELS.find(({ codes }) => codes.includes(weatherCode))?.label ?? '기분 좋은 날씨에'
+}
+
+function createWeatherHeroCopy(now: Date, weather: WeatherState): HeroCopy {
+  const hour = now.getHours()
+  const greeting = TIME_LABELS.find(({ startHour, endHour }) => hour >= startHour && hour < endHour)?.label
+    ?? DEFAULT_HERO_COPY.greeting
+  const temperatureLabel = weather.temperature >= 28
+    ? '시원한 커피가 생각나는 날씨에'
+    : weather.temperature <= 5
+      ? '따뜻한 커피가 어울리는 날씨에'
+      : weather.label
+
+  return {
+    greeting,
+    recommendation: `${temperatureLabel} ${pickRandom(COFFEE_RECOMMENDATIONS)}`,
+  }
 }
 
 export default function HomeContent() {
-  const { user, profilePrefs } = useUser()
-  const displayName = user?.nickname ?? null
-  const siteAnimal = user?.type === 'authenticated' ? user.siteAnimal : user?.animal
-  const kakaoProfileImageUrl = user?.type === 'authenticated' ? user.kakaoProfileImageUrl : undefined
-  const useKakaoAvatar = profilePrefs.avatarPreference === 'kakao' && Boolean(kakaoProfileImageUrl)
-  const avatarSrc = useKakaoAvatar
-    ? kakaoProfileImageUrl!
-    : siteAnimal ? getAnimalAvatarPath(siteAnimal) : null
+  const { user } = useUser()
+  const [cafes, setCafes] = useState<Cafe[]>([])
+  const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
+  const [locationStatus, setLocationStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking')
+  const [weather, setWeather] = useState<WeatherState | null>(null)
+  const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY)
+  const displayName = user?.nickname ?? '개발하는 검정곰'
+  const nearestCafe = useMemo(() => {
+    if (!cafes.length) return null
+    if (!userLocation) return cafes[0]
+    return findNearestCafe(cafes, userLocation)
+  }, [cafes, userLocation])
+  const nearestDistance = nearestCafe && userLocation ? formatDistance(distanceKm(nearestCafe, userLocation)) : null
+  const heroCafeHref = nearestCafe ? `/cafes/${nearestCafe.id}` : '/map'
+  const heroCafeName = nearestCafe?.name ?? '스페셜티 카페'
+  const heroCafeImage = nearestCafe?.images?.[0] ?? '/image/logo/beenRoad.png'
+  const heroCafeImageIsRemote = heroCafeImage.startsWith('http')
+  const heroDistanceLabel = nearestDistance
+    ?? (locationStatus === 'checking' ? '위치 확인중' : '추천 카페')
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setHeroCopy(createHeroCopy(new Date())), 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [])
+
+  useEffect(() => {
+    if (!weather) return
+
+    const timeoutId = window.setTimeout(() => setHeroCopy(createWeatherHeroCopy(new Date(), weather)), 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [weather])
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadCafes(): Promise<void> {
+      try {
+        const response = await fetch('/api/cafes', { signal: controller.signal })
+        if (!response.ok) throw new Error('Failed to load cafes.')
+        const loadedCafes = await response.json() as Cafe[]
+        setCafes(loadedCafes)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        console.warn('Failed to load home cafe recommendation. / 홈 카페 추천 로드 실패.', error)
+      }
+    }
+
+    void loadCafes()
+
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      window.setTimeout(() => setLocationStatus('unavailable'), 0)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+        setLocationStatus('ready')
+      },
+      (error) => {
+        console.warn('Failed to load home geolocation. / 홈 위치 확인 실패.', error)
+        setLocationStatus('unavailable')
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: GEOLOCATION_TIMEOUT_MS,
+        maximumAge: GEOLOCATION_MAXIMUM_AGE_MS,
+      },
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!userLocation) return
+
+    const controller = new AbortController()
+    const currentLocation = userLocation
+
+    async function loadWeather(): Promise<void> {
+      try {
+        const params = new URLSearchParams({
+          lat: String(currentLocation.lat),
+          lng: String(currentLocation.lng),
+        })
+        const response = await fetch(`/api/weather?${params.toString()}`, {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error('Failed to load weather.')
+        const data = await response.json() as {
+          temperature?: number
+          weatherCode?: number
+        }
+        const temperature = data.temperature
+        const weatherCode = data.weatherCode
+
+        if (typeof temperature !== 'number' || typeof weatherCode !== 'number') {
+          throw new Error('Invalid weather response.')
+        }
+
+        setWeather({
+          label: getWeatherLabel(weatherCode),
+          temperature,
+        })
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        console.warn('Failed to load home weather. / 홈 날씨 로드 실패.', error)
+      }
+    }
+
+    void loadWeather()
+
+    return () => controller.abort()
+  }, [userLocation])
 
   return (
     <>
-      <div className="relative z-10 mx-auto w-full max-w-2xl flex-1 space-y-5 px-4 py-5">
-
-        {/* Greeting */}
-        <motion.div
+      <main className="relative z-10 mx-auto w-full max-w-md flex-1 overflow-hidden bg-[var(--main-bg)] pb-32 pt-16 text-[#201b16] dark:bg-[#161616] dark:text-[#f3f0ef]">
+        <motion.section
           {...fadeUp(0)}
-          className="relative overflow-hidden rounded-3xl border border-white/75 bg-white/[0.42] p-4 shadow-[0_20px_60px_rgba(107,67,42,0.14),inset_0_1px_0_rgba(255,255,255,0.72)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08] dark:shadow-[0_20px_60px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.10)]"
+          className="relative overflow-hidden rounded-b-[2.5rem] bg-[#45493d] px-5 pb-6 pt-5 shadow-[0_18px_38px_rgba(32,27,22,0.16)]"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-4 top-0 h-px bg-white/85 dark:bg-white/18"
+          <Image
+            src="/image/home/hero-coffee-recommendation.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 480px) 100vw, 448px"
+            className="object-cover object-center"
           />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-[var(--accent)]/18 blur-2xl dark:bg-[var(--accent)]/10"
-          />
-          <div className="relative flex items-center gap-3">
-            {avatarSrc && (
-              <Image
-                src={avatarSrc}
-                alt={siteAnimal ?? '프로필'}
-                width={44}
-                height={44}
-                unoptimized={useKakaoAvatar}
-                className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm"
-                style={{ border: '2px solid var(--card-border)' }}
-              />
-            )}
-            <div className="min-w-0">
-              <p className="text-[11px] font-black uppercase text-[var(--brown)]/70 dark:text-[var(--accent)]/85">
-                Today coffee
-              </p>
-              <p className="mt-1 text-xl font-black leading-snug text-[var(--foreground)]">
-                {displayName && (
-                  <span className="mb-1 inline-flex items-center rounded-2xl border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(240,229,218,0.58))] px-3 py-1 text-[1.35rem] font-black text-[var(--brown)] shadow-[0_12px_28px_rgba(107,67,42,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-white/14 dark:bg-[linear-gradient(135deg,rgba(160,192,104,0.24),rgba(255,255,255,0.08))] dark:text-white dark:shadow-[0_12px_28px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    {displayName}님
-                  </span>
-                )}
-                <span className="block font-black text-[var(--foreground)]">오늘 어떤 커피 마실까요?</span>
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1d2118]/28 via-[#303629]/36 to-[#23291f]/58" />
 
-        {/* Map hero card */}
-        <motion.div {...fadeUp(0.05)}>
-          <Link
-            href="/map"
-            className="group relative block min-h-[220px] overflow-hidden rounded-[2rem] border border-white/18 no-underline shadow-[0_28px_70px_rgba(107,67,42,0.25)] dark:border-white/12 dark:shadow-[0_30px_80px_rgba(0,0,0,0.58)]"
-            style={{ background: 'linear-gradient(135deg, #151412, #6B432A)' }}
-          >
-            <div className="pointer-events-none absolute inset-0 opacity-[0.12]">
-              <div className="absolute left-[10%] top-[20%] h-px w-[85%] -rotate-[15deg] bg-[var(--sub)]" />
-              <div className="absolute left-0 top-[58%] h-px w-full rotate-[8deg] bg-[var(--sub)]" />
-              <div className="absolute left-[45%] top-0 h-full w-px rotate-[12deg] bg-[var(--sub)]" />
-              <div className="absolute left-[72%] top-0 h-full w-px -rotate-[8deg] bg-[var(--sub)]" />
-            </div>
-            <div className="pointer-events-none absolute -bottom-16 -right-12 h-52 w-52 rounded-full bg-[var(--accent)]/20 blur-3xl dark:bg-[var(--accent)]/14" />
-            <div className="pointer-events-none absolute inset-x-4 top-4 rounded-3xl border border-white/14 bg-white/10 p-3 backdrop-blur-xl dark:border-white/12 dark:bg-white/[0.07]">
-              <div className="flex items-center gap-2 text-xs font-black text-white/60 dark:text-white/72">
-                <Compass size={14} /> 근처 스페셜티 카페 탐색 중
-              </div>
-            </div>
-
-            <div className="relative z-10 p-6 pt-20">
-              <span
-                className="text-[10px] font-black uppercase tracking-widest"
-                style={{ color: 'var(--accent)' }}
-              >
-                원두로 지도
+          <div className="relative z-10">
+            <div className="mb-12 flex flex-col items-start gap-2 text-left font-extrabold text-white">
+              <span className="truncate text-[28px] leading-tight">{heroCopy.greeting}</span>
+              <span className="mt-5 inline-flex max-w-[300px] rounded-full border border-white/10 bg-white/12 px-5 py-2 text-xl font-bold text-white/82 backdrop-blur-md">
+                <span className="min-w-0 truncate">{displayName}님</span>
               </span>
-              <h2 className="mt-2 text-2xl font-black leading-tight text-white">
-                스페셜티<br />카페를 탐색하세요
-              </h2>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-black text-[var(--primary)] shadow-[0_12px_28px_rgba(143,174,90,0.28)] transition-all group-hover:-translate-y-0.5 group-hover:shadow-[0_16px_36px_rgba(143,174,90,0.38)] active:scale-[0.98]">
-                <MapPin size={14} /> 지도 열기
-              </div>
+              <span className="max-w-[300px] break-keep pt-5 text-xl font-bold leading-snug text-white/86">
+                {heroCopy.recommendation}
+              </span>
             </div>
 
-            <motion.div
-              className="pointer-events-none absolute right-5 top-[92px] flex h-12 w-12 items-center justify-center rounded-2xl border border-white/18 bg-white/12 text-white shadow-lg backdrop-blur-xl dark:border-white/14 dark:bg-white/[0.08]"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <MapPin size={18} />
-            </motion.div>
-          </Link>
-        </motion.div>
-
-        {/* Service grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {serviceCards.map(({ href, title, description, icon: Icon, iconBgClass }, index) => (
-            <motion.div key={title} {...fadeUp(0.1 + index * 0.03)}>
-              <Link
-                href={href}
-                className={`group block min-h-[8.25rem] rounded-[1.65rem] p-5 no-underline hover:-translate-y-1 hover:shadow-[0_26px_62px_rgba(107,67,42,0.20)] dark:hover:shadow-[0_26px_62px_rgba(0,0,0,0.48)] ${homeGlassCardClass}`}
-              >
-                <span aria-hidden className={homeGlassShineClass} />
-                <span aria-hidden className={homeGlassGlowClass} />
-                <div className={`relative ${homeGlassIconClass} ${iconBgClass}`}>
-                  <Icon size={19} />
-                </div>
-                <h3 className="relative mt-3 break-keep text-sm font-black text-[var(--foreground)]">
-                  {title}
-                </h3>
-                <p className="relative mt-1 break-keep text-[11px] leading-relaxed text-[var(--text-secondary)]">
-                  {description}
-                </p>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Featured beans */}
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <p
-              className="text-[11px] font-black uppercase tracking-widest"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              추천 원두
-            </p>
             <Link
-              href="/beans"
-              className="flex items-center gap-1 text-[11px] font-bold no-underline"
-              style={{ color: 'var(--accent)' }}
+              href={heroCafeHref}
+              className="flex items-center justify-between rounded-[1.75rem] border border-white/5 bg-black/14 p-4 shadow-[0_16px_32px_rgba(20,24,18,0.26)] backdrop-blur-xl transition active:scale-[0.98]"
             >
-              전체 보기 <ArrowRight size={11} />
+              <span className="flex min-w-0 flex-col">
+                <span className="mb-1 flex items-center gap-2 text-xs font-bold text-white/78">
+                  <span className="h-2 w-2 rounded-full bg-[#d8eab0]" />
+                  {heroDistanceLabel}
+                </span>
+                <span className="truncate text-lg font-extrabold text-white">{heroCafeName}</span>
+              </span>
+              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#f9fbf1] shadow-lg">
+                <Image
+                  src={heroCafeImage}
+                  alt=""
+                  fill
+                  sizes="56px"
+                  unoptimized={heroCafeImageIsRemote}
+                  className="object-cover"
+                />
+              </span>
             </Link>
           </div>
-          <motion.div
-            variants={beanContainer}
-            initial="hidden"
-            animate="show"
-            className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide"
-          >
-            {FEATURED_BEANS.map((bean) => (
-              <motion.div key={bean.id} variants={beanItem} className="h-[6.4rem] w-32 shrink-0">
-                <Link
-                  href="/beans"
-                  className={`group flex h-full w-full flex-col rounded-[1.35rem] p-3.5 no-underline hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(107,67,42,0.18)] dark:hover:shadow-[0_22px_50px_rgba(0,0,0,0.46)] ${homeGlassCardClass}`}
-                >
-                  <span aria-hidden className={homeGlassShineClass} />
-                  <span aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[var(--sub)]/18 blur-2xl dark:bg-[var(--sub)]/10" />
-                  <span className="relative text-2xl leading-none">{bean.flag}</span>
-                  <p
-                    className="relative mt-2 overflow-hidden break-keep text-[11px] font-black leading-tight [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-                    style={{ color: 'var(--foreground)' }}
-                  >
-                    {bean.name}
-                  </p>
-                  <p
-                    className="relative mt-1 overflow-hidden break-keep text-[10px] leading-snug [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {bean.notes.slice(0, 2).join(' · ')}
-                  </p>
+        </motion.section>
+
+        <section className="px-5 pt-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#201b16] dark:text-[#f3f0ef]">
+              주변 스페셜티 카페
+            </h2>
+            <Link href="/map" className="flex items-center gap-0.5 text-xs font-bold text-[#6f5835] dark:text-[#d8eab0]">
+              전체보기
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-4 scrollbar-hide">
+            {featuredCafes.map((cafe, index) => (
+              <motion.article
+                key={cafe.name}
+                {...fadeUp(0.08 + index * 0.06)}
+                className="min-w-[186px] overflow-hidden rounded-[1.6rem] border border-[#f3e9df] bg-white shadow-[0_8px_30px_rgba(32,27,22,0.06)] dark:border-white/10 dark:bg-white/8"
+              >
+                <Link href="/map" className="group block transition active:scale-[0.98]">
+                  <div className="relative h-28 overflow-hidden bg-[#ece0d9]">
+                    <Image
+                      src={cafe.image}
+                      alt={cafe.name}
+                      fill
+                      sizes="190px"
+                      className={`object-cover transition duration-700 group-hover:scale-105 ${index === 1 ? 'scale-125 object-right' : 'object-center'}`}
+                    />
+                    <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#526134] shadow-sm backdrop-blur">
+                      <Heart size={18} />
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <h3 className="min-w-0 truncate text-base font-bold text-[#201b16] dark:text-[#f3f0ef]">{cafe.name}</h3>
+                      <span className="shrink-0 pt-0.5 text-[11px] font-bold text-[#45483d] dark:text-white/62">{cafe.distance}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      {cafe.tags.map((tag) => (
+                        <span key={tag} className="rounded-full bg-[#fdf1ea] px-3 py-1 text-[10px] font-bold text-[#8a714b] dark:bg-white/10 dark:text-white/70">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </Link>
-              </motion.div>
+              </motion.article>
             ))}
-          </motion.div>
+          </div>
         </section>
 
-        {/* Marketplace teaser */}
-        <motion.div {...fadeUp(0.3)}>
-          <div className={`flex items-center gap-4 rounded-[1.65rem] px-5 py-4 ${homeGlassCardClass}`}>
-            <span aria-hidden className={homeGlassShineClass} />
-            <span aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-[var(--accent)]/18 blur-2xl dark:bg-[var(--accent)]/10" />
-            <div className={`relative bg-[var(--card-icon-bg)] dark:bg-white/10 ${homeGlassIconClass}`}>
-              <ShoppingBag size={18} />
-            </div>
-            <div className="relative min-w-0 flex-1">
-              <p className="break-keep text-sm font-black" style={{ color: 'var(--foreground)' }}>
-                원두 마켓플레이스
-              </p>
-              <p className="mt-0.5 break-keep text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                스페셜티 원두 구매 · 준비 중
-              </p>
-            </div>
-            <span className="relative shrink-0 rounded-full border border-white/70 bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-black text-[var(--primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] dark:border-white/12 dark:bg-[rgba(160,192,104,0.22)] dark:text-white">
+        <section className="grid grid-cols-2 gap-4 px-5 pt-1">
+          <Link
+            href="/cbti"
+            className="flex h-44 flex-col justify-between rounded-[1.6rem] border border-[#526134]/5 bg-[#eef1e6] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6a7a4b] text-white shadow-sm">
+              <Bean size={25} />
+            </span>
+            <span>
+              <span className="block text-lg font-extrabold text-[#201b16] dark:text-[#f3f0ef]">커피 CBTI</span>
+              <span className="mt-1 block break-keep text-[13px] font-medium leading-tight text-[#45483d] dark:text-white/60">
+                내 취향 타입 찾기
+              </span>
+            </span>
+          </Link>
+
+          <Link
+            href="/beans"
+            className="flex h-44 flex-col justify-between rounded-[1.6rem] border border-[#77583e]/5 bg-[#fff0e3] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#8a714b] text-white shadow-sm">
+              <Compass size={25} />
+            </span>
+            <span>
+              <span className="block text-lg font-extrabold text-[#201b16] dark:text-[#f3f0ef]">원두 정보</span>
+              <span className="mt-1 block break-keep text-[13px] font-medium leading-tight text-[#45483d] dark:text-white/60">
+                산지별 원두 탐색
+              </span>
+            </span>
+          </Link>
+        </section>
+
+        <section className="px-5 pt-5">
+          <Link
+            href="/beans"
+            className="flex items-center justify-between rounded-[1.6rem] border border-[#c6c8ba]/30 bg-white p-5 shadow-[0_8px_30px_rgba(32,27,22,0.06)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
+          >
+            <span className="flex min-w-0 items-center gap-4">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#f7ece5] text-[#6f5835] dark:bg-white/10 dark:text-[#d8eab0]">
+                <ShoppingBag size={28} />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-extrabold text-[#201b16] dark:text-[#f3f0ef]">원두 마켓플레이스</span>
+                <span className="mt-1 block break-keep text-sm font-medium text-[#45483d] dark:text-white/60">
+                  스페셜티 원두 구매 · 준비 중
+                </span>
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full bg-[#e3d8d1] px-3 py-1 text-[11px] font-extrabold text-[#45483d] dark:bg-white/12 dark:text-white/70">
               SOON
             </span>
-          </div>
-        </motion.div>
+          </Link>
+        </section>
+      </main>
 
-      </div>
-
-      <footer className="relative z-10 px-4 py-6 text-center">
-        <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
-          © 2026 원<span className="text-[#8FAE5A]">두</span>로
-        </p>
-      </footer>
+      <nav className="pointer-events-none fixed bottom-0 left-0 z-50 w-full pb-6">
+        <div className="pointer-events-auto mx-auto flex w-fit items-center gap-1 rounded-[2rem] border border-white/20 bg-white/80 px-3 py-2 shadow-[0_8px_40px_rgba(28,23,19,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1e1e1e]/85">
+          {bottomNavItems.map(({ href, label, icon: Icon, active }) => (
+            <Link
+              key={label}
+              href={href}
+              className={`flex flex-col items-center justify-center rounded-[1.4rem] px-4 py-2 transition ${
+                active
+                  ? 'bg-[#526134] text-white shadow-sm'
+                  : 'text-[#45483d] hover:bg-[#f0ebe5] dark:text-white/60 dark:hover:bg-white/10'
+              }`}
+            >
+              <Icon size={20} fill={active ? 'currentColor' : 'none'} />
+              <span className="mt-0.5 text-[10px] font-bold whitespace-nowrap">{label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
     </>
   )
 }

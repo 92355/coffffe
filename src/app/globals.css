@@ -7,6 +7,7 @@
 :root {
   /* 기본 팔레트 */
   --bg: #F6F3EC;
+  --main-bg: #F7F1E8;
   --surface: #FFFFFF;
 
   --primary: #151412;
