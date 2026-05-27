@@ -78,6 +78,7 @@ export default function BeansAdminPage() {
   const [form, setForm] = useState<BeanForm>(EMPTY_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [mobileTab, setMobileTab] = useState<'edit' | 'list'>('edit')
 
   async function loadBeans() {
     const res = await fetch('/api/beans', { cache: 'no-store' })
@@ -103,6 +104,8 @@ export default function BeansAdminPage() {
 
   function startEdit(bean: BeanType) {
     setEditingId(bean.id)
+    setMobileTab('edit')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setForm({
       id: bean.id, name: bean.name, nameEn: bean.nameEn,
       origin: bean.origin, region: bean.region, variety: bean.variety,
@@ -149,16 +152,34 @@ export default function BeansAdminPage() {
 
   return (
     <div className="px-5 py-6">
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <Bean size={20} className="text-[#5a2e11]" />
         <h1 className="text-xl font-black text-[#3f2618]">원두 관리</h1>
       </div>
 
       {message && <p className="mb-4 text-sm font-bold text-[#8b5a32]">{message}</p>}
 
+      {/* 모바일 탭 */}
+      <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-[#f0e8df] p-1 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab('edit')}
+          className={`h-9 rounded-md text-xs font-black transition-colors ${mobileTab === 'edit' ? 'bg-white text-[#3f2618] shadow-sm' : 'text-[#7a6654]'}`}
+        >
+          {editingId ? '수정' : '추가'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('list')}
+          className={`h-9 rounded-md text-xs font-black transition-colors ${mobileTab === 'list' ? 'bg-white text-[#3f2618] shadow-sm' : 'text-[#7a6654]'}`}
+        >
+          목록 ({beans.length})
+        </button>
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* Form */}
-        <form onSubmit={saveBean} className="rounded-lg border border-[#eadfd3] bg-white p-5 shadow-sm">
+        <form onSubmit={saveBean} className={`rounded-lg border border-[#eadfd3] bg-white p-5 shadow-sm ${mobileTab === 'edit' ? 'block' : 'hidden'} lg:block`}>
           <h2 className="text-base font-black text-[#3f2618] mb-4">{editingId ? '원두 수정' : '원두 추가'}</h2>
 
           {/* 원산지 선택 (국가 → 이름+이모지 자동 입력) */}
@@ -250,7 +271,7 @@ export default function BeansAdminPage() {
         </form>
 
         {/* Bean list */}
-        <div className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+        <div className={`rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm ${mobileTab === 'list' ? 'block' : 'hidden'} lg:block`}>
           <h2 className="text-base font-black text-[#3f2618] mb-4">등록된 원두 ({beans.length})</h2>
           <div className="space-y-2">
             {beans.map(bean => (

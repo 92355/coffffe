@@ -30,6 +30,7 @@ export default function CafesAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [activeReportId, setActiveReportId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [mobileTab, setMobileTab] = useState<'edit' | 'list'>('edit')
 
   // created_at 기준 정렬은 API가 담당 — 클라이언트에서 추가 정렬 없음
   const cafeList = useMemo(() => cafes, [cafes])
@@ -101,6 +102,8 @@ export default function CafesAdminPage() {
   function editCafe(cafe: Cafe) {
     setEditingId(cafe.id)
     setActiveReportId(null)
+    setMobileTab('edit')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setForm({
       id: cafe.id, name: cafe.name,
       shortDescription: cafe.shortDescription, fullDescription: cafe.fullDescription,
@@ -130,20 +133,38 @@ export default function CafesAdminPage() {
 
   return (
     <div className="px-5 py-6">
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <Coffee size={20} className="text-[#5a2e11]" />
         <h1 className="text-xl font-black text-[#3f2618]">카페 관리</h1>
       </div>
 
+      {/* 모바일 탭 */}
+      <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-[#f0e8df] p-1 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab('edit')}
+          className={`h-9 rounded-md text-xs font-black transition-colors ${mobileTab === 'edit' ? 'bg-white text-[#3f2618] shadow-sm' : 'text-[#7a6654]'}`}
+        >
+          {editingId ? '수정' : '추가'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('list')}
+          className={`h-9 rounded-md text-xs font-black transition-colors ${mobileTab === 'list' ? 'bg-white text-[#3f2618] shadow-sm' : 'text-[#7a6654]'}`}
+        >
+          목록 ({cafeList.length})
+        </button>
+      </div>
+
       <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
         {/* 카카오 검색 */}
-        <section className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+        <section className={`rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm ${mobileTab === 'edit' ? 'block' : 'hidden'} lg:block`}>
           <KakaoSearch onApply={applyPlace} />
         </section>
 
         {/* 폼 + 목록 */}
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+          <div className={`rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm ${mobileTab === 'edit' ? 'block' : 'hidden'} lg:block`}>
             <CafeFormSection
               form={form}
               editingId={editingId}
@@ -154,7 +175,7 @@ export default function CafesAdminPage() {
             />
           </div>
 
-          <div className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+          <div className={`rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm ${mobileTab === 'list' ? 'block' : 'hidden'} lg:block`}>
             <h2 className="text-base font-black text-[#3f2618] mb-4">등록된 카페 ({cafeList.length})</h2>
             <div className="space-y-2">
               {cafeList.map(cafe => (

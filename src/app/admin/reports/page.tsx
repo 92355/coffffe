@@ -36,6 +36,7 @@ export default function ReportsAdminPage() {
   const [panelReport, setPanelReport] = useState<CafeReport | null>(null)
   const [cafeForm, setCafeForm] = useState<CafeForm>(EMPTY_CAFE_FORM)
   const [panelMessage, setPanelMessage] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const pendingCount = reports.filter(r => r.status === 'pending').length
 
@@ -256,10 +257,20 @@ export default function ReportsAdminPage() {
 
             {/* 패널 본문 */}
             <div className="flex-1 overflow-y-auto">
-              <div className="grid gap-5 p-5 lg:grid-cols-[240px_minmax(0,1fr)]">
-                {/* 카카오 검색 */}
-                <div className="rounded-lg border border-[#eadfd3] bg-[#fdf9f5] p-4">
-                  <KakaoSearch onApply={applyPlace} />
+              <div className="grid gap-4 p-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-5 lg:p-5">
+                {/* 카카오 검색 — 모바일에서는 접기/펴기 */}
+                <div className="rounded-lg border border-[#eadfd3] bg-[#fdf9f5] p-3 lg:p-4">
+                  <button
+                    type="button"
+                    onClick={() => setSearchOpen(o => !o)}
+                    className="flex w-full items-center justify-between text-sm font-black text-[#3f2618] lg:hidden"
+                  >
+                    카카오 장소 검색
+                    <span className="text-xs font-bold text-[#8b5a32]">{searchOpen ? '접기 ▲' : '펴기 ▼'}</span>
+                  </button>
+                  <div className={`${searchOpen ? 'mt-3 block' : 'hidden'} lg:mt-0 lg:block`}>
+                    <KakaoSearch onApply={applyPlace} />
+                  </div>
                 </div>
 
                 {/* 카페 폼 */}

@@ -136,7 +136,111 @@ export default function MembersAdminPage() {
 
       {message && <p className="mb-4 text-sm font-bold text-[#8b5a32]">{message}</p>}
 
-      <div className="rounded-lg border border-[#eadfd3] bg-white shadow-sm overflow-hidden">
+      {/* 공통 파일 입력 (모바일/데스크탑 공유) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) void uploadAvatar(f) }}
+      />
+
+      {/* 모바일 카드 뷰 */}
+      <div className="space-y-3 md:hidden">
+        {members.length === 0 && (
+          <p className="rounded-md border border-dashed border-[#d8c8b8] px-3 py-6 text-center text-sm font-bold text-[#7a6654]">
+            가입한 회원이 없습니다.
+          </p>
+        )}
+        {members.map(member => (
+          <article key={`m-${member.id}`} className="rounded-lg border border-[#eadfd3] bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              {member.profile_image_url ? (
+                <img src={member.profile_image_url} alt="" className="h-11 w-11 shrink-0 rounded-full border border-[#eadfd3] object-cover" />
+              ) : (
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#eadfd3] bg-[#f7eee5] text-lg font-bold text-[#5a2e11]">
+                  {(member.site_nickname ?? member.nickname ?? '?')[0]}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="truncate text-sm font-black text-[#3f2618]">{member.site_nickname ?? '-'}</span>
+                  {member.site_animal && <span className="text-xs font-semibold text-[#8b7a68]">({member.site_animal})</span>}
+                  {member.cbti_type && (
+                    <span className="rounded-full bg-[#f7eee5] px-2 py-0.5 text-[10px] font-black text-[#8b5a32]">{member.cbti_type}</span>
+                  )}
+                </div>
+                <p className="mt-0.5 truncate text-xs font-semibold text-[#7a6654]">카카오: {member.nickname ?? '-'}</p>
+                <p className="text-[11px] font-semibold text-[#a9988a]">{new Date(member.created_at).toLocaleDateString('ko-KR')} 가입</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => editingId === member.id ? cancelEdit() : startEdit(member)}
+                className="flex h-9 items-center justify-center gap-1 rounded-md border border-[#eadfd3] text-xs font-black text-[#5a2e11] hover:bg-[#f7eee5]"
+              >
+                {editingId === member.id ? <X size={13} /> : <Pencil size={13} />}
+                {editingId === member.id ? '닫기' : '수정'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void deleteMember(member.id, member.site_nickname)}
+                className="flex h-9 items-center justify-center gap-1 rounded-md border border-red-200 bg-red-50 text-xs font-black text-red-700 hover:bg-red-100"
+              >
+                <Trash2 size={13} />삭제
+              </button>
+            </div>
+
+            {editingId === member.id && (
+              <div className="mt-3 grid gap-3 border-t border-[#eadfd3] pt-3">
+                <label className="block text-xs font-black text-[#5f4634]">
+                  사이트 닉네임
+                  <input value={editForm.site_nickname} onChange={e => f('site_nickname', e.target.value)} className="mt-1 h-9 w-full rounded-md border border-[#d8c8b8] px-3 text-sm font-semibold outline-none focus:border-[#d66612]" />
+                </label>
+                <label className="block text-xs font-black text-[#5f4634]">
+                  동물
+                  <select value={editForm.site_animal} onChange={e => f('site_animal', e.target.value)} className="mt-1 h-9 w-full rounded-md border border-[#d8c8b8] bg-white px-3 text-sm font-semibold outline-none focus:border-[#d66612]">
+                    <option value="">선택</option>
+                    {NICKNAME_ANIMALS.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </label>
+                <label className="block text-xs font-black text-[#5f4634]">
+                  CBTI 유형
+                  <select value={editForm.cbti_type} onChange={e => f('cbti_type', e.target.value)} className="mt-1 h-9 w-full rounded-md border border-[#d8c8b8] bg-white px-3 text-sm font-semibold outline-none focus:border-[#d66612]">
+                    <option value="">없음</option>
+                    {CBTI_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </label>
+                <div className="text-xs font-black text-[#5f4634]">
+                  프로필 이미지
+                  <div className="mt-1 flex items-center gap-2">
+                    {editForm.profile_image_url ? (
+                      <img src={editForm.profile_image_url} alt="" className="h-9 w-9 shrink-0 rounded-full border border-[#eadfd3] object-cover" />
+                    ) : (
+                      <div className="h-9 w-9 shrink-0 rounded-full border border-[#eadfd3] bg-[#f7eee5]" />
+                    )}
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex h-9 items-center gap-1.5 rounded-md border border-[#d8c8b8] px-3 text-xs font-black text-[#5f4634] hover:bg-[#f7eee5] disabled:opacity-50">
+                      <Upload size={13} />
+                      {uploading ? '업로드 중...' : '파일 선택'}
+                    </button>
+                    {editForm.profile_image_url && (
+                      <button type="button" onClick={() => f('profile_image_url', '')} className="text-xs text-red-600 hover:underline">제거</button>
+                    )}
+                  </div>
+                </div>
+                <button type="button" onClick={() => void saveEdit(member.id)} className="flex h-10 items-center justify-center gap-1.5 rounded-md bg-[#d66612] text-sm font-black text-white">
+                  <Check size={14} />저장
+                </button>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+
+      {/* 데스크탑 테이블 뷰 */}
+      <div className="hidden overflow-hidden rounded-lg border border-[#eadfd3] bg-white shadow-sm md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[#eadfd3] bg-[#faf7f3]">
@@ -262,13 +366,6 @@ export default function MembersAdminPage() {
                               <Upload size={13} />
                               {uploading ? '업로드 중...' : '파일 선택'}
                             </button>
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              className="hidden"
-                              onChange={e => { const f = e.target.files?.[0]; if (f) void uploadAvatar(f) }}
-                            />
                             {editForm.profile_image_url && (
                               <button
                                 type="button"
