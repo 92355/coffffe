@@ -283,6 +283,15 @@ body {
   font-family: var(--font-josefin-sans), var(--font-noto-sans-kr), sans-serif;
 }
 
+@keyframes float-hint {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-float-hint {
+  animation: float-hint 1.6s ease-in-out infinite;
+  will-change: transform;
+}
+
 /* Map overlay glass — desktop full blur, mobile halved for GPU cost */
 .glass-map-bar {
   backdrop-filter: blur(20px) saturate(165%);

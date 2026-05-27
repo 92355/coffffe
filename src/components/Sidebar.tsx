@@ -55,8 +55,11 @@ interface SidebarProps {
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
   mobileShowDetail?: boolean
+  mobileDetailInitialMode?: MobileSheetMode
   mobileBottomBarHidden?: boolean
 }
+
+type MobileSheetMode = 'closed' | 'preview' | 'full'
 
 const QUICK_CATEGORIES = [
   { label: '전체', value: null, icon: Sparkles, activeColor: '#5a2e11', activeShadow: 'rgba(90,46,17,0.25)' },
@@ -76,6 +79,13 @@ const itemVariants = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
 }
+
+const MOBILE_PREVIEW_HEIGHT_DVH = 34
+const MOBILE_FULL_HEIGHT_DVH = 86
+const MOBILE_CLOSED_HEIGHT_PX = 36
+const MOBILE_DRAG_THRESHOLD_PX = 48
+const MOBILE_DISMISS_THRESHOLD_PX = 72
+const MOBILE_DISMISS_VELOCITY = 400
 
 export default function Sidebar({
   cafes,
@@ -98,25 +108,39 @@ export default function Sidebar({
   collapsed = false,
   onCollapsedChange,
   mobileShowDetail = false,
+  mobileDetailInitialMode = 'full',
   mobileBottomBarHidden = false,
 }: SidebarProps) {
-  const [mobileExpanded, setMobileExpanded] = useState(mobileOpen)
+  const [mobileSheetMode, setMobileSheetMode] = useState<MobileSheetMode>(mobileOpen ? 'full' : 'closed')
+  const mobileExpanded = mobileSheetMode === 'full'
+  const mobileSheetOpen = mobileSheetMode !== 'closed'
+  const selectedCafeId = selectedCafe?.id ?? null
 
   useEffect(() => {
     if (!mobileOpen) return
 
     const animationFrame = window.requestAnimationFrame(() => {
-      setMobileExpanded(true)
+      setMobileSheetMode('full')
     })
 
     return () => window.cancelAnimationFrame(animationFrame)
   }, [mobileOpen])
 
   useEffect(() => {
-    onMobileExpandedChange?.(mobileExpanded)
-  }, [mobileExpanded, onMobileExpandedChange])
+    onMobileExpandedChange?.(mobileSheetOpen)
+  }, [mobileSheetOpen, onMobileExpandedChange])
 
-  useViewTracker(selectedCafe?.id ?? null)
+  useEffect(() => {
+    if (!mobileShowDetail || !selectedCafeId) return
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      setMobileSheetMode(mobileDetailInitialMode)
+    })
+
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [mobileDetailInitialMode, mobileShowDetail, selectedCafeId])
+
+  useViewTracker(selectedCafeId)
 
   const selectedCafeHue = selectedCafe ? cafeHue(selectedCafe.id) : 0
   const cafePlaceholderBg = [
@@ -126,6 +150,48 @@ export default function Sidebar({
     `hsl(${selectedCafeHue}, 42%, 38%)`,
   ].join(', ')
   const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
+  const mobileSheetHeight = mobileSheetMode === 'full'
+    ? `${MOBILE_FULL_HEIGHT_DVH}dvh`
+    : mobileSheetMode === 'preview'
+      ? `${MOBILE_PREVIEW_HEIGHT_DVH}dvh`
+      : (mobileBottomBarHidden ? 0 : `${MOBILE_CLOSED_HEIGHT_PX}px`)
+
+  function closeMobileSheet(): void {
+    setMobileSheetMode('closed')
+    if (mobileShowDetail && selectedCafe) {
+      onClearSelection()
+    }
+    onMobileClose?.()
+  }
+
+  function handleMobileSheetDragEnd(info: { offset: { y: number }; velocity: { y: number } }): void {
+    const draggedUp = info.offset.y < -MOBILE_DRAG_THRESHOLD_PX
+    const draggedDown = info.offset.y > MOBILE_DISMISS_THRESHOLD_PX || info.velocity.y > MOBILE_DISMISS_VELOCITY
+
+    if (draggedUp) {
+      setMobileSheetMode('full')
+      return
+    }
+
+    if (!draggedDown) return
+
+    if (mobileShowDetail && selectedCafe && mobileSheetMode === 'full') {
+      setMobileSheetMode('preview')
+      return
+    }
+
+    closeMobileSheet()
+  }
+
+  function handleMobileHandleClick(): void {
+    if (mobileShowDetail && selectedCafe) {
+      setMobileSheetMode(mobileSheetMode === 'full' ? 'preview' : 'full')
+      return
+    }
+
+    setMobileSheetMode(mobileSheetMode === 'full' ? 'closed' : 'full')
+    if (mobileSheetMode === 'full') onMobileClose?.()
+  }
 
   const desktopDetailPanel = selectedCafe ? (
     <>
@@ -181,31 +247,19 @@ export default function Sidebar({
       <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
         {/* 설명 */}
         <div className="px-4 py-4">
-          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/84">{selectedCafe.shortDescription}</p>
-          {selectedCafe.fullDescription && (
-            <p className="mt-2 text-sm leading-relaxed text-[#5f4634] dark:text-white/78">{selectedCafe.fullDescription}</p>
-          )}
+          <div className="rounded-xl bg-white/30 px-3.5 py-3 dark:bg-white/5">
+            <p className="text-[15px] font-semibold leading-relaxed text-[#3d2410] dark:text-white/95">{selectedCafe.shortDescription}</p>
+            {selectedCafe.fullDescription && (
+              <p className="mt-3 text-xs leading-relaxed text-[#7d6149] dark:text-white/65">{selectedCafe.fullDescription}</p>
+            )}
+          </div>
         </div>
 
         <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
 
         {/* 태그 */}
-        <div className="flex flex-wrap gap-1.5 px-4 py-4">
-          {selectedCafe.roastLevels.map(r => (
-            <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              {ROAST_LABELS[r]}
-            </span>
-          ))}
-          {selectedCafe.beanOrigins.map(o => (
-            <span key={o} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-              {ORIGIN_LABELS[o]}
-            </span>
-          ))}
-          {selectedCafe.brewMethods.map(m => (
-            <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              {BREW_LABELS[m]}
-            </span>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5 px-4 py-4">
+          <CafeTagList cafe={selectedCafe} />
         </div>
 
         <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
@@ -311,7 +365,7 @@ export default function Sidebar({
   const mobileDetailPanel = selectedCafe ? (
     <>
       {/* Hero 썸네일 */}
-      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '220px' }}>
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '170px' }}>
         {selectedCafe.images?.[0] ? (
           <Image
             src={selectedCafe.images[0]}
@@ -361,29 +415,17 @@ export default function Sidebar({
       <div className="map-sidebar-scroll min-h-0 flex-1 overflow-y-auto">
         {/* 설명 */}
         <div className="px-4 pb-3 pt-4">
-          <p className="text-sm leading-relaxed text-[#7d6149] dark:text-white/84">{selectedCafe.shortDescription}</p>
-          {selectedCafe.fullDescription && (
-            <p className="mt-1.5 text-sm leading-relaxed text-[#5f4634] dark:text-white/78">{selectedCafe.fullDescription}</p>
-          )}
+          <div className="rounded-xl bg-white/30 px-3.5 py-3 dark:bg-white/5">
+            <p className="text-[15px] font-semibold leading-relaxed text-[#3d2410] dark:text-white/95">{selectedCafe.shortDescription}</p>
+            {selectedCafe.fullDescription && (
+              <p className="mt-3 text-xs leading-relaxed text-[#7d6149] dark:text-white/65">{selectedCafe.fullDescription}</p>
+            )}
+          </div>
         </div>
 
         {/* 태그 */}
-        <div className="flex flex-wrap gap-1.5 px-4 pb-3">
-          {selectedCafe.roastLevels.map(r => (
-            <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              {ROAST_LABELS[r]}
-            </span>
-          ))}
-          {selectedCafe.beanOrigins.map(o => (
-            <span key={o} className="rounded-full bg-[#f5ede5] px-2.5 py-1 text-xs font-semibold text-[#7d6149] dark:bg-white/12 dark:text-white/84">
-              {ORIGIN_LABELS[o]}
-            </span>
-          ))}
-          {selectedCafe.brewMethods.map(m => (
-            <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              {BREW_LABELS[m]}
-            </span>
-          ))}
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3">
+          <CafeTagList cafe={selectedCafe} />
         </div>
 
         <div className="mx-4 border-t border-[#eee4d8] dark:border-white/10" />
@@ -477,6 +519,58 @@ export default function Sidebar({
         </div>
       </div>
 
+    </>
+  ) : null
+
+  const mobilePreviewPanel = selectedCafe ? (
+    <>
+      <div className="flex flex-col px-4 pb-4 pt-1 gap-3">
+        {/* 상단: 썸네일 + 이름/설명 + 찜 */}
+        <div className="flex items-start gap-3">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+            {selectedCafe.images?.[0] ? (
+              <Image src={selectedCafe.images[0]} alt={selectedCafe.name} fill className="object-cover" unoptimized />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-xl font-black text-white/80" style={{ background: cafePlaceholderBg }}>
+                {selectedCafe.name[0]}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-black leading-tight text-[#2c2118] dark:text-white">{selectedCafe.name}</h2>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-[#7d6149] dark:text-white/72">{selectedCafe.shortDescription}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onFavoriteToggle(selectedCafe.id)}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+              isFavorite
+                ? 'border-[#d66612] bg-[#d66612] text-white'
+                : 'border-[#eadfd3] bg-white/70 text-[#6b432a] dark:border-white/18 dark:bg-white/12 dark:text-white/80'
+            }`}
+            aria-label={isFavorite ? `${selectedCafe.name} 저장 해제` : `${selectedCafe.name} 저장`}
+            aria-pressed={isFavorite}
+          >
+            <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+        </div>
+
+        {/* 태그 */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <CafeTagList cafe={selectedCafe} />
+        </div>
+
+        {/* 주소 */}
+        <div className="flex items-start gap-2 text-xs text-[#7d6149] dark:text-white/72">
+          <MapPin size={12} className="mt-0.5 shrink-0 text-[#b45a12] dark:text-[#e8975a]" />
+          <span className="leading-relaxed">{selectedCafe.address}</span>
+        </div>
+
+        {/* 힌트 */}
+        <p className="animate-float-hint text-center text-[10px] text-[#b8aa9b] dark:text-white/38">
+          위로 올려서 자세히 보기
+        </p>
+      </div>
     </>
   ) : null
 
@@ -662,18 +756,15 @@ export default function Sidebar({
         )}
       </motion.aside>
 
-      {/* Mobile: backdrop (expanded only) */}
+      {/* Mobile: backdrop (sheet open only) */}
       <AnimatePresence>
-        {mobileExpanded && (
+        {mobileSheetOpen && (
           <motion.div
             className="md:hidden fixed inset-0 z-40 bg-black/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => {
-              setMobileExpanded(false)
-              onMobileClose?.()
-            }}
+            onClick={closeMobileSheet}
           />
         )}
       </AnimatePresence>
@@ -681,19 +772,12 @@ export default function Sidebar({
       {/* Mobile: drag bottom sheet — always visible */}
       <motion.div
         className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
-        animate={{ height: mobileExpanded ? '86dvh' : (mobileBottomBarHidden ? 0 : '36px') }}
+        animate={{ height: mobileSheetHeight }}
         transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         drag="y"
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0.06, bottom: 0.3 }}
-        onDragEnd={(_, info) => {
-          if (!mobileExpanded && info.offset.y < -48) {
-            setMobileExpanded(true)
-          } else if (mobileExpanded && (info.offset.y > 72 || info.velocity.y > 400)) {
-            setMobileExpanded(false)
-            onMobileClose?.()
-          }
-        }}
+        onDragEnd={(_, info) => handleMobileSheetDragEnd(info)}
       >
         <aside
           className="glass-map-sheet flex h-full w-full flex-col overflow-hidden rounded-t-[22px]"
@@ -707,25 +791,60 @@ export default function Sidebar({
           <button
             type="button"
             className="flex w-full shrink-0 cursor-grab items-center justify-center pb-2 pt-3 active:cursor-grabbing"
-            onClick={() => {
-              const next = !mobileExpanded
-              setMobileExpanded(next)
-              if (!next) onMobileClose?.()
-            }}
+            onClick={handleMobileHandleClick}
             aria-label={mobileExpanded ? '목록 접기' : '목록 펼치기'}
           >
             <div className="h-1 w-10 rounded-full bg-[#c4b5a5] dark:bg-white/38" />
           </button>
 
 
-          {/* Expanded: full sidebar content */}
-          {mobileExpanded && (
+          {/* Open: preview or full sidebar content */}
+          {mobileSheetOpen && (
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {mobileShowDetail && selectedCafe ? mobileDetailPanel : expandedContent}
+              {mobileShowDetail && selectedCafe
+                ? (mobileSheetMode === 'preview' ? mobilePreviewPanel : mobileDetailPanel)
+                : expandedContent}
             </div>
           )}
         </aside>
       </motion.div>
     </>
+  )
+}
+
+function CafeTagList({ cafe }: { cafe: Cafe }) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      {cafe.roastLevels.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-black text-[#b8aa9b] dark:text-white/38">로스팅</span>
+          {cafe.roastLevels.map(r => (
+            <span key={r} className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              {ROAST_LABELS[r]}
+            </span>
+          ))}
+        </div>
+      )}
+      {cafe.beanOrigins.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-black text-[#b8aa9b] dark:text-white/38">원산지</span>
+          {cafe.beanOrigins.map(o => (
+            <span key={o} className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+              {ORIGIN_LABELS[o]}
+            </span>
+          ))}
+        </div>
+      )}
+      {cafe.brewMethods.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-black text-[#b8aa9b] dark:text-white/38">추출방식</span>
+          {cafe.brewMethods.map(m => (
+            <span key={m} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              {BREW_LABELS[m]}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
