@@ -109,9 +109,9 @@ export default function HomeHeader() {
               <Link
                 href="/admin"
                 aria-label="관리자"
-                className="hidden h-8 w-8 items-center justify-center rounded-full text-[#504442] hover:bg-[#f0eded] dark:text-white/70 dark:hover:bg-white/10 sm:flex"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#5a2e11] text-white hover:bg-[#43210c] dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
               >
-                <LayoutDashboard size={18} />
+                <LayoutDashboard size={16} />
               </Link>
             )}
             {user?.type === 'authenticated' ? (

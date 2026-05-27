@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Heart, Loader2, LogIn, LogOut, MessageSquare, RefreshCw, Trash2, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Heart, LayoutDashboard, Loader2, LogIn, LogOut, MessageSquare, RefreshCw, Trash2, TriangleAlert } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import type { ReviewDbRow } from '@/lib/repositories/footprint'
@@ -202,9 +202,17 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {isAuthenticated && user.isAdmin && (
+          <Link href="/admin"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#5a2e11] py-2.5 text-sm font-black text-white transition-colors hover:bg-[#43210c]">
+            <LayoutDashboard size={14} />
+            관리자 페이지
+          </Link>
+        )}
+
         {isAuthenticated && (
           <button type="button" onClick={handleLogout}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#eadfd3] py-2.5 text-sm font-black text-[#6b432a] dark:border-white/18 dark:text-white/70">
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#eadfd3] py-2.5 text-sm font-black text-[#6b432a] dark:border-white/18 dark:text-white/70">
             <LogOut size={14} />
             로그아웃
           </button>
