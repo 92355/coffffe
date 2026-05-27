@@ -201,6 +201,7 @@ export default function Sidebar({
     `hsl(${selectedCafeHue}, 42%, 38%)`,
   ].join(', ')
   const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
+  const isPortrait = useIsPortrait(selectedCafe?.images?.[0])
   const mobileSheetHeight = mobileSheetMode === 'full'
     ? `${MOBILE_FULL_HEIGHT_DVH}dvh`
     : mobileSheetMode === 'preview'
@@ -302,17 +303,29 @@ export default function Sidebar({
       </div>
 
       {/* 썸네일 16:9 */}
-      <div className="relative w-full shrink-0" style={{ paddingTop: '56.25%' }}>
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ paddingTop: '56.25%' }}>
         {selectedCafe.images?.[0] ? (
-          <Image
-            src={selectedCafe.images[0]}
-            alt={selectedCafe.name}
-            fill
-            className="object-cover"
-            unoptimized
-            priority
-            sizes="100vw"
-          />
+          <>
+            {isPortrait && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={selectedCafe.images[0]}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.2)', transformOrigin: 'center' }}
+              />
+            )}
+            <Image
+              src={selectedCafe.images[0]}
+              alt={selectedCafe.name}
+              fill
+              className={isPortrait ? 'object-contain' : 'object-cover'}
+              unoptimized
+              priority
+              sizes="100vw"
+            />
+          </>
         ) : (
           <div className="absolute inset-0" style={{ background: cafePlaceholderBg }}>
             <span className="absolute inset-0 flex select-none items-center justify-center text-5xl font-black text-white/80">
@@ -383,15 +396,28 @@ export default function Sidebar({
   const mobileDetailPanel = selectedCafe ? (
     <>
       {/* Hero 썸네일 */}
-      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '170px' }}>
+      <div className="relative w-full shrink-0 overflow-hidden" style={{ height: '170px', willChange: 'transform', transform: 'translateZ(0)' }}>
         {selectedCafe.images?.[0] ? (
-          <Image
-            src={selectedCafe.images[0]}
-            alt={selectedCafe.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
+          <>
+            {isPortrait && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={selectedCafe.images[0]}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full object-cover"
+                style={{ filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.2)', transformOrigin: 'center' }}
+              />
+            )}
+            <Image
+              src={selectedCafe.images[0]}
+              alt={selectedCafe.name}
+              fill
+              className={isPortrait ? 'object-contain' : 'object-cover'}
+              unoptimized
+              priority
+            />
+          </>
         ) : (
           <div className="absolute inset-0" style={{ background: cafePlaceholderBg }}>
             <span className="absolute inset-0 flex select-none items-center justify-center text-6xl font-black text-white/80">
@@ -483,15 +509,27 @@ export default function Sidebar({
         <div className="flex items-start gap-3">
           <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
             {selectedCafe.images?.[0] ? (
-              <Image
-                src={selectedCafe.images[0]}
-                alt={selectedCafe.name}
-                fill
-                className="object-cover"
-                unoptimized
-                priority
-                sizes="56px"
-              />
+              <>
+                {isPortrait && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedCafe.images[0]}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ filter: 'blur(20px) brightness(0.6)', transform: 'scale(1.2)', transformOrigin: 'center' }}
+                  />
+                )}
+                <Image
+                  src={selectedCafe.images[0]}
+                  alt={selectedCafe.name}
+                  fill
+                  className={isPortrait ? 'object-contain' : 'object-cover'}
+                  unoptimized
+                  priority
+                  sizes="56px"
+                />
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-xl font-black text-white/80" style={{ background: cafePlaceholderBg }}>
                 {selectedCafe.name[0]}
@@ -784,6 +822,17 @@ export default function Sidebar({
       </motion.div>
     </>
   )
+}
+
+function useIsPortrait(src: string | undefined): boolean {
+  const [isPortrait, setIsPortrait] = useState(false)
+  useEffect(() => {
+    if (!src) { setIsPortrait(false); return }
+    const img = new window.Image()
+    img.onload = () => setIsPortrait(img.naturalHeight > img.naturalWidth)
+    img.src = src
+  }, [src])
+  return isPortrait
 }
 
 function CafeDescription({ cafe }: { cafe: Cafe }) {

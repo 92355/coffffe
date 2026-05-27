@@ -119,13 +119,13 @@ export default function MapView({ allCafes }: MapViewProps) {
   }, [activeQuickCategory, allCafes, filters, searchQuery])
 
   const filteredCafes = useMemo(() => {
-    const locationFilteredCafes = userLocation
+    if (activeMapBounds) {
+      return baseFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
+    }
+
+    return userLocation
       ? baseFilteredCafes.filter(cafe => distanceKm(cafe, userLocation) <= NEARBY_CAFE_RADIUS_KM)
       : baseFilteredCafes
-
-    if (!activeMapBounds) return locationFilteredCafes
-
-    return locationFilteredCafes.filter(cafe => isCafeInsideBounds(cafe, activeMapBounds))
   }, [activeMapBounds, baseFilteredCafes, userLocation])
   const favoriteCafes = useMemo(() => {
     const favoriteOrder = new Map(favoriteCafeIds.map((cafeId, index) => [cafeId, index]))
