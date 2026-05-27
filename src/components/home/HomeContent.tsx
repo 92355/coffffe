@@ -28,12 +28,18 @@ const bottomNavItems = [
   { href: '/', label: '홈', icon: Home, active: true },
   { href: '/map', label: '지도', icon: Map, active: false },
   { href: '/beans', label: '원두', icon: Coffee, active: false },
-  { href: '#profile', label: '내 정보', icon: UserRound, active: false },
+  { href: '/profile', label: '내 정보', icon: UserRound, active: false },
 ]
 
 const EARTH_RADIUS_KM = 6371
 const GEOLOCATION_TIMEOUT_MS = 10000
 const GEOLOCATION_MAXIMUM_AGE_MS = 60000
+const FEATURED_CAFE_LIMIT = 2
+const FEATURED_PLACEHOLDER_COUNT = 1
+const HERO_BACKGROUND_IMAGES = [
+  '/image/home/hero-coffee-recommendation.png',
+  '/image/home/hero-coffee-recommendation-alt.png',
+] as const
 
 interface HeroCopy {
   greeting: string
@@ -43,6 +49,16 @@ interface HeroCopy {
 interface WeatherState {
   label: string
   temperature: number
+}
+
+interface FeaturedCafeCard {
+  name: string
+  distance: string
+  image: string
+  tags: string[]
+  href: string
+  imageIsRemote: boolean
+  isPlaceholder?: boolean
 }
 
 const DEFAULT_HERO_COPY: HeroCopy = {
@@ -113,6 +129,39 @@ function findNearestCafe(cafes: Cafe[], userLocation: LocationPoint): Cafe | nul
   }, null)
 }
 
+function getFeaturedCafeCards(
+  cafes: Cafe[],
+  userLocation: LocationPoint | null,
+  locationStatus: 'checking' | 'ready' | 'unavailable',
+): FeaturedCafeCard[] {
+  if (!cafes.length || locationStatus === 'checking') {
+    const placeholderCount = Math.min(FEATURED_PLACEHOLDER_COUNT, featuredCafes.length)
+
+    return Array.from({ length: placeholderCount }, () => ({
+      name: '',
+      distance: '',
+      image: '/image/home/cafe-1.png',
+      tags: [],
+      href: '/map',
+      imageIsRemote: false,
+      isPlaceholder: true,
+    }))
+  }
+
+  const sortedCafes = userLocation
+    ? [...cafes].sort((a, b) => distanceKm(a, userLocation) - distanceKm(b, userLocation))
+    : cafes
+
+  return sortedCafes.slice(0, FEATURED_CAFE_LIMIT).map((cafe) => ({
+    name: cafe.name,
+    distance: userLocation ? formatDistance(distanceKm(cafe, userLocation)) : '추천 카페',
+    image: cafe.images?.[0] ?? '/image/home/cafe-1.png',
+    tags: cafe.tags.slice(0, 2),
+    href: `/cafes/${cafe.id}`,
+    imageIsRemote: cafe.images?.[0]?.startsWith('http') ?? false,
+  }))
+}
+
 function pickRandom<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)]
 }
@@ -158,6 +207,7 @@ export default function HomeContent() {
   const [locationStatus, setLocationStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking')
   const [weather, setWeather] = useState<WeatherState | null>(null)
   const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY)
+  const [heroBackgroundImage, setHeroBackgroundImage] = useState<string>(HERO_BACKGROUND_IMAGES[0])
   const displayName = user?.nickname ?? '개발하는 검정곰'
   const nearestCafe = useMemo(() => {
     if (!cafes.length) return null
@@ -169,11 +219,20 @@ export default function HomeContent() {
   const heroCafeName = nearestCafe?.name ?? '스페셜티 카페'
   const heroCafeImage = nearestCafe?.images?.[0] ?? '/image/logo/beenRoad.png'
   const heroCafeImageIsRemote = heroCafeImage.startsWith('http')
+  const recommendedCafes = useMemo(
+    () => getFeaturedCafeCards(cafes, userLocation, locationStatus),
+    [cafes, locationStatus, userLocation],
+  )
   const heroDistanceLabel = nearestDistance
     ?? (locationStatus === 'checking' ? '위치 확인중' : '추천 카페')
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setHeroCopy(createHeroCopy(new Date())), 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setHeroBackgroundImage(pickRandom([...HERO_BACKGROUND_IMAGES])), 0)
     return () => window.clearTimeout(timeoutId)
   }, [])
 
@@ -280,7 +339,7 @@ export default function HomeContent() {
           className="relative overflow-hidden rounded-b-[2.5rem] bg-[#45493d] px-5 pb-6 pt-5 shadow-[0_18px_38px_rgba(32,27,22,0.16)]"
         >
           <Image
-            src="/image/home/hero-coffee-recommendation.png"
+            src={heroBackgroundImage}
             alt=""
             fill
             priority
@@ -325,6 +384,54 @@ export default function HomeContent() {
           </div>
         </motion.section>
 
+        <section className="grid grid-cols-2 gap-4 px-5 pt-5">
+          <Link
+            href="/cbti"
+            className="relative flex h-44 flex-col justify-between overflow-hidden rounded-[1.6rem] border border-[#526134]/5 bg-[#eef1e6] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
+          >
+            <Image
+              src="/image/home/cbti-card-bg.png"
+              alt=""
+              fill
+              sizes="(max-width: 480px) 50vw, 224px"
+              className="object-cover"
+            />
+            <span className="absolute inset-0 bg-gradient-to-b from-[#1d2118]/16 via-[#1d2118]/8 to-[#1d2118]/42" />
+            <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/24 text-white shadow-sm backdrop-blur-md">
+              <Bean size={25} />
+            </span>
+            <span className="relative z-10">
+              <span className="block text-lg font-extrabold text-white">커피 CBTI</span>
+              <span className="mt-1 block break-keep text-[13px] font-semibold leading-tight text-white/76">
+                내 취향 찾기
+              </span>
+            </span>
+          </Link>
+
+          <Link
+            href="/beans"
+            className="relative flex h-44 flex-col justify-between overflow-hidden rounded-[1.6rem] border border-[#77583e]/5 bg-[#fff0e3] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
+          >
+            <Image
+              src="/image/home/beans-card-bg.png"
+              alt=""
+              fill
+              sizes="(max-width: 480px) 50vw, 224px"
+              className="object-cover"
+            />
+            <span className="absolute inset-0 bg-gradient-to-b from-[#1b1008]/10 via-[#1b1008]/20 to-[#1b1008]/58" />
+            <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/24 text-white shadow-sm backdrop-blur-md">
+              <Compass size={25} />
+            </span>
+            <span className="relative z-10">
+              <span className="block text-lg font-extrabold text-white">원두 정보</span>
+              <span className="mt-1 block break-keep text-[13px] font-semibold leading-tight text-white/78">
+                지역별 원두 탐색
+              </span>
+            </span>
+          </Link>
+        </section>
+
         <section className="px-5 pt-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-extrabold tracking-[-0.01em] text-[#201b16] dark:text-[#f3f0ef]">
@@ -337,74 +444,61 @@ export default function HomeContent() {
           </div>
 
           <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-4 scrollbar-hide">
-            {featuredCafes.map((cafe, index) => (
+            {recommendedCafes.map((cafe, index) => (
               <motion.article
                 key={cafe.name}
                 {...fadeUp(0.08 + index * 0.06)}
                 className="min-w-[186px] overflow-hidden rounded-[1.6rem] border border-[#f3e9df] bg-white shadow-[0_8px_30px_rgba(32,27,22,0.06)] dark:border-white/10 dark:bg-white/8"
               >
-                <Link href="/map" className="group block transition active:scale-[0.98]">
+                <Link href={cafe.href} className="group block transition active:scale-[0.98]">
                   <div className="relative h-28 overflow-hidden bg-[#ece0d9]">
-                    <Image
-                      src={cafe.image}
-                      alt={cafe.name}
-                      fill
-                      sizes="190px"
-                      className={`object-cover transition duration-700 group-hover:scale-105 ${index === 1 ? 'scale-125 object-right' : 'object-center'}`}
-                    />
-                    <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#526134] shadow-sm backdrop-blur">
-                      <Heart size={18} />
-                    </span>
+                    {cafe.isPlaceholder ? (
+                      <div className="h-full w-full bg-[#ece0d9] dark:bg-white/10" />
+                    ) : (
+                      <>
+                        <Image
+                          src={cafe.image}
+                          alt={cafe.name}
+                          fill
+                          sizes="190px"
+                          unoptimized={cafe.imageIsRemote}
+                          className={`object-cover transition duration-700 group-hover:scale-105 ${index === 1 ? 'scale-125 object-right' : 'object-center'}`}
+                        />
+                        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#526134] shadow-sm backdrop-blur">
+                          <Heart size={18} />
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="p-4">
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <h3 className="min-w-0 truncate text-base font-bold text-[#201b16] dark:text-[#f3f0ef]">{cafe.name}</h3>
-                      <span className="shrink-0 pt-0.5 text-[11px] font-bold text-[#45483d] dark:text-white/62">{cafe.distance}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      {cafe.tags.map((tag) => (
-                        <span key={tag} className="rounded-full bg-[#fdf1ea] px-3 py-1 text-[10px] font-bold text-[#8a714b] dark:bg-white/10 dark:text-white/70">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
+                    {cafe.isPlaceholder ? (
+                      <div className="space-y-3">
+                        <div className="h-4 w-24 rounded-full bg-[#efe5da] dark:bg-white/10" />
+                        <div className="flex gap-2">
+                          <div className="h-6 w-14 rounded-full bg-[#f3e9df] dark:bg-white/10" />
+                          <div className="h-6 w-16 rounded-full bg-[#f3e9df] dark:bg-white/10" />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-3 flex items-start justify-between gap-2">
+                          <h3 className="min-w-0 truncate text-base font-bold text-[#201b16] dark:text-[#f3f0ef]">{cafe.name}</h3>
+                          <span className="shrink-0 pt-0.5 text-[11px] font-bold text-[#45483d] dark:text-white/62">{cafe.distance}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          {cafe.tags.map((tag) => (
+                            <span key={tag} className="rounded-full bg-[#fdf1ea] px-3 py-1 text-[10px] font-bold text-[#8a714b] dark:bg-white/10 dark:text-white/70">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </Link>
               </motion.article>
             ))}
           </div>
-        </section>
-
-        <section className="grid grid-cols-2 gap-4 px-5 pt-1">
-          <Link
-            href="/cbti"
-            className="flex h-44 flex-col justify-between rounded-[1.6rem] border border-[#526134]/5 bg-[#eef1e6] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6a7a4b] text-white shadow-sm">
-              <Bean size={25} />
-            </span>
-            <span>
-              <span className="block text-lg font-extrabold text-[#201b16] dark:text-[#f3f0ef]">커피 CBTI</span>
-              <span className="mt-1 block break-keep text-[13px] font-medium leading-tight text-[#45483d] dark:text-white/60">
-                내 취향 타입 찾기
-              </span>
-            </span>
-          </Link>
-
-          <Link
-            href="/beans"
-            className="flex h-44 flex-col justify-between rounded-[1.6rem] border border-[#77583e]/5 bg-[#fff0e3] p-5 shadow-[0_8px_30px_rgba(32,27,22,0.05)] transition active:scale-[0.98] dark:border-white/10 dark:bg-white/8"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#8a714b] text-white shadow-sm">
-              <Compass size={25} />
-            </span>
-            <span>
-              <span className="block text-lg font-extrabold text-[#201b16] dark:text-[#f3f0ef]">원두 정보</span>
-              <span className="mt-1 block break-keep text-[13px] font-medium leading-tight text-[#45483d] dark:text-white/60">
-                산지별 원두 탐색
-              </span>
-            </span>
-          </Link>
         </section>
 
         <section className="px-5 pt-5">

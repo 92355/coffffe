@@ -125,7 +125,7 @@ export { uploadCafeImage, uploadAvatar }
 
 import { parseReportPayload } from '@/lib/validation/report'
 
-export async function submitReport(body: unknown): Promise<{ id: string }> {
+export async function submitReport(body: unknown, userId: string | null = null): Promise<{ id: string }> {
   const p = parseReportPayload(body)
   return insertReport({
     type: p.type,
@@ -138,6 +138,7 @@ export async function submitReport(body: unknown): Promise<{ id: string }> {
     correction_types: p.correctionTypes,
     memo: p.memo ?? null,
     anonymous_id: p.anonymousId,
+    user_id: userId,
     nickname: p.nickname,
   })
 }

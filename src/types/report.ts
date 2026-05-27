@@ -14,6 +14,7 @@ export interface CafeReport {
   correctionTypes: string[]
   memo?: string
   anonymousId: string
+  userId?: string
   nickname: string
   status: ReportStatus
   createdAt: string

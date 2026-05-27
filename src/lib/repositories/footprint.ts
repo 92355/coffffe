@@ -131,6 +131,16 @@ export interface ReviewDbRow {
 const REVIEW_SELECT =
   'id, cafe_id, author_user_id, author_anonymous_id, author_nickname, author_animal, text, report_count, created_at'
 
+export async function getMyReviews(userId: string): Promise<ReviewDbRow[]> {
+  const { data, error } = await createSupabaseAdminClient()
+    .from('cafe_reviews')
+    .select(REVIEW_SELECT)
+    .eq('author_user_id', userId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as ReviewDbRow[]
+}
+
 export async function queryReviews(cafeId: string, limit: number): Promise<ReviewDbRow[]> {
   const { data, error } = await createSupabaseAdminClient()
     .from('cafe_reviews')

@@ -96,6 +96,7 @@ interface DatabaseReport {
   correction_types: string[] | null
   memo: string | null
   anonymous_id: string
+  user_id: string | null
   nickname: string
   status: ReportStatus
   created_at: string
@@ -115,10 +116,21 @@ export function toReport(row: DatabaseReport): CafeReport {
     correctionTypes: row.correction_types ?? [],
     memo: row.memo ?? undefined,
     anonymousId: row.anonymous_id,
+    userId: row.user_id ?? undefined,
     nickname: row.nickname,
     status: row.status,
     createdAt: row.created_at,
   }
+}
+
+export async function getMyReports(userId: string): Promise<CafeReport[]> {
+  const { data, error } = await createSupabaseAdminClient()
+    .from('reports')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data as DatabaseReport[]).map(toReport)
 }
 
 export async function listReports(): Promise<CafeReport[]> {
@@ -221,6 +233,7 @@ export interface DatabaseReportPayload {
   correction_types: string[]
   memo: string | null
   anonymous_id: string
+  user_id: string | null
   nickname: string
 }
 
