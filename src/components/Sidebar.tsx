@@ -827,12 +827,12 @@ export default function Sidebar({
 function useIsPortrait(src: string | undefined): boolean {
   const [isPortrait, setIsPortrait] = useState(false)
   useEffect(() => {
-    if (!src) { setIsPortrait(false); return }
+    if (!src) return
     const img = new window.Image()
     img.onload = () => setIsPortrait(img.naturalHeight > img.naturalWidth)
     img.src = src
   }, [src])
-  return isPortrait
+  return src ? isPortrait : false
 }
 
 function CafeDescription({ cafe }: { cafe: Cafe }) {

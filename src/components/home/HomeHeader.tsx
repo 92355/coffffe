@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { LayoutDashboard, LogOut, MapPin, UserRound } from 'lucide-react'
+import { LayoutDashboard, LogIn, LogOut, MapPin, UserRound } from 'lucide-react'
 import { useUser } from '@/hooks/useUser'
 import { getAnimalAvatarPath } from '@/lib/animalAvatar'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -77,7 +77,9 @@ export default function HomeHeader() {
         void loadLocationLabel()
       },
       (error) => {
-        console.warn('Failed to load header geolocation. / 헤더 위치 확인 실패.', error)
+        if (error.code !== error.PERMISSION_DENIED) {
+          console.warn('Failed to load header geolocation. / 헤더 위치 확인 실패.', error)
+        }
         setLocationLabel('위치 미확인')
       },
       {
@@ -91,7 +93,7 @@ export default function HomeHeader() {
   return (
     <>
       <header className="fixed top-0 z-50 w-full border-b border-[#f0eded] bg-[#fcf9f8]/90 px-5 py-4 backdrop-blur-md dark:border-white/10 dark:bg-[#161616]/88">
-        <div className="relative mx-auto flex max-w-md items-center justify-between">
+        <div className="relative mx-auto flex w-full max-w-md items-center justify-between">
           <Link href="/map" className="flex items-center gap-1">
             <MapPin size={18} className="text-[#271310] dark:text-[#e3beb8]" />
             <span className="max-w-28 truncate text-[11px] font-bold uppercase tracking-[0.1em] text-[#504442] dark:text-white/64">
@@ -99,13 +101,10 @@ export default function HomeHeader() {
             </span>
           </Link>
 
-          <Link href="/" className="absolute left-1/2 flex -translate-x-1/2 items-center text-xl font-extrabold tracking-widest">
-            <span className="text-[#271310] dark:text-[#e3beb8]">원</span>
-            <span className="mx-0.5 text-[#556341] dark:text-[#bdcca3]">두</span>
-            <span className="text-[#271310] dark:text-[#e3beb8]">로</span>
-          </Link>
-
           <div className="flex items-center gap-2">
+            <div className="[&>button]:h-8 [&>button]:w-8 [&>button]:text-[#504442] dark:[&>button]:text-[#bdcca3]">
+              <ThemeToggle />
+            </div>
             {user?.type === 'authenticated' && user.isAdmin && (
               <Link
                 href="/admin"
@@ -128,14 +127,13 @@ export default function HomeHeader() {
               <button
                 type="button"
                 onClick={loginWithKakao}
-                className="hidden h-8 rounded-full bg-[#FEE500] px-3 text-[11px] font-bold text-[#191600] sm:block"
+                aria-label="카카오 로그인"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FEE500] text-[#191600] sm:w-auto sm:px-3 sm:text-[11px] sm:font-bold"
               >
-                Kakao
+                <LogIn size={16} className="sm:hidden" />
+                <span className="hidden sm:inline">Kakao</span>
               </button>
             )}
-            <div className="[&>button]:h-8 [&>button]:w-8 [&>button]:text-[#504442] dark:[&>button]:text-[#bdcca3]">
-              <ThemeToggle />
-            </div>
             <button
               type="button"
               onClick={() => setProfileEditSheetOpen(true)}
@@ -160,6 +158,12 @@ export default function HomeHeader() {
             </button>
           </div>
         </div>
+
+        <Link href="/" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center text-xl font-extrabold tracking-widest">
+          <span className="text-[#271310] dark:text-[#e3beb8]">원</span>
+          <span className="mx-0.5 text-[#556341] dark:text-[#bdcca3]">두</span>
+          <span className="text-[#271310] dark:text-[#e3beb8]">로</span>
+        </Link>
       </header>
 
       {profileEditSheetOpen && (
@@ -168,6 +172,7 @@ export default function HomeHeader() {
           profilePrefs={profilePrefs}
           onProfilePrefsChange={updateProfilePrefs}
           onRegenerateNickname={regenerateNickname}
+          onLoginWithKakao={loginWithKakao}
           onClose={() => setProfileEditSheetOpen(false)}
         />
       )}

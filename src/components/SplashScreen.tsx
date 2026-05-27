@@ -22,24 +22,144 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         position: 'fixed', inset: 0, zIndex: 9999,
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        background: '#EDE0CF',
+        background: 'radial-gradient(circle at 24% 20%, rgba(216,234,176,0.58) 0%, transparent 26%), radial-gradient(circle at 78% 72%, rgba(214,102,18,0.10) 0%, transparent 28%), linear-gradient(180deg, #fbf7ef 0%, #eadcc8 100%)',
         opacity: fading ? 0 : 1,
         transition: 'opacity 0.7s ease',
         cursor: 'pointer',
         userSelect: 'none',
       }}
     >
-      {/* Warm glow behind cup */}
+      <style>{`
+        .splash-bean {
+          position: absolute;
+          width: 18px;
+          height: 11px;
+          border-radius: 999px;
+          background: #556341;
+          opacity: 0.22;
+          transform: rotate(-24deg);
+          animation: splashBeanFloat 4.2s ease-in-out infinite;
+        }
+
+        .splash-bean::after {
+          content: '';
+          position: absolute;
+          inset: 2px 8px 2px 7px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.32);
+        }
+
+        .splash-cup-stage {
+          position: relative;
+          width: 240px;
+          height: 280px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: splashCupDrift 3.6s ease-in-out infinite;
+        }
+
+        .splash-glow {
+          animation: splashGlowPulse 2.8s ease-in-out infinite;
+        }
+
+        .splash-steam {
+          position: absolute;
+          top: 20px;
+          width: 8px;
+          height: 48px;
+          border-radius: 999px;
+          border-left: 2px solid rgba(111,88,53,0.24);
+          filter: blur(0.2px);
+          opacity: 0;
+          animation: splashSteamRise 2.6s ease-in-out infinite;
+        }
+
+        .splash-cup {
+          filter: drop-shadow(0 20px 28px rgba(63,38,24,0.16));
+        }
+
+        .splash-dot {
+          display: inline-block;
+          width: 5px;
+          height: 5px;
+          margin: 0 3px;
+          border-radius: 999px;
+          background: #8fae5a;
+          animation: splashDot 1.1s ease-in-out infinite;
+        }
+
+        .splash-dot:nth-child(2) {
+          animation-delay: 0.15s;
+        }
+
+        .splash-dot:nth-child(3) {
+          animation-delay: 0.3s;
+        }
+
+        @keyframes splashCupDrift {
+          0%, 100% { transform: translateY(0) rotate(-0.8deg); }
+          50% { transform: translateY(-8px) rotate(0.8deg); }
+        }
+
+        @keyframes splashGlowPulse {
+          0%, 100% { transform: scale(0.94); opacity: 0.72; }
+          50% { transform: scale(1.08); opacity: 1; }
+        }
+
+        @keyframes splashSteamRise {
+          0% { transform: translateY(20px) scaleY(0.65); opacity: 0; }
+          30% { opacity: 0.6; }
+          100% { transform: translateY(-28px) scaleY(1.1); opacity: 0; }
+        }
+
+        @keyframes splashBeanFloat {
+          0%, 100% { transform: translateY(0) rotate(-24deg); }
+          50% { transform: translateY(-18px) rotate(-8deg); }
+        }
+
+        @keyframes splashDot {
+          0%, 100% { transform: translateY(0); opacity: 0.35; }
+          50% { transform: translateY(-5px); opacity: 1; }
+        }
+      `}</style>
+      <span className="splash-bean" style={{ left: '18%', top: '24%', animationDelay: '0.2s' }} />
+      <span className="splash-bean" style={{ right: '18%', top: '30%', animationDelay: '1.1s', transform: 'rotate(18deg)' }} />
+      <span className="splash-bean" style={{ left: '24%', bottom: '22%', animationDelay: '1.8s', transform: 'rotate(12deg)' }} />
+      <span className="splash-bean" style={{ right: '20%', bottom: '18%', animationDelay: '2.4s' }} />
+
       <div style={{
+        position: 'absolute',
+        top: 36,
+        border: '1px solid rgba(143,174,90,0.18)',
+        borderRadius: 999,
+        background: 'rgba(255,255,255,0.36)',
+        color: '#556341',
+        fontSize: 11,
+        fontWeight: 900,
+        letterSpacing: '0.12em',
+        padding: '8px 12px',
+        backdropFilter: 'blur(10px)',
+      }}>
+        SPECIALTY COFFEE MAP
+      </div>
+
+      <div className="splash-cup-stage">
+        <span className="splash-steam" style={{ left: 88, animationDelay: '0.35s' }} />
+        <span className="splash-steam" style={{ left: 124, height: 58, animationDelay: '0.8s' }} />
+        <span className="splash-steam" style={{ left: 150, animationDelay: '1.2s' }} />
+
+      {/* Warm glow behind cup */}
+      <div className="splash-glow" style={{
         position: 'absolute',
         width: 240, height: 240,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(158,111,62,0.12) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(214,102,18,0.15) 0%, rgba(143,174,90,0.10) 42%, transparent 72%)',
         pointerEvents: 'none',
       }} />
 
       {/* Cup SVG */}
-      <svg width="160" height="220" viewBox="0 0 160 220" style={{ overflow: 'visible' }}>
+      <svg className="splash-cup" width="160" height="220" viewBox="0 0 160 220" style={{ overflow: 'visible' }}>
         <defs>
           {/* Cup interior clip */}
           <clipPath id="sc-cup-clip">
@@ -174,10 +294,11 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <ellipse cx="138" cy="132" rx="3"   ry="5"   fill="rgba(100,55,20,0.16)" />
         <ellipse cx="148" cy="158" rx="2"   ry="3.5" fill="rgba(100,55,20,0.12)" />
       </svg>
+      </div>
 
       {/* ── Brand logo ── */}
       <div style={{
-        marginTop: 32,
+        marginTop: 10,
         opacity: logoVisible ? 1 : 0,
         transform: logoVisible ? 'translateY(0)' : 'translateY(10px)',
         transition: 'opacity 0.65s ease, transform 0.65s ease',
@@ -189,6 +310,11 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         </p>
         <p style={{ fontSize: 12, color: 'rgba(100,65,30,0.55)', marginTop: 6, letterSpacing: '0.06em' }}>
           스페셜티 커피 큐레이션
+        </p>
+        <p style={{ margin: '14px 0 0', height: 8 }}>
+          <span className="splash-dot" />
+          <span className="splash-dot" />
+          <span className="splash-dot" />
         </p>
       </div>
 

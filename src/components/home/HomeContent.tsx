@@ -280,7 +280,9 @@ export default function HomeContent() {
         setLocationStatus('ready')
       },
       (error) => {
-        console.warn('Failed to load home geolocation. / 홈 위치 확인 실패.', error)
+        if (error.code !== error.PERMISSION_DENIED) {
+          console.warn('Failed to load home geolocation. / 홈 위치 확인 실패.', error)
+        }
         setLocationStatus('unavailable')
       },
       {
@@ -395,6 +397,7 @@ export default function HomeContent() {
               src="/image/home/cbti-card-bg2.png"
               alt=""
               fill
+              loading="eager"
               sizes="(max-width: 480px) 50vw, 224px"
               className="object-cover"
             />
@@ -418,6 +421,7 @@ export default function HomeContent() {
               src="/image/home/beans-card-bg.png"
               alt=""
               fill
+              loading="eager"
               sizes="(max-width: 480px) 50vw, 224px"
               className="object-cover"
             />

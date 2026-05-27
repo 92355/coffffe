@@ -11,6 +11,7 @@ interface ProfileEditSheetProps {
   profilePrefs: ProfilePrefs
   onProfilePrefsChange: (prefs: Partial<ProfilePrefs>) => void
   onRegenerateNickname: () => void
+  onLoginWithKakao?: () => void
   onClose: () => void
 }
 
@@ -19,6 +20,7 @@ export default function ProfileEditSheet({
   profilePrefs,
   onProfilePrefsChange,
   onRegenerateNickname,
+  onLoginWithKakao,
   onClose,
 }: ProfileEditSheetProps) {
   const authenticated = user?.type === 'authenticated'
@@ -82,6 +84,23 @@ export default function ProfileEditSheet({
               )}
             </div>
             <p className="mt-3 truncate text-base font-black">{displayNickname}</p>
+            {!authenticated && (
+              <div className="mt-4 rounded-xl border border-[#f4c26b] bg-[#fff8df] px-3 py-3 text-left">
+                <p className="text-sm font-black text-[#5a2e11]">지금 프로필은 임시 프로필이에요.</p>
+                <p className="mt-1 break-keep text-xs font-bold leading-relaxed text-[#8a6042]">
+                  이 닉네임이 마음에 든다면 카카오 로그인해서 내 프로필로 고정해 보세요.
+                </p>
+                {onLoginWithKakao && (
+                  <button
+                    type="button"
+                    onClick={onLoginWithKakao}
+                    className="mt-3 h-10 w-full rounded-lg bg-[#FEE500] px-3 text-sm font-black text-[#191600]"
+                  >
+                    카카오 로그인하고 고정하기
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="mt-5">
