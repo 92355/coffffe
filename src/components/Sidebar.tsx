@@ -122,6 +122,7 @@ export default function Sidebar({
   const selectedCafeId = selectedCafe?.id ?? null
   const scrollDragStartYRef = useRef<number | null>(null)
   const scrollDragStartTimeRef = useRef<number>(0)
+  const [detailDismissed, setDetailDismissed] = useState(false)
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -171,6 +172,7 @@ export default function Sidebar({
   useEffect(() => {
     if (!mobileShowDetail || !selectedCafeId) return
 
+    setDetailDismissed(false)
     const animationFrame = window.requestAnimationFrame(() => {
       setMobileSheetMode(mobileDetailInitialMode)
     })
@@ -208,9 +210,10 @@ export default function Sidebar({
   function closeMobileSheet(): void {
     setMobileSheetMode('closed')
     if (mobileShowDetail && selectedCafe) {
-      onClearSelection()
+      setDetailDismissed(true)
+    } else {
+      onMobileClose?.()
     }
-    onMobileClose?.()
   }
 
   function handleMobileSheetDragEnd(info: { offset: { y: number }; velocity: { y: number } }): void {
@@ -685,14 +688,23 @@ export default function Sidebar({
       </AnimatePresence>
 
       {/* Mobile: selected cafe detail sheet only. / 모바일: 선택한 카페 상세 시트만 표시. */}
-      {mobileShowDetail && selectedCafe && (
+      <AnimatePresence onExitComplete={() => {
+        if (mobileShowDetail && selectedCafe) {
+          onClearSelection()
+          onMobileClose?.()
+        }
+      }}>
+      {mobileShowDetail && selectedCafe && !detailDismissed && (
         <motion.div
+          key={selectedCafe.id}
           className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
-          animate={{ height: mobileSheetHeight }}
+          initial={{ y: '100%' }}
+          animate={{ height: mobileSheetHeight, y: 0 }}
+          exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
           drag="y"
           dragConstraints={{ top: 0, bottom: 0 }}
-          dragElastic={{ top: 0.06, bottom: 0.3 }}
+          dragElastic={{ top: 0.06, bottom: 1 }}
           onDragEnd={(_, info) => handleMobileSheetDragEnd(info)}
         >
           <aside
@@ -726,6 +738,7 @@ export default function Sidebar({
           </aside>
         </motion.div>
       )}
+      </AnimatePresence>
     </>
   )
 }
