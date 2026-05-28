@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import type { MutableRefObject } from 'react'
 import type { Cafe } from '@/types/cafe'
 import type { LocationPoint } from '@/types/location'
+import type { MapBounds } from '@/types/map'
 import { useKakaoMap } from '@/hooks/useKakaoMap'
 
 interface KakaoMapProps {
@@ -20,12 +21,7 @@ interface KakaoMapProps {
 
 export type MapType = 'normal' | 'skyview'
 
-export interface MapBounds {
-  north: number
-  south: number
-  east: number
-  west: number
-}
+export type { MapBounds } from '@/types/map'
 
 export interface ZoomRequest {
   id: number

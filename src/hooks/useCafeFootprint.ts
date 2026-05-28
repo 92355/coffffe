@@ -131,8 +131,12 @@ function parseReviews(value: unknown): ReviewEntry[] {
   return value.map(parseReview).filter((entry): entry is ReviewEntry => entry !== null)
 }
 
-export function useCafeFootprint(cafeId: string | null | undefined, user: User | null): CafeFootprintState {
-  const [summary, setSummary] = useState<FootprintSummary | null>(null)
+export function useCafeFootprint(
+  cafeId: string | null | undefined,
+  user: User | null,
+  initialData?: FootprintSummary | null,
+): CafeFootprintState {
+  const [summary, setSummary] = useState<FootprintSummary | null>(initialData ?? null)
   const [reviews, setReviews] = useState<ReviewEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -141,36 +145,41 @@ export function useCafeFootprint(cafeId: string | null | undefined, user: User |
   useEffect(() => {
     if (!cafeId) return
 
+    // Skip initial summary fetch when SSR-provided initialData is present.
+    // Still fetch reviews (not included in SSR snapshot).
     const abortController = new AbortController()
-    // Initial fetch for newly-selected cafe. setState here is intentional.
     /* eslint-disable react-hooks/set-state-in-effect */
-    setLoading(true)
+    if (!initialData) setLoading(true)
     setError(null)
     /* eslint-enable react-hooks/set-state-in-effect */
 
     async function loadAll(currentCafeId: string): Promise<void> {
       try {
-        const [summaryRes, reviewsRes] = await Promise.all([
-          fetchWithIdentity(`/api/cafes/${encodeURIComponent(currentCafeId)}/footprint`, {
-            signal: abortController.signal,
-            cache: 'no-store',
-          }),
-          fetchWithIdentity(`/api/cafes/${encodeURIComponent(currentCafeId)}/reviews`, {
-            signal: abortController.signal,
-            cache: 'no-store',
-          }),
-        ])
+        const fetches = initialData
+          ? [fetchWithIdentity(`/api/cafes/${encodeURIComponent(currentCafeId)}/reviews`, { signal: abortController.signal, cache: 'no-store' })]
+          : [
+              fetchWithIdentity(`/api/cafes/${encodeURIComponent(currentCafeId)}/footprint`, { signal: abortController.signal, cache: 'no-store' }),
+              fetchWithIdentity(`/api/cafes/${encodeURIComponent(currentCafeId)}/reviews`, { signal: abortController.signal, cache: 'no-store' }),
+            ]
 
-        if (!summaryRes.ok) throw new Error('summary load failed')
-        if (!reviewsRes.ok) throw new Error('reviews load failed')
+        const results = await Promise.all(fetches)
 
-        const summaryData = await summaryRes.json() as FootprintResponse
-        const reviewsData = await reviewsRes.json() as ReviewsResponse
-
-        if (abortController.signal.aborted) return
-
-        setSummary(parseSummary(summaryData))
-        setReviews(parseReviews(reviewsData.reviews))
+        if (initialData) {
+          const [reviewsRes] = results
+          if (!reviewsRes?.ok) throw new Error('reviews load failed')
+          const reviewsData = await reviewsRes.json() as ReviewsResponse
+          if (abortController.signal.aborted) return
+          setReviews(parseReviews(reviewsData.reviews))
+        } else {
+          const [summaryRes, reviewsRes] = results
+          if (!summaryRes?.ok) throw new Error('summary load failed')
+          if (!reviewsRes?.ok) throw new Error('reviews load failed')
+          const summaryData = await summaryRes.json() as FootprintResponse
+          const reviewsData = await reviewsRes.json() as ReviewsResponse
+          if (abortController.signal.aborted) return
+          setSummary(parseSummary(summaryData))
+          setReviews(parseReviews(reviewsData.reviews))
+        }
       } catch (loadError) {
         if (abortController.signal.aborted) return
         console.warn('Failed to load cafe footprint. / 카페 발자취 로드 실패.', loadError)
@@ -185,6 +194,7 @@ export function useCafeFootprint(cafeId: string | null | undefined, user: User |
     return () => {
       abortController.abort()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cafeId])
 
   const markVisit = useCallback(async () => {

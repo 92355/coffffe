@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useUser } from '@/hooks/useUser'
-import { useCafeFootprint } from '@/hooks/useCafeFootprint'
+import { useCafeFootprint, type FootprintSummary } from '@/hooks/useCafeFootprint'
 import VisitTodayButton from './VisitTodayButton'
 import ReactionRow from './ReactionRow'
 import ReviewForm from './ReviewForm'
@@ -10,9 +10,10 @@ import ReviewList from './ReviewList'
 
 interface CafeFootprintPanelProps {
   cafeId: string
+  initialFootprint?: FootprintSummary | null
 }
 
-export default function CafeFootprintPanel({ cafeId }: CafeFootprintPanelProps) {
+export default function CafeFootprintPanel({ cafeId, initialFootprint }: CafeFootprintPanelProps) {
   const { user } = useUser()
   const {
     summary,
@@ -26,7 +27,7 @@ export default function CafeFootprintPanel({ cafeId }: CafeFootprintPanelProps) 
     editReview,
     deleteMyReview,
     reportReview,
-  } = useCafeFootprint(cafeId, user)
+  } = useCafeFootprint(cafeId, user, initialFootprint)
   const [reportFeedback, setReportFeedback] = useState<string | null>(null)
 
   async function handleReport(reviewId: string): Promise<void> {

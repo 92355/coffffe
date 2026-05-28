@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { matchesFilters, matchesSearch, matchesCategory } from './cafeFilters'
+import { applyCafeFilters, matchesFilters, matchesSearch, matchesCategory } from './cafeFilters'
 import type { Cafe, FilterState } from '@/types/cafe'
+import type { MapBounds } from '@/types/map'
 
 function makeCafe(overrides: Partial<Cafe> = {}): Cafe {
   return {
@@ -27,7 +28,102 @@ function makeCafe(overrides: Partial<Cafe> = {}): Cafe {
 
 const emptyFilters: FilterState = { roastLevel: null, beanOrigin: null, brewMethod: null }
 
-describe('matchesFilters', () => {
+describe('applyCafeFilters', () => {
+  it('빈 쿼리는 전체 카페를 반환한다', () => {
+    const cafes = [makeCafe({ id: 'a' }), makeCafe({ id: 'b' })]
+    expect(applyCafeFilters(cafes, {})).toHaveLength(2)
+  })
+
+  it('roastLevel 필터 일치', () => {
+    const cafes = [
+      makeCafe({ id: 'a', roastLevels: ['light'] }),
+      makeCafe({ id: 'b', roastLevels: ['dark'] }),
+    ]
+    expect(applyCafeFilters(cafes, { roastLevel: 'light' })).toHaveLength(1)
+    expect(applyCafeFilters(cafes, { roastLevel: 'light' })[0]?.id).toBe('a')
+  })
+
+  it('beanOrigin 필터 일치', () => {
+    const cafes = [
+      makeCafe({ id: 'a', beanOrigins: ['ethiopia'] }),
+      makeCafe({ id: 'b', beanOrigins: ['kenya'] }),
+    ]
+    expect(applyCafeFilters(cafes, { beanOrigin: 'kenya' })).toHaveLength(1)
+  })
+
+  it('brewMethod 필터 일치', () => {
+    const cafes = [
+      makeCafe({ id: 'a', brewMethods: ['espresso'] }),
+      makeCafe({ id: 'b', brewMethods: ['pour-over'] }),
+    ]
+    expect(applyCafeFilters(cafes, { brewMethod: 'espresso' })).toHaveLength(1)
+  })
+
+  it('복합 필터 AND 조건', () => {
+    const match = makeCafe({ id: 'a', roastLevels: ['light'], beanOrigins: ['ethiopia'], brewMethods: ['pour-over'] })
+    const nomatch = makeCafe({ id: 'b', roastLevels: ['dark'], beanOrigins: ['ethiopia'], brewMethods: ['pour-over'] })
+    const cafes = [match, nomatch]
+    expect(applyCafeFilters(cafes, { roastLevel: 'light', beanOrigin: 'ethiopia', brewMethod: 'pour-over' })).toHaveLength(1)
+    expect(applyCafeFilters(cafes, { roastLevel: 'light', beanOrigin: 'ethiopia', brewMethod: 'pour-over' })[0]?.id).toBe('a')
+  })
+
+  it('searchText 이름 일치', () => {
+    const cafes = [
+      makeCafe({ id: 'a', name: '안산 로스터리', fullDescription: '로스터리', shortDescription: '로스터리', address: '경기도', tags: [] }),
+      makeCafe({ id: 'b', name: '서울 카페', fullDescription: '서울', shortDescription: '서울', address: '서울시', tags: [] }),
+    ]
+    expect(applyCafeFilters(cafes, { searchText: '안산' })).toHaveLength(1)
+    expect(applyCafeFilters(cafes, { searchText: '안산' })[0]?.id).toBe('a')
+  })
+
+  it('searchText 대소문자 무시', () => {
+    const cafes = [makeCafe({ id: 'a', name: 'Ansan Roastery' })]
+    expect(applyCafeFilters(cafes, { searchText: 'ANSAN' })).toHaveLength(1)
+  })
+
+  it('빈 searchText는 전체 통과', () => {
+    const cafes = [makeCafe({ id: 'a' }), makeCafe({ id: 'b' })]
+    expect(applyCafeFilters(cafes, { searchText: '' })).toHaveLength(2)
+    expect(applyCafeFilters(cafes, { searchText: '   ' })).toHaveLength(2)
+  })
+
+  it('category 태그 일치', () => {
+    const cafes = [
+      makeCafe({ id: 'a', name: 'a', shortDescription: 'a', fullDescription: 'a', address: 'a', tags: ['스페셜티'] }),
+      makeCafe({ id: 'b', name: 'b', shortDescription: 'b', fullDescription: 'b', address: 'b', tags: ['로스터리'] }),
+    ]
+    expect(applyCafeFilters(cafes, { category: '스페셜티' })).toHaveLength(1)
+    expect(applyCafeFilters(cafes, { category: '스페셜티' })[0]?.id).toBe('a')
+  })
+
+  it('null category는 전체 통과', () => {
+    const cafes = [makeCafe({ id: 'a' }), makeCafe({ id: 'b' })]
+    expect(applyCafeFilters(cafes, { category: null })).toHaveLength(2)
+  })
+
+  it('bounds 필터 — 범위 내 카페만', () => {
+    const bounds: MapBounds = { north: 37.40, south: 37.30, east: 126.90, west: 126.80 }
+    const inside = makeCafe({ id: 'a', lat: 37.35, lng: 126.85 })
+    const outside = makeCafe({ id: 'b', lat: 37.50, lng: 126.85 })
+    expect(applyCafeFilters([inside, outside], { bounds })).toHaveLength(1)
+    expect(applyCafeFilters([inside, outside], { bounds })[0]?.id).toBe('a')
+  })
+
+  it('nearbyOrigin — 반경 내 카페만', () => {
+    const origin = { lat: 37.32, lng: 126.83 }
+    const near = makeCafe({ id: 'a', lat: 37.32, lng: 126.83 })
+    const far = makeCafe({ id: 'b', lat: 37.80, lng: 127.20 })
+    expect(applyCafeFilters([near, far], { nearbyOrigin: { origin, maxKm: 1.5 } })).toHaveLength(1)
+    expect(applyCafeFilters([near, far], { nearbyOrigin: { origin, maxKm: 1.5 } })[0]?.id).toBe('a')
+  })
+
+  it('결과 없음 케이스', () => {
+    const cafes = [makeCafe({ roastLevels: ['light'] })]
+    expect(applyCafeFilters(cafes, { roastLevel: 'dark' })).toHaveLength(0)
+  })
+})
+
+describe('matchesFilters (legacy)', () => {
   it('모든 필터가 null이면 모든 카페를 통과시킨다', () => {
     expect(matchesFilters(makeCafe(), emptyFilters)).toBe(true)
   })
@@ -59,7 +155,7 @@ describe('matchesFilters', () => {
   })
 })
 
-describe('matchesSearch', () => {
+describe('matchesSearch (legacy)', () => {
   it('빈 쿼리는 모든 카페를 통과시킨다', () => {
     expect(matchesSearch(makeCafe(), '')).toBe(true)
     expect(matchesSearch(makeCafe(), '   ')).toBe(true)
@@ -87,7 +183,7 @@ describe('matchesSearch', () => {
   })
 })
 
-describe('matchesCategory', () => {
+describe('matchesCategory (legacy)', () => {
   it('null 카테고리는 모든 카페를 통과시킨다', () => {
     expect(matchesCategory(makeCafe(), null)).toBe(true)
   })

@@ -7,6 +7,7 @@ import { BREW_LABELS, ORIGIN_LABELS, ROAST_LABELS } from '@/types/cafe'
 import { createSupabaseAdminClient } from '@/lib/supabase'
 import { cafeHue } from '@/lib/cafeThumb'
 import { googleMapUrl, kakaoMapUrl, naverMapUrl } from '@/lib/mapNavigation'
+import { getFootprintSummary } from '@/lib/cafeFootprint'
 import CafeFootprintPanel from '@/components/CafeFootprintPanel'
 
 interface PageProps {
@@ -75,7 +76,10 @@ async function fetchCafeById(cafeId: string): Promise<Cafe | null> {
 
 export default async function CafeDetailPage({ params }: PageProps) {
   const { id } = await params
-  const cafe = await fetchCafeById(id)
+  const [cafe, initialFootprint] = await Promise.all([
+    fetchCafeById(id),
+    getFootprintSummary(id, null).catch(() => null),
+  ])
   if (!cafe) notFound()
 
   const hue = cafeHue(cafe.id)
@@ -187,7 +191,7 @@ export default async function CafeDetailPage({ params }: PageProps) {
         </section>
 
         <div className="mt-5">
-          <CafeFootprintPanel cafeId={cafe.id} />
+          <CafeFootprintPanel cafeId={cafe.id} initialFootprint={initialFootprint} />
         </div>
       </div>
     </main>

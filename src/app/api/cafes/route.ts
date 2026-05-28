@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import type { RoastLevel, BeanOrigin, BrewMethod } from '@/types/cafe'
-import { matchesFilters } from '@/lib/cafeFilters'
+import { applyCafeFilters } from '@/lib/cafeFilters'
 import { getCachedCafes } from '@/lib/services/cafe'
 import { ok } from '@/lib/response'
 
@@ -12,8 +12,7 @@ export async function GET(request: NextRequest) {
   const origin = searchParams.get('origin') as BeanOrigin | null
   const method = searchParams.get('method') as BrewMethod | null
 
-  const filters = { roastLevel: roast, beanOrigin: origin, brewMethod: method }
-  const result = (await getCachedCafes()).filter((cafe) => matchesFilters(cafe, filters))
+  const result = applyCafeFilters(await getCachedCafes(), { roastLevel: roast, beanOrigin: origin, brewMethod: method })
 
   return ok(result)
 }
