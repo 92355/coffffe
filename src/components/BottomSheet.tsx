@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Image from 'next/image'
 import { AtSign, Heart, Phone, X } from 'lucide-react'
@@ -34,6 +34,8 @@ export default function BottomSheet({
   onFavoriteToggle,
 }: BottomSheetProps) {
   const [sheetHeight, setSheetHeight] = useState(MAX_HEIGHT_DVH)
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const rafIdRef = useRef<number | null>(null)
   useViewTracker(cafe?.id ?? null)
 
   useEffect(() => {
@@ -48,12 +50,28 @@ export default function BottomSheet({
     const startHeight = sheetHeight
 
     function onMove(moveEvent: PointerEvent) {
-      const deltaY = startY - moveEvent.clientY
-      const deltaPercent = (deltaY / window.innerHeight) * 100
-      setSheetHeight(Math.min(MAX_HEIGHT_DVH, Math.max(MIN_HEIGHT_DVH, startHeight + deltaPercent)))
+      // RAF throttle: cancel pending frame and schedule a new one.
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current)
+      rafIdRef.current = requestAnimationFrame(() => {
+        const deltaY = startY - moveEvent.clientY
+        const deltaPercent = (deltaY / window.innerHeight) * 100
+        const next = Math.min(MAX_HEIGHT_DVH, Math.max(MIN_HEIGHT_DVH, startHeight + deltaPercent))
+        // Directly mutate DOM style — no React re-render in the hot path.
+        if (sheetRef.current) sheetRef.current.style.height = `${next}dvh`
+      })
     }
 
     function onUp() {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+        rafIdRef.current = null
+      }
+      // Sync React state once so the next render matches the dragged position.
+      const current = sheetRef.current?.style.height
+      if (current) {
+        const parsed = parseFloat(current)
+        if (!Number.isNaN(parsed)) setSheetHeight(parsed)
+      }
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerup', onUp)
     }
@@ -75,6 +93,7 @@ export default function BottomSheet({
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
         >
           <div
+            ref={sheetRef}
             className="glass-map-sheet overflow-hidden rounded-3xl"
             style={{ ...glassStyle, height: `${sheetHeight}dvh` }}
           >

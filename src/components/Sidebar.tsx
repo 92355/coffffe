@@ -90,7 +90,9 @@ const MOBILE_DISMISS_VELOCITY = 400
 const MOBILE_SCROLL_DRAG_THRESHOLD_PX = 36
 const MOBILE_SCROLL_DRAG_PREVENT_THRESHOLD_PX = 8
 const MOBILE_SCROLL_LOCK_QUERY = '(max-width: 767px)'
-const preloadedCafeImageUrls = new Set<string>()
+const IMAGE_PRELOAD_CACHE_SIZE = 25
+// Map preserves insertion order — delete first key to evict oldest entry.
+const preloadedCafeImageUrls = new Map<string, void>()
 
 export default function Sidebar({
   cafes,
@@ -188,7 +190,11 @@ export default function Sidebar({
 
     const image = new window.Image()
     image.src = imageUrl
-    preloadedCafeImageUrls.add(imageUrl)
+    preloadedCafeImageUrls.set(imageUrl, undefined)
+    if (preloadedCafeImageUrls.size > IMAGE_PRELOAD_CACHE_SIZE) {
+      const oldest = preloadedCafeImageUrls.keys().next().value
+      if (oldest !== undefined) preloadedCafeImageUrls.delete(oldest)
+    }
     void image.decode?.().catch((error: unknown) => {
       console.warn('Failed to preload cafe image. / 카페 이미지 미리 불러오기 실패.', error)
     })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { memo, useCallback, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Heart, MapPin } from 'lucide-react'
 import type { Cafe } from '@/types/cafe'
@@ -36,6 +36,21 @@ export default function MobileCafeCarousel({
 }: MobileCafeCarouselProps) {
   const cardRefs = useRef(new Map<string, HTMLElement>())
 
+  // Stable callbacks so React.memo on CafeCarouselCard can skip re-renders.
+  const onSelectRef = useRef(onSelect)
+  useEffect(() => { onSelectRef.current = onSelect }, [onSelect])
+  const stableOnSelect = useCallback((cafe: Cafe) => onSelectRef.current(cafe), [])
+
+  const onFavoriteToggleRef = useRef(onFavoriteToggle)
+  useEffect(() => { onFavoriteToggleRef.current = onFavoriteToggle }, [onFavoriteToggle])
+  const stableOnFavoriteToggle = useCallback((cafeId: string) => onFavoriteToggleRef.current(cafeId), [])
+
+  // Single stable card-ref handler — card passes its own ID to identify itself.
+  const onCardRef = useCallback((cafeId: string, el: HTMLElement | null) => {
+    if (el) cardRefs.current.set(cafeId, el)
+    else cardRefs.current.delete(cafeId)
+  }, [])
+
   useEffect(() => {
     if (!selectedCafeId) return
 
@@ -70,20 +85,15 @@ export default function MobileCafeCarousel({
         {cafes.length > 0 ? cafes.map((cafe, index) => (
           <CafeCarouselCard
             key={cafe.id}
-            cardRef={(element) => {
-              if (element) {
-                cardRefs.current.set(cafe.id, element)
-                return
-              }
-              cardRefs.current.delete(cafe.id)
-            }}
+            cafeId={cafe.id}
+            onCardRef={onCardRef}
             cafe={cafe}
             priorityImage={index === 0}
             selected={selectedCafeId === cafe.id}
             distanceOrigin={distanceOrigin}
             favorite={favoriteCafeIds.has(cafe.id)}
-            onSelect={onSelect}
-            onFavoriteToggle={onFavoriteToggle}
+            onSelect={stableOnSelect}
+            onFavoriteToggle={stableOnFavoriteToggle}
           />
         )) : (
           <div className="w-[min(20rem,calc(100vw-2rem))] shrink-0 rounded-2xl border border-dashed border-[#dacdbf] bg-white/94 p-4 text-center shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md dark:border-white/18 dark:bg-[#171514]/88">
@@ -102,8 +112,9 @@ export default function MobileCafeCarousel({
   )
 }
 
-function CafeCarouselCard({
-  cardRef,
+const CafeCarouselCard = memo(function CafeCarouselCard({
+  cafeId,
+  onCardRef,
   cafe,
   priorityImage,
   selected,
@@ -112,7 +123,8 @@ function CafeCarouselCard({
   onSelect,
   onFavoriteToggle,
 }: {
-  cardRef: (element: HTMLElement | null) => void
+  cafeId: string
+  onCardRef: (cafeId: string, el: HTMLElement | null) => void
   cafe: Cafe
   priorityImage: boolean
   selected: boolean
@@ -121,13 +133,17 @@ function CafeCarouselCard({
   onSelect: (cafe: Cafe) => void
   onFavoriteToggle: (cafeId: string) => void
 }) {
+  const articleRef = useCallback(
+    (el: HTMLElement | null) => onCardRef(cafeId, el),
+    [cafeId, onCardRef],
+  )
   const distance = distanceOrigin ? formatDistance(distanceKm(cafe, distanceOrigin)) : '거리 정보 없음'
   const tags = cafe.brewMethods.slice(0, MAX_VISIBLE_TAGS)
   const hasMoreTags = cafe.brewMethods.length > MAX_VISIBLE_TAGS
 
   return (
     <article
-      ref={cardRef}
+      ref={articleRef}
       className={`w-[15.5rem] shrink-0 overflow-hidden rounded-2xl border bg-white/94 p-2 shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md transition-all dark:bg-[#171514]/88 ${
         selected
           ? 'border-[#d66612] ring-2 ring-[#f08a24]/25'
@@ -190,7 +206,7 @@ function CafeCarouselCard({
       </button>
     </article>
   )
-}
+})
 
 function distanceKm(cafe: Cafe, origin: LocationPoint): number {
   const dLat = ((cafe.lat - origin.lat) * Math.PI) / 180

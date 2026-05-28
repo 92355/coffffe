@@ -110,8 +110,30 @@ export default function KakaoMap({
     prevSelectedIdRef.current = nextId
 
     if (cafesChanged) {
-      renderAll(cafes, nextId)
-      return
+      // Delta sync: only add/remove changed markers instead of full rebuild.
+      const nextIds = new Set(cafes.map(c => c.id))
+      const currentIds = new Set(overlaysRef.current.keys())
+
+      for (const id of currentIds) {
+        if (!nextIds.has(id)) {
+          overlaysRef.current.get(id)?.setMap(null)
+          overlaysRef.current.delete(id)
+        }
+      }
+      for (const cafe of cafes) {
+        if (!currentIds.has(cafe.id)) {
+          const sel = cafe.id === nextId
+          overlaysRef.current.set(
+            cafe.id,
+            makeOverlay(map, cafe, sel, () => {
+              onSelectRef.current(cafe)
+              focusCafeOnMap(map, cafe)
+            }),
+          )
+        }
+      }
+      // Fall through to handle selection change if it occurred simultaneously.
+      if (prevId === nextId) return
     }
 
     if (prevId === nextId) return

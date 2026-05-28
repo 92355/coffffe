@@ -70,17 +70,24 @@ export default function MapView({ allCafes }: MapViewProps) {
     return [...filteredCafes, selectedCafe]
   }, [filteredCafes, selectedCafe])
 
+  // Separate memo so the O(n log n) sort only re-runs when location or cafes change, not on every pan.
+  const cafesSortedByDistance = useMemo(() => {
+    if (!locationState.userLocation) return null
+    return [...baseFilteredCafes].sort(
+      (left, right) => cafeDistanceKm(left, locationState.userLocation!) - cafeDistanceKm(right, locationState.userLocation!),
+    )
+  }, [baseFilteredCafes, locationState.userLocation])
+
   const mobileCarouselCafes = useMemo(() => {
-    const candidates = locationState.userLocation
-      ? [...baseFilteredCafes].sort((left, right) => cafeDistanceKm(left, locationState.userLocation!) - cafeDistanceKm(right, locationState.userLocation!))
-      : mapState.currentMapBounds
+    const candidates = cafesSortedByDistance
+      ?? (mapState.currentMapBounds
         ? applyCafeFilters(baseFilteredCafes, { bounds: mapState.currentMapBounds })
-        : baseFilteredCafes
+        : baseFilteredCafes)
 
     const visibleCafes = candidates.slice(0, MOBILE_CAROUSEL_LIMIT)
     if (!selectedCafe || visibleCafes.some(cafe => cafe.id === selectedCafe.id)) return visibleCafes
     return [...visibleCafes, selectedCafe]
-  }, [baseFilteredCafes, mapState.currentMapBounds, selectedCafe, locationState.userLocation])
+  }, [cafesSortedByDistance, mapState.currentMapBounds, baseFilteredCafes, selectedCafe])
 
   const favoriteCafes = useMemo(() => {
     const favoriteOrder = new Map(favoriteCafeIds.map((cafeId, index) => [cafeId, index]))
