@@ -177,17 +177,23 @@ export default function KakaoMap({
     focusCafeOnMap(map, selectedCafe)
   }, [selectedCafe])
 
+  // Debounced so rapid zoom_changed events (pinch-zoom through multiple levels) are batched.
+  const boundsNotifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notifyMapBoundsChange = useCallback((map: kakao.maps.Map | null) => {
     if (!map) return
-    const bounds = map.getBounds()
-    const northEast = bounds.getNorthEast()
-    const southWest = bounds.getSouthWest()
-    onBoundsChangeRef.current?.({
-      north: northEast.getLat(),
-      south: southWest.getLat(),
-      east: northEast.getLng(),
-      west: southWest.getLng(),
-    })
+    if (boundsNotifyTimerRef.current !== null) clearTimeout(boundsNotifyTimerRef.current)
+    boundsNotifyTimerRef.current = setTimeout(() => {
+      boundsNotifyTimerRef.current = null
+      const bounds = map.getBounds()
+      const northEast = bounds.getNorthEast()
+      const southWest = bounds.getSouthWest()
+      onBoundsChangeRef.current?.({
+        north: northEast.getLat(),
+        south: southWest.getLat(),
+        east: northEast.getLng(),
+        west: southWest.getLng(),
+      })
+    }, 120)
   }, [])
 
   useEffect(() => {

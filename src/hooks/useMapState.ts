@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { startTransition, useCallback, useState } from 'react'
 import type { MapBounds, MapType, ZoomRequest } from '@/components/map/KakaoMap'
 
 export interface MapStateResult {
@@ -37,11 +37,14 @@ export function useMapState(): MapStateResult {
     setMapType((current) => current === 'normal' ? 'skyview' : 'normal')
   }, [])
 
-  // 첫 bounds 변경(초기 로드)에서는 pending 표시를 하지 않는다
+  // 첫 bounds 변경(초기 로드)에서는 pending 표시를 하지 않는다.
+  // startTransition: carousel 재계산은 비긴급 — 진행 중인 애니메이션/제스처를 block하지 않는다.
   const handleMapBoundsChange = useCallback((bounds: MapBounds) => {
-    setCurrentMapBounds((prev) => {
-      setHasPendingBoundsSearch(prev !== null)
-      return bounds
+    startTransition(() => {
+      setCurrentMapBounds((prev) => {
+        setHasPendingBoundsSearch(prev !== null)
+        return bounds
+      })
     })
   }, [])
 

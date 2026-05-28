@@ -198,7 +198,7 @@ export default function Sidebar({
     void image.decode?.().catch((error: unknown) => {
       console.warn('Failed to preload cafe image. / 카페 이미지 미리 불러오기 실패.', error)
     })
-  }, [selectedCafe?.images])
+  }, [selectedCafe?.id])
 
   const selectedCafeHue = selectedCafe ? cafeHue(selectedCafe.id) : 0
   const cafePlaceholderBg = [
@@ -209,9 +209,10 @@ export default function Sidebar({
   ].join(', ')
   const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
   const isPortrait = useIsPortrait(selectedCafe?.images?.[0])
-  const mobileSheetHeight = mobileSheetMode === 'full'
-    ? `${MOBILE_FULL_HEIGHT_DVH}dvh`
-    : (mobileBottomBarHidden ? 0 : `${MOBILE_CLOSED_HEIGHT_PX}px`)
+  // translateY-based sheet positioning — GPU-accelerated, no layout reflow per frame.
+  const mobileSheetY = mobileSheetMode === 'full'
+    ? '0%'
+    : (mobileBottomBarHidden ? '100%' : `calc(${MOBILE_FULL_HEIGHT_DVH}dvh - ${MOBILE_CLOSED_HEIGHT_PX}px)`)
 
   function closeMobileSheet(): void {
     setMobileSheetMode('closed')
@@ -704,8 +705,9 @@ export default function Sidebar({
         <motion.div
           key={selectedCafe.id}
           className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
+          style={{ height: `${MOBILE_FULL_HEIGHT_DVH}dvh` }}
           initial={{ y: '100%' }}
-          animate={{ height: mobileSheetHeight, y: 0 }}
+          animate={{ y: mobileSheetY }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 32, stiffness: 320 }}
           drag="y"
