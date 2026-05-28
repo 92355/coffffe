@@ -11,6 +11,7 @@ import MobileCafeCarousel from '@/components/MobileCafeCarousel'
 import ProfileEditSheet from '@/components/ProfileEditSheet'
 import ReportSheet from '@/components/ReportSheet'
 import Sidebar from '@/components/Sidebar'
+import ThemeToggle from '@/components/ThemeToggle'
 import { isCafeInsideBounds } from '@/lib/cafeFilters'
 
 const KakaoMap = dynamic(() => import('@/components/map/KakaoMap'), { ssr: false })
@@ -314,6 +315,9 @@ export default function MapViewPresentation(state: MapViewState) {
             >
               <SlidersHorizontal size={15} />
             </button>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#eadfd3] bg-white text-[#6f3b17] transition-colors hover:bg-[#f8efe6] dark:border-white/18 dark:bg-white/16 dark:text-white/90 dark:hover:bg-white/22">
+              <ThemeToggle />
+            </div>
             <div ref={profileMenuRef} className="relative shrink-0">
               <button
                 type="button"
@@ -378,8 +382,11 @@ export default function MapViewPresentation(state: MapViewState) {
         </div>
 
         {/* Desktop-only profile button */}
-        <div ref={profileMenuRefDesktop} className="pointer-events-none absolute right-4 top-4 z-30 hidden md:block">
-          <div className="pointer-events-auto relative">
+        <div className="pointer-events-none absolute right-4 top-4 z-30 hidden md:flex md:items-start md:gap-2">
+          <div className="glass-map-btn pointer-events-auto flex h-9 w-9 items-center justify-center rounded-xl text-[#6f3b17] dark:text-white/90" style={{ background: 'color-mix(in srgb, var(--background) 93%, rgba(255,255,255,0.10))', border: '1px solid color-mix(in srgb, var(--foreground) 20%, transparent)', boxShadow: '0 6px 18px rgba(60, 40, 20, 0.08), inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+            <ThemeToggle />
+          </div>
+          <div ref={profileMenuRefDesktop} className="pointer-events-auto relative">
             <button
               type="button"
               onClick={() => setProfileMenuOpen((current) => !current)}

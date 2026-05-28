@@ -96,7 +96,7 @@ export default function MobileCafeCarousel({
             onFavoriteToggle={stableOnFavoriteToggle}
           />
         )) : (
-          <div className="w-[min(20rem,calc(100vw-2rem))] shrink-0 rounded-2xl border border-dashed border-[#dacdbf] bg-white/94 p-4 text-center shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md dark:border-white/18 dark:bg-[#171514]/88">
+          <div className="glass-carousel-border w-[min(20rem,calc(100vw-2rem))] shrink-0 rounded-2xl border border-dashed border-[#dacdbf] bg-white/94 p-4 text-center shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md dark:border-white/18 dark:bg-[#171514]/88">
             <p className="text-sm font-black text-[#3d2410] dark:text-white">조건에 맞는 카페가 없어요</p>
             <button
               type="button"
@@ -144,7 +144,8 @@ const CafeCarouselCard = memo(function CafeCarouselCard({
   return (
     <article
       ref={articleRef}
-      className={`w-[15.5rem] shrink-0 overflow-hidden rounded-2xl border bg-white/94 p-2 shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md transition-all dark:bg-[#171514]/88 ${
+      data-selected={selected}
+      className={`glass-carousel-border w-[15.5rem] shrink-0 overflow-hidden rounded-2xl border bg-white/94 p-2 shadow-[0_10px_28px_rgba(60,40,20,0.14)] backdrop-blur-md transition-all dark:bg-[#171514]/88 ${
         selected
           ? 'border-[#d66612] ring-2 ring-[#f08a24]/25'
           : 'border-[#eadfd3] dark:border-white/16'
