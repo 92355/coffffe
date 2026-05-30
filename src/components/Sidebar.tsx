@@ -119,12 +119,16 @@ export default function Sidebar({
   mobileBottomBarHidden = false,
 }: SidebarProps) {
   const [mobileSheetMode, setMobileSheetMode] = useState<MobileSheetMode>(mobileOpen ? 'full' : 'closed')
-  const mobileExpanded = mobileSheetMode === 'full'
-  const mobileSheetOpen = mobileSheetMode !== 'closed'
   const selectedCafeId = selectedCafe?.id ?? null
+  const [dismissedCafeId, setDismissedCafeId] = useState<string | null>(null)
+  const mobileDetailActive = mobileShowDetail && selectedCafeId !== null && dismissedCafeId !== selectedCafeId
+  const effectiveMobileSheetMode = mobileDetailActive && mobileSheetMode === 'closed'
+    ? mobileDetailInitialMode
+    : mobileSheetMode
+  const mobileExpanded = effectiveMobileSheetMode === 'full'
+  const mobileSheetOpen = effectiveMobileSheetMode !== 'closed'
   const scrollDragStartYRef = useRef<number | null>(null)
   const scrollDragStartTimeRef = useRef<number>(0)
-  const [detailDismissed, setDetailDismissed] = useState(false)
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -143,44 +147,22 @@ export default function Sidebar({
   useEffect(() => {
     if (!mobileSheetOpen || !window.matchMedia(MOBILE_SCROLL_LOCK_QUERY).matches) return
 
-    const scrollY = window.scrollY
     const { body, documentElement } = document
     const previousBodyOverflow = body.style.overflow
-    const previousBodyPosition = body.style.position
-    const previousBodyTop = body.style.top
-    const previousBodyWidth = body.style.width
     const previousHtmlOverflow = documentElement.style.overflow
     const previousHtmlOverscrollBehavior = documentElement.style.overscrollBehavior
 
-    // Lock page scroll while the mobile sheet is open. / 모바일 시트가 열린 동안 페이지 스크롤을 잠급니다.
+    // Lock page scroll without repositioning the body. / body 위치 변경 없이 페이지 스크롤만 잠급니다.
     body.style.overflow = 'hidden'
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.width = '100%'
     documentElement.style.overflow = 'hidden'
     documentElement.style.overscrollBehavior = 'none'
 
     return () => {
       body.style.overflow = previousBodyOverflow
-      body.style.position = previousBodyPosition
-      body.style.top = previousBodyTop
-      body.style.width = previousBodyWidth
       documentElement.style.overflow = previousHtmlOverflow
       documentElement.style.overscrollBehavior = previousHtmlOverscrollBehavior
-      window.scrollTo(0, scrollY)
     }
   }, [mobileSheetOpen])
-
-  useEffect(() => {
-    if (!mobileShowDetail || !selectedCafeId) return
-
-    setDetailDismissed(false)
-    const animationFrame = window.requestAnimationFrame(() => {
-      setMobileSheetMode(mobileDetailInitialMode)
-    })
-
-    return () => window.cancelAnimationFrame(animationFrame)
-  }, [mobileDetailInitialMode, mobileShowDetail, selectedCafeId])
 
   useViewTracker(selectedCafeId)
 
@@ -210,14 +192,14 @@ export default function Sidebar({
   const isFavorite = selectedCafe ? favoriteCafeIds.has(selectedCafe.id) : false
   const isPortrait = useIsPortrait(selectedCafe?.images?.[0])
   // translateY-based sheet positioning — GPU-accelerated, no layout reflow per frame.
-  const mobileSheetY = mobileSheetMode === 'full'
+  const mobileSheetY = effectiveMobileSheetMode === 'full'
     ? '0%'
     : (mobileBottomBarHidden ? '100%' : `calc(${MOBILE_FULL_HEIGHT_DVH}dvh - ${MOBILE_CLOSED_HEIGHT_PX}px)`)
 
   function closeMobileSheet(): void {
     setMobileSheetMode('closed')
     if (mobileShowDetail && selectedCafe) {
-      setDetailDismissed(true)
+      setDismissedCafeId(selectedCafe.id)
     } else {
       onMobileClose?.()
     }
@@ -281,8 +263,12 @@ export default function Sidebar({
   }
 
   function handleMobileHandleClick(): void {
-    setMobileSheetMode(mobileSheetMode === 'full' ? 'closed' : 'full')
-    if (mobileSheetMode === 'full') onMobileClose?.()
+    if (mobileExpanded) {
+      closeMobileSheet()
+      return
+    }
+
+    setMobileSheetMode('full')
   }
 
   const desktopDetailPanel = selectedCafe ? (
@@ -701,7 +687,7 @@ export default function Sidebar({
           onMobileClose?.()
         }
       }}>
-      {mobileShowDetail && selectedCafe && !detailDismissed && (
+      {mobileDetailActive && selectedCafe && (
         <motion.div
           key={selectedCafe.id}
           className="md:hidden fixed inset-x-0 bottom-0 z-50 touch-none"
