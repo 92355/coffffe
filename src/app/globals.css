@@ -69,6 +69,12 @@ body {
   height: 100%;
 }
 
+/* Reserve scrollbar space so pages with/without scrollbars don't shift horizontally (Windows).
+   스크롤바 유무에 따라 화면이 좌우로 흔들리지 않도록 공간을 예약한다. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);
@@ -238,14 +244,14 @@ body {
 }
 
 @media (max-width: 639px) {
+  /* opacity only — animating filter on full-size cards forces expensive GPU repaints while swiping.
+     opacity만 사용 — 카드 전체에 filter 애니메이션을 걸면 스와이프 중 GPU 비용이 커진다. */
   .bean-card.bean-card--visible[data-mobile-active="false"] {
     opacity: 0.42;
-    filter: blur(0.4px) saturate(0.82);
   }
 
   .bean-card.bean-card--visible[data-mobile-active="true"] {
     opacity: 1;
-    filter: none;
   }
 }
 

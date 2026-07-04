@@ -8,8 +8,6 @@ import {
 } from '@/lib/user-auth-edge'
 import { isNicknameAnimal } from '@/lib/nickname'
 
-export const runtime = 'edge'
-
 const KAKAO_AUTHORIZE_URL = 'https://kauth.kakao.com/oauth/authorize'
 const KAKAO_JS_SDK_URL = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.6/kakao.min.js'
 const OAUTH_STATE_MAX_AGE_SECONDS = 60 * 10

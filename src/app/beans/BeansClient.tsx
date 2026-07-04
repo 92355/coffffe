@@ -82,7 +82,19 @@ export default function BeansClient({ initialBeans }: BeansClientProps) {
     list.scrollTo({ left: centeredOffset, behavior: 'smooth' })
   }
 
+  const scrollFrameRef = useRef<number | null>(null)
+
+  // rAF throttle — scroll fires many times per frame; compute the active card once per frame.
+  // rAF 스로틀 — scroll 이벤트는 프레임당 여러 번 발생하므로 프레임당 한 번만 계산한다.
   function handleCardScroll() {
+    if (scrollFrameRef.current !== null) return
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = null
+      updateActiveCardFromScroll()
+    })
+  }
+
+  function updateActiveCardFromScroll() {
     const list = listRef.current
     if (!list || filtered.length === 0) return
 

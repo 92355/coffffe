@@ -3,6 +3,11 @@ import { BEANS, BEAN_COVER_IMAGE_BY_ID } from '@/data/beans'
 import type { Bean } from '@/data/beans'
 import BeansClient from './BeansClient'
 
+// Without this the page is prerendered at build time, freezing Supabase data
+// (admin bean edits would never appear until the next deploy).
+// 이 설정이 없으면 빌드 시점에 정적 생성되어 Supabase 데이터가 배포 시점으로 고정된다.
+export const dynamic = 'force-dynamic'
+
 interface DatabaseBean {
   id: string
   name: string

@@ -260,6 +260,9 @@ export default function HomeContent() {
   const [locationStatus, setLocationStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking')
   const [heroCopy, setHeroCopy] = useState<HeroCopy>(DEFAULT_HERO_COPY)
   const [heroBackgroundImage, setHeroBackgroundImage] = useState<string>(HERO_BACKGROUND_IMAGES[0])
+  // Random hero image fades in over the SSR base image to avoid a hard swap flash.
+  // 랜덤 히어로 이미지는 SSR 기본 이미지 위에 페이드인해서 하드 스왑 깜빡임을 방지한다.
+  const [heroOverlayLoaded, setHeroOverlayLoaded] = useState(false)
   const displayName = user?.nickname ?? '개발하는 검정곰'
   const siteAnimal = user?.type === 'authenticated' ? user.siteAnimal : user?.animal
   const kakaoProfileImageUrl = user?.type === 'authenticated' ? user.kakaoProfileImageUrl : undefined
@@ -358,13 +361,23 @@ export default function HomeContent() {
           className="relative z-10 overflow-hidden rounded-b-[2.5rem] bg-[#45493d] px-5 pb-6 pt-5 shadow-[0_18px_38px_rgba(32,27,22,0.16)]"
         >
           <Image
-            src={heroBackgroundImage}
+            src={HERO_BACKGROUND_IMAGES[0]}
             alt=""
             fill
             priority
             sizes="(max-width: 480px) 100vw, 448px"
             className="object-cover object-center"
           />
+          {heroBackgroundImage !== HERO_BACKGROUND_IMAGES[0] && (
+            <Image
+              src={heroBackgroundImage}
+              alt=""
+              fill
+              sizes="(max-width: 480px) 100vw, 448px"
+              onLoad={() => setHeroOverlayLoaded(true)}
+              className={`object-cover object-center transition-opacity duration-700 ${heroOverlayLoaded ? 'opacity-100' : 'opacity-0'}`}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-b from-[#1d2118]/28 via-[#303629]/36 to-[#23291f]/58" />
 
           <div className="relative z-10">
